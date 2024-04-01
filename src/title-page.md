@@ -1,4 +1,4 @@
-# The Rust Programming Language
+# Limbajul de programare Rust
 
 *by Steve Klabnik and Carol Nichols, with contributions from the Rust Community*
 
