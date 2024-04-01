@@ -1,50 +1,30 @@
-## Appendix G - How Rust is Made and “Nightly Rust”
+## Anexa G - Procesul de dezvoltare al Rust și „Nightly Rust”
 
-This appendix is about how Rust is made and how that affects you as a Rust
-developer.
+Acest apêndice explică modul în care este dezvoltat Rust și impactul acestui proces asupra ta ca dezvoltator Rust.
 
-### Stability Without Stagnation
+### Stabilitate fără stagnare
 
-As a language, Rust cares a *lot* about the stability of your code. We want
-Rust to be a rock-solid foundation you can build on, and if things were
-constantly changing, that would be impossible. At the same time, if we can’t
-experiment with new features, we may not find out important flaws until after
-their release, when we can no longer change things.
+Rust acordă o *importanță mare* stabilității codului tău. Vrem ca Rust să fie o bază solidă de dezvoltare pentru tine și dacă lucrurile ar fi în schimbare continuă, nu ar fi posibil. Totodată, dacă nu putem experimenta cu funcționalități noi, s-ar putea să descoperim defecte semnificative abia după lansarea acestora, când nu ne mai este permis să modificăm ceva.
 
-Our solution to this problem is what we call “stability without stagnation”,
-and our guiding principle is this: you should never have to fear upgrading to a
-new version of stable Rust. Each upgrade should be painless, but should also
-bring you new features, fewer bugs, and faster compile times.
+Soluția noastră la această dilemă se numește "stabilitate fără stagnare", iar principiul călăuzitor este următorul: nu ar trebui să îți fie teamă vreodată să efectuezi un upgrade la o nouă versiune stabilă de Rust. Fiecare upgrade ar trebui să fie simplu și să îți ofere noi funcționalități, un număr mai mic de erori, precum și o viteză mai mare de compilare.
 
-### Choo, Choo! Release Channels and Riding the Trains
+### Choo, Choo! Canale de lansare și metoda trenurilor
 
-Rust development operates on a *train schedule*. That is, all development is
-done on the `master` branch of the Rust repository. Releases follow a software
-release train model, which has been used by Cisco IOS and other software
-projects. There are three *release channels* for Rust:
+Dezvoltarea Rust se derulează conform unui *program de tren*. Adică, întreaga dezvoltare se realizează pe ramura `master` al depozitului de cod Rust. Lansările sunt efectuate pe baza modelului trenurilor software, folosit de Cisco IOS precum și de alte proiecte. Există trei *canale de lansare* în cadrul Rust:
 
-* Nightly
+* Nightly (Nocturn)
 * Beta
-* Stable
+* Stable (Stabil)
 
-Most Rust developers primarily use the stable channel, but those who want to
-try out experimental new features may use nightly or beta.
+Majoritatea dezvoltatorilor Rust preferă canalul stabil, dar cei interesați să exploreze funcții noi și experimentale pot opta pentru Nightly Rust sau Beta.
 
-Here’s an example of how the development and release process works: let’s
-assume that the Rust team is working on the release of Rust 1.5. That release
-happened in December of 2015, but it will provide us with realistic version
-numbers. A new feature is added to Rust: a new commit lands on the `master`
-branch. Each night, a new nightly version of Rust is produced. Every day is a
-release day, and these releases are created by our release infrastructure
-automatically. So as time passes, our releases look like this, once a night:
+Să examinăm un exemplu specific despre cum se desfășoară procesul de dezvoltare și lansare: să presupunem că echipa Rust lucrează la lansarea versiunii 1.5. Deși lansarea a avut loc în decembrie 2015, ne va oferi exemple adecvate de numere de versiune. O caracteristică nouă este introdusă în Rust: un nou commit este adăugat pe ramura `master`. Fiecare noapte se creează o nouă versiune Nightly Rust. Fiecare zi înseamnă o lansare, iar aceste lansări sunt generate în mod automat de infrastructura noastră de lansări. Astfel, odată cu trecerea timpului, lansările arată cam așa, noapte de noapte:
 
 ```text
 nightly: * - - * - - *
 ```
 
-Every six weeks, it’s time to prepare a new release! The `beta` branch of the
-Rust repository branches off from the `master` branch used by nightly. Now,
-there are two releases:
+La fiecare șase săptămâni, este timpul să pregătim o nouă lansare! Ramura `beta` a depozitului Rust se ramifică din ramura `master` utilizată de Nightly. Acum, există două lansări:
 
 ```text
 nightly: * - - * - - *
@@ -52,9 +32,7 @@ nightly: * - - * - - *
 beta:                *
 ```
 
-Most Rust users do not use beta releases actively, but test against beta in
-their CI system to help Rust discover possible regressions. In the meantime,
-there’s still a nightly release every night:
+Cei mai mulți utilizatori Rust nu folosesc activ lansările beta, dar testează împotriva beta în sistemul lor de integrare continuă pentru a ajuta Rust să descopere posibile regresii. Între timp, tot apare o lansare Nightly în fiecare noapte:
 
 ```text
 nightly: * - - * - - * - - * - - *
@@ -62,10 +40,7 @@ nightly: * - - * - - * - - * - - *
 beta:                *
 ```
 
-Let’s say a regression is found. Good thing we had some time to test the beta
-release before the regression snuck into a stable release! The fix is applied
-to `master`, so that nightly is fixed, and then the fix is backported to the
-`beta` branch, and a new release of beta is produced:
+Să presupunem că se găsește o regresie. Bine că am avut ceva timp să testăm lansarea beta înainte ca regresia să se strecoare într-o lansare stabilă! Remediul se aplică pe `master`, astfel încât Nightly este reparat, apoi remedierea este retroportată la ramura `beta`, și se produce o nouă lansare beta:
 
 ```text
 nightly: * - - * - - * - - * - - * - - *
@@ -73,8 +48,7 @@ nightly: * - - * - - * - - * - - * - - *
 beta:                * - - - - - - - - *
 ```
 
-Six weeks after the first beta was created, it’s time for a stable release! The
-`stable` branch is produced from the `beta` branch:
+La șase săptămâni după crearea primei beta, este timpul pentru o lansare stable! Ramura `stable` este produsă din ramura `beta`:
 
 ```text
 nightly: * - - * - - * - - * - - * - - * - * - *
@@ -84,10 +58,7 @@ beta:                * - - - - - - - - *
 stable:                                *
 ```
 
-Hooray! Rust 1.5 is done! However, we’ve forgotten one thing: because the six
-weeks have gone by, we also need a new beta of the *next* version of Rust, 1.6.
-So after `stable` branches off of `beta`, the next version of `beta` branches
-off of `nightly` again:
+Excelent! Rust 1.5 este gata! Totuși, am uitat un lucru: pentru că au trecut șase săptămâni, avem nevoie și de o nouă beta a versiunii *următoare* de Rust, 1.6. Așadar, după ce `stable` se ramifică din `beta`, următoarea versiune de `beta` se ramifică din nou din `nightly`:
 
 ```text
 nightly: * - - * - - * - - * - - * - - * - * - *
@@ -97,63 +68,29 @@ beta:                * - - - - - - - - *       *
 stable:                                *
 ```
 
-This is called the “train model” because every six weeks, a release “leaves the
-station”, but still has to take a journey through the beta channel before it
-arrives as a stable release.
+Acesta se numește modelul „de tren” pentru că la fiecare șase săptămâni, o lansare „părăsește stația”, dar tot trebuie să parcurgă un drum prin canalul beta înainte de a ajunge ca o lansare stabilă.
 
-Rust releases every six weeks, like clockwork. If you know the date of one Rust
-release, you can know the date of the next one: it’s six weeks later. A nice
-aspect of having releases scheduled every six weeks is that the next train is
-coming soon. If a feature happens to miss a particular release, there’s no need
-to worry: another one is happening in a short time! This helps reduce pressure
-to sneak possibly unpolished features in close to the release deadline.
+Rust se lansează la fiecare șase săptămâni, cu precizia unui ceasornic. Dacă cunoști data unei lansări Rust, poți determina data celei următoare: va fi peste șase săptămâni. Un avantaj al acestei programări la fiecare șase săptămâni este că „următorul tren” va sosi în curând. Dacă o funcționalitate nu reușește să ajungă într-o anumită lansare, nu e cazul să te îngrijorezi: o nouă lansare va fi disponibilă în curând! Asta diminuează presiunea de a adăuga funcționalități poate nefinisate în apropierea datei de lansare.
 
-Thanks to this process, you can always check out the next build of Rust and
-verify for yourself that it’s easy to upgrade to: if a beta release doesn’t
-work as expected, you can report it to the team and get it fixed before the
-next stable release happens! Breakage in a beta release is relatively rare, but
-`rustc` is still a piece of software, and bugs do exist.
+Datorită acestui proces, mereu poți testa următoarea construcție a Rust și să te convingi că este simplu de trecut la ea: dacă o versiune beta nu funcționează conform așteptărilor, poți să raportezi asta echipei și să obții corectarea înainte de următoarea lansare stabilă! Incidența problemelor într-o versiune beta este relativ rară, dar `rustc` rămâne o piesă de software, așa că erorile pot apărea.
 
-### Maintenance time
+### Caracteristici instabile
 
-The Rust project supports the most recent stable version. When a new stable
-version is released, the old version reaches its end of life (EOL). This means
-each version is supported for six weeks.
+Există un aspect suplimentar de luat în seamă în ce privește modelul de lansare menționat: caracteristicile instabile. Rust utilizează o tehnică numită „flag-uri de funcționalitate” pentru a defini ce caracteristici sunt disponibile într-o versiune anume. Când o nouă caracteristică este încă în dezvoltare, aceasta este adăugată în `master` și, astfel, este disponibilă în Nightly Rust, dar protejată de un *flag de funcționalitate*. Dacă dorești să testezi o funcționalitate aflată în dezvoltare, ai posibilitatea, însă este necesar să utilizezi versiunea Nightly Rust și să adnotezi codul sursă cu flag-ul potrivit pentru a exprima acordul tău.
 
-### Unstable Features
+În cazul în care folosești o versiune beta sau stabilă Rust, nu ai posibilitatea de a folosi flag-uri de funcționalitate. Acest lucru reprezintă cheia ce ne permite să testăm în mod practic noile caracteristici înainte de a fi declarate stabile pe termen lung. Cei care doresc să fie la curent cu tehnologia de ultimă oră pot adopta variantele instabile, în timp ce cei doritori de o experiență robustă pot să rămână pe versiunea stabilă și să fie siguri că codul lor nu va avea probleme. Stabilitate fără stagnare.
 
-There’s one more catch with this release model: unstable features. Rust uses a
-technique called “feature flags” to determine what features are enabled in a
-given release. If a new feature is under active development, it lands on
-`master`, and therefore, in nightly, but behind a *feature flag*. If you, as a
-user, wish to try out the work-in-progress feature, you can, but you must be
-using a nightly release of Rust and annotate your source code with the
-appropriate flag to opt in.
+Cartea de față include doar informații despre caracteristicile stabile pentru că cele în curs de elaborare sunt încă în schimbare și cu certitudine vor fi diferite față de cum sunt descrise aici, la momentul când vor fi implementate în versiunile stabile. Poți găsi documentație pentru caracteristicile disponibile doar în versiunea Nightly Rust pe internet.
 
-If you’re using a beta or stable release of Rust, you can’t use any feature
-flags. This is the key that allows us to get practical use with new features
-before we declare them stable forever. Those who wish to opt into the bleeding
-edge can do so, and those who want a rock-solid experience can stick with
-stable and know that their code won’t break. Stability without stagnation.
+### Rustup și rolul lui Rust Nightly
 
-This book only contains information about stable features, as in-progress
-features are still changing, and surely they’ll be different between when this
-book was written and when they get enabled in stable builds. You can find
-documentation for nightly-only features online.
-
-### Rustup and the Role of Rust Nightly
-
-Rustup makes it easy to change between different release channels of Rust, on a
-global or per-project basis. By default, you’ll have stable Rust installed. To
-install nightly, for example:
+Rustup facilitează trecerea între diferite canale de release ale Rust, fie la nivel global, fie pentru fiecare proiect în parte.În mod implicit, ai instalat Rust în versiunea stabilă. Pentru a instala Nightly Rust, de exemplu:
 
 ```console
 $ rustup toolchain install nightly
 ```
 
-You can see all of the *toolchains* (releases of Rust and associated
-components) you have installed with `rustup` as well. Here’s an example on one
-of your authors’ Windows computer:
+Poți vedea, de asemenea, toate *toolchain-urile* (lansările de Rust și componentele asociate) instalate cu `rustup`. Iată un exemplu de pe computerul cu Windows al unuia dintre autorii cărții:
 
 ```powershell
 > rustup toolchain list
@@ -162,46 +99,21 @@ beta-x86_64-pc-windows-msvc
 nightly-x86_64-pc-windows-msvc
 ```
 
-As you can see, the stable toolchain is the default. Most Rust users use stable
-most of the time. You might want to use stable most of the time, but use
-nightly on a specific project, because you care about a cutting-edge feature.
-To do so, you can use `rustup override` in that project’s directory to set the
-nightly toolchain as the one `rustup` should use when you’re in that directory:
+Cum poți observa, toolchain-ul stabil este cel selectat implicit. Majoritatea utilizatorilor Rust preferă versiunea stabilă în cele mai multe situații. Este posibil să dorești să folosești în principal versiunea stabilă, dar să alegi Nightly Rust pentru un proiect anume, pentru că ai nevoie de o caracteristică avansată. În acest caz, poți utiliza `rustup override` în directoriul respectivului proiect pentru a specifica toolchain-ul Nightly ca fiind cel dorit de `rustup` atunci când lucrezi în acel directoriu:
 
 ```console
 $ cd ~/projects/needs-nightly
 $ rustup override set nightly
 ```
 
-Now, every time you call `rustc` or `cargo` inside of
-*~/projects/needs-nightly*, `rustup` will make sure that you are using nightly
-Rust, rather than your default of stable Rust. This comes in handy when you
-have a lot of Rust projects!
+Astfel, ori de câte ori rulezi `rustc` sau `cargo` în *~/projects/needs-nightly*, `rustup` va asigura că folosești Nightly Rust, în loc de Rust stabil, care este setarea default. Aceasta este o facilitare importantă atunci când lucrezi cu mai multe proiecte Rust.
 
-### The RFC Process and Teams
+### Procesul RFC și echipele
 
-So how do you learn about these new features? Rust’s development model follows
-a *Request For Comments (RFC) process*. If you’d like an improvement in Rust,
-you can write up a proposal, called an RFC.
+Cum afli despre aceste noi caracteristici? Dezvoltarea Rust se bazează pe un *proces de Request For Comments (RFC)*. Dacă dorești o îmbunătățire în Rust, poți scrie o propunere, denumită RFC.
 
-Anyone can write RFCs to improve Rust, and the proposals are reviewed and
-discussed by the Rust team, which is comprised of many topic subteams. There’s
-a full list of the teams [on Rust’s
-website](https://www.rust-lang.org/governance), which includes teams for
-each area of the project: language design, compiler implementation,
-infrastructure, documentation, and more. The appropriate team reads the
-proposal and the comments, writes some comments of their own, and eventually,
-there’s consensus to accept or reject the feature.
+Oricine poate redacta RFC-uri pentru a aduce îmbunătățiri limbajului Rust, iar aceste propuneri sunt revizuite și discutate de echipa Rust, alcătuită din multiple subechipe specializate pe diverse teme. O listă completă a acestor echipe este disponibilă [pe website-ul Rust](https://www.rust-lang.org/governance), care include echipe pentru fiecare domeniu al proiectului: design de limbaj, implementarea compilatorului, infrastructură, documentație și altele. Echipa relevantă analizează propunerea și comentariile, contribuie cu observații proprii și, în final, se ajunge la un consens pentru acceptarea sau respingerea caracteristicii propuse.
 
-If the feature is accepted, an issue is opened on the Rust repository, and
-someone can implement it. The person who implements it very well may not be the
-person who proposed the feature in the first place! When the implementation is
-ready, it lands on the `master` branch behind a feature gate, as we discussed
-in the [“Unstable Features”](#unstable-features)<!-- ignore --> section.
+Dacă funcția este acceptată, se deschide un incident în repository-ul Rust, iar cineva poate să o implementeze. Persoana care o implementează nu trebuie neapărat să fie aceea care a propus funcția la început! Când implementarea este terminată, aceasta este adăugată în ramura `master` sub controlul unui flag de funcționalitate, așa cum am explicat în secțiunea [„Caracteristici instabile”](#unstable-features)<!-- ignore -->.
 
-After some time, once Rust developers who use nightly releases have been able
-to try out the new feature, team members will discuss the feature, how it’s
-worked out on nightly, and decide if it should make it into stable Rust or not.
-If the decision is to move forward, the feature gate is removed, and the
-feature is now considered stable! It rides the trains into a new stable release
-of Rust.
+După ce dezvoltatorii Rust care folosesc versiunea Nightly Rust au avut posibilitatea să experimenteze noua caracteristică, membrii echipei o evaluează, discutând despre performanța ei în cadrul versiunii Nightly, și iau o decizie privind includerea sa în versiunea stabilă de Rust sau nu. Dacă se decide promovarea caracteristicii, flag-ul acesteia este îndepărtat, și astfel devine o funcție stabilă! Astfel, este integrată în următoarea versiune stabilă a Rust.

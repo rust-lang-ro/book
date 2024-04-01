@@ -1,42 +1,32 @@
-## Appendix D - Useful Development Tools
+## Anexa D - Unelte utile de dezvoltare
 
-In this appendix, we talk about some useful development tools that the Rust
-project provides. We’ll look at automatic formatting, quick ways to apply
-warning fixes, a linter, and integrating with IDEs.
+În această anexă, vorbim despre unele unelte utile de dezvoltare pe care proiectul Rust le oferă. Vom analiza formatarea automată, modalități rapide de a aplica corecțiile de avertizare, un linter și integrare cu IDE-urile.
 
-### Automatic Formatting with `rustfmt`
+### Formatare automată cu `rustfmt`
 
-The `rustfmt` tool reformats your code according to the community code style.
-Many collaborative projects use `rustfmt` to prevent arguments about which
-style to use when writing Rust: everyone formats their code using the tool.
+Instrumentul `rustfmt` reformatează codul tău conform stilului de codare al comunității. Multe proiecte colaborative utilizează `rustfmt` pentru a preveni dispute cu privire la stilul de utilizat atunci când se scrie în Rust: toată lumea formatează codul lor folosind acest instrument.
 
-To install `rustfmt`, enter the following:
+Pentru a instala `rustfmt`, introdu următorul text:
 
 ```console
 $ rustup component add rustfmt
 ```
 
-This command gives you `rustfmt` and `cargo-fmt`, similar to how Rust gives you
-both `rustc` and `cargo`. To format any Cargo project, enter the following:
+Această comandă îți oferă `rustfmt` și `cargo-fmt`, similar cum Rust îți oferă atât `rustc` cât și `cargo`. Pentru a formata orice proiect Cargo, introduce următorare comandă:
 
 ```console
 $ cargo fmt
 ```
 
-Running this command reformats all the Rust code in the current crate. This
-should only change the code style, not the code semantics. For more information
-on `rustfmt`, see [its documentation][rustfmt].
+Rularea acestei comenzi reformatează tot codul Rust din crate-ul curent. Aceasta ar trebui să schimbe doar stilul codului, nu și semantica acestuia. Pentru mai multe informații despre `rustfmt`, consultați [documentația sa][rustfmt].
 
 [rustfmt]: https://github.com/rust-lang/rustfmt
 
-### Fix Your Code with `rustfix`
+### Corectează-ți codul cu `rustfix`
 
-The rustfix tool is included with Rust installations and can automatically fix
-compiler warnings that have a clear way to correct the problem that’s likely
-what you want. It’s likely you’ve seen compiler warnings before. For example,
-consider this code:
+Instrumentul rustfix este inclus în instalările Rust și poate corecta în mod automat avertismentele compilatorului care au o modalitate clară de corectare, care și este probabil ceea ce vrei. Este posibil să fi văzut avertismente de compilator înainte. De exemplu, ia în considerare acest cod:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 fn do_something() {}
@@ -48,8 +38,7 @@ fn main() {
 }
 ```
 
-Here, we’re calling the `do_something` function 100 times, but we never use the
-variable `i` in the body of the `for` loop. Rust warns us about that:
+Aici, apelăm funcția `do_something` de 100 de ori, dar nu folosim niciodată variabila `i` în corpul buclei `for`. Rust ne avertizează despre acest lucru:
 
 ```console
 $ cargo build
@@ -65,10 +54,7 @@ warning: unused variable: `i`
     Finished dev [unoptimized + debuginfo] target(s) in 0.50s
 ```
 
-The warning suggests that we use `_i` as a name instead: the underscore
-indicates that we intend for this variable to be unused. We can automatically
-apply that suggestion using the `rustfix` tool by running the command `cargo
-fix`:
+Avertismentul sugerează să folosim `_i` ca nume în schimb: linia de subliniere indică faptul că intenționăm ca această variabilă să rămână nefolosită. Putem aplica automat această sugestie folosind instrumentul `rustfix` rulând comanda `cargo fix`:
 
 ```console
 $ cargo fix
@@ -77,10 +63,9 @@ $ cargo fix
     Finished dev [unoptimized + debuginfo] target(s) in 0.59s
 ```
 
-When we look at *src/main.rs* again, we’ll see that `cargo fix` has changed the
-code:
+Când ne uităm din nou la *src/main.rs*, vedem că `cargo fix` a modificat codul:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 fn do_something() {}
@@ -92,32 +77,29 @@ fn main() {
 }
 ```
 
-The `for` loop variable is now named `_i`, and the warning no longer appears.
+Variabila buclei `for` se numește acum `_i`, iar avertismentul nu mai apare.
 
-You can also use the `cargo fix` command to transition your code between
-different Rust editions. Editions are covered in Appendix E.
+De asemenea, poți utiliza comanda `cargo fix` pentru a trece codul tău între diferitele ediții ale Rust. Edițiile sunt descrise în Anexa E.
 
-### More Lints with Clippy
+### Mai multe lints cu Clippy
 
-The Clippy tool is a collection of lints to analyze your code so you can catch
-common mistakes and improve your Rust code.
+Instrumentul Clippy este o colecție de lints care ajută la analiza codului tău Rust. „Lints” se referă la reguli de verificare statică a codului sursă, folosite pentru a identifica erori, inconsecvențe de stil și posibile probleme de performanță sau securitate. Folosind Clippy, poți depista și remedia eficient aceste probleme comune, sporind astfel calitatea codului tău Rust.
 
-To install Clippy, enter the following:
+Pentru a instala Clippy, introdu următoarea comandă:
 
 ```console
 $ rustup component add clippy
 ```
 
-To run Clippy’s lints on any Cargo project, enter the following:
+Pentru a rula lints de la Clippy pe orice proiect Cargo, introdu următoarea comandă:
 
 ```console
 $ cargo clippy
 ```
 
-For example, say you write a program that uses an approximation of a
-mathematical constant, such as pi, as this program does:
+De exemplu, presupunem că scrii un program care folosește o aproximare a unei constante matematice, precum pi, așa cum face acest program:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 fn main() {
@@ -127,7 +109,7 @@ fn main() {
 }
 ```
 
-Running `cargo clippy` on this project results in this error:
+Rularea `cargo clippy` pe acest proiect duce la această eroare:
 
 ```text
 error: approximate value of `f{32, 64}::consts::PI` found
@@ -141,12 +123,9 @@ error: approximate value of `f{32, 64}::consts::PI` found
   = help: for further information visit https://rust-lang.github.io/rust-clippy/master/index.html#approx_constant
 ```
 
-This error lets you know that Rust already has a more precise `PI` constant
-defined, and that your program would be more correct if you used the constant
-instead. You would then change your code to use the `PI` constant. The
-following code doesn’t result in any errors or warnings from Clippy:
+Aceasta eroare îți arată că Rust are deja o constantă `PI` mai precisă definită și că programul tău ar fi mai corect dacă ai folosi constanta respectivă. Atunci ai schimba codul tău pentru a utiliza constanta `PI`. Următorul cod nu duce la nicio eroare sau avertisment de la Clippy:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 fn main() {
@@ -156,25 +135,21 @@ fn main() {
 }
 ```
 
-For more information on Clippy, see [its documentation][clippy].
+Pentru mai multe informații despre Clippy, vezi [documentația sa][clippy].
 
 [clippy]: https://github.com/rust-lang/rust-clippy
 
-### IDE Integration Using `rust-analyzer`
+### Integrarea cu IDE folosind `rust-analyzer`
 
-To help IDE integration, the Rust community recommends using
-[`rust-analyzer`][rust-analyzer]<!-- ignore -->. This tool is a set of
-compiler-centric utilities that speaks the [Language Server Protocol][lsp]<!--
-ignore -->, which is a specification for IDEs and programming languages to
-communicate with each other. Different clients can use `rust-analyzer`, such as
-[the Rust analyzer plug-in for Visual Studio Code][vscode].
+Pentru a facilita integrarea cu IDE, comunitatea Rust recomandă utilizarea
+[`rust-analyzer`][rust-analyzer]<!-- ignore -->. Acest instrument este un set de
+utilitare centrate pe compilator care folosesc protocolul [Language Server Protocol][lsp]<!-- ignore -->, care este o specificație pentru ca IDE-urile și limbajele de programare să comunice între ele. Diferiți clienți pot folosi `rust-analyzer`, cum ar fi
+[plugin-ul Rust analyzer pentru Visual Studio Code][vscode].
 
 [lsp]: http://langserver.org/
 [vscode]: https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer
 
-Visit the `rust-analyzer` project’s [home page][rust-analyzer]<!-- ignore -->
-for installation instructions, then install the language server support in your
-particular IDE. Your IDE will gain abilities such as autocompletion, jump to
-definition, and inline errors.
+Vizitează pagina de [acasa][rust-analyzer] a proiectului `rust-analyzer` <!-- ignore -->
+pentru instrucțiuni de instalare, apoi instalează suportul pentru serverul de limbaj în propriul tău IDE. IDE-ul tău va obține abilități precum autocompletare, sări la definiție, și erorile inline.
 
 [rust-analyzer]: https://rust-analyzer.github.io

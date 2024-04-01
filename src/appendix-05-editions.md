@@ -1,57 +1,25 @@
-## Appendix E - Editions
+## Anexa E - Edițiile
 
-In Chapter 1, you saw that `cargo new` adds a bit of metadata to your
-*Cargo.toml* file about an edition. This appendix talks about what that means!
+În Capitolul 1, ai observat că `cargo new` adaugă un pic de metadate în *Cargo.toml* referitoare la o anumită ediție. Această anexă te va ajuta să înțelegi ce semnificație are acest aspect.
 
-The Rust language and compiler have a six-week release cycle, meaning users get
-a constant stream of new features. Other programming languages release larger
-changes less often; Rust releases smaller updates more frequently. After a
-while, all of these tiny changes add up. But from release to release, it can be
-difficult to look back and say, “Wow, between Rust 1.10 and Rust 1.31, Rust has
-changed a lot!”
+Limbajul de programare Rust și compilatorul său au un ciclu stabil de lansare o dată la fiecare șase săptămâni, astfel încât utilizatorii primesc constant functionalități noi. În comparație, alte limbaje de programare lansează modificări substanțiale mai rar; Rust, în schimb, preferă actualizări mai mici, dar mai dese. De-a lungul timpului, toate aceste actualizări mici adunate reușesc să schimbe în mod semnificativ limbajul. Fără o repere clare, poate fi dificil să realizezi cât de mult a progresat Rust de-a lungul mai multor versiuni cum ar fi de la Rust 1.10 la Rust 1.31.
 
-Every two or three years, the Rust team produces a new Rust *edition*. Each
-edition brings together the features that have landed into a clear package with
-fully updated documentation and tooling. New editions ship as part of the usual
-six-week release process.
+La intervale de câte doi sau trei ani, echipa Rust lansează o nouă ediție a limbajului. O ediție înglobează toate funcționalitățile noi într-un format ușor de abordat, împreună cu documentație completă și instrumente actualizate. Aceste noi ediții sunt parte integrantă a ritmului standard de lansare.
 
-Editions serve different purposes for different people:
+Pentru diferite grupuri de utilizatori, edițiile îndeplinesc scopuri distincte:
 
-* For active Rust users, a new edition brings together incremental changes into
-  an easy-to-understand package.
-* For non-users, a new edition signals that some major advancements have
-  landed, which might make Rust worth another look.
-* For those developing Rust, a new edition provides a rallying point for the
-  project as a whole.
+* Pentru cei ce folosesc Rust activ, o nouă ediție aduce schimbările incrementale într-un mod compact și accesibil.
+* Pentru non-utilizatorii de Rust, o nouă ediție indică schimbări de amploare și poate incita la acordarea unei noi șanse limbajului.
+* Pentru contribuitorii la Rust, o ediție nouă este un moment de sărbătoare ce evidențiază evoluția proiectului și a comunității acestuia.
 
-At the time of this writing, three Rust editions are available: Rust 2015, Rust
-2018, and Rust 2021. This book is written using Rust 2021 edition idioms.
+În momentul redactării, sunt disponibile trei ediții Rust: Rust 2015, Rust 2018 și Rust 2021. Acest text se conformează idiomurilor ediției Rust 2021.
 
-The `edition` key in *Cargo.toml* indicates which edition the compiler should
-use for your code. If the key doesn’t exist, Rust uses `2015` as the edition
-value for backward compatibility reasons.
+Cheia `edition` din *Cargo.toml* îi spune compilatorului Rust ce ediție să utilizeze pentru codul tău. Dacă această cheie lipsește, Rust va folosi ediția `2015` ca implicită, pentru a păstra compatibilitatea cu versiunile anterioare.
 
-Each project can opt in to an edition other than the default 2015 edition.
-Editions can contain incompatible changes, such as including a new keyword that
-conflicts with identifiers in code. However, unless you opt in to those
-changes, your code will continue to compile even as you upgrade the Rust
-compiler version you use.
+Proiectele Pot opta pentru orice ediție disponibilă, diferită de cea implicită din 2015. O ediție poate introduce schimbări ce nu sunt compatibile în versiuni anterioare, de exemplu noi cuvinte cheie ce ar putea conflicta cu identificatorii din cod. Cu toate acestea, compilatorul va continua să compileze codul existent chiar și după actualizarea versiunii de compilator Rust, atâta timp cât nu alegi să adopți schimbările noi.
 
-All Rust compiler versions support any edition that existed prior to that
-compiler’s release, and they can link crates of any supported editions
-together. Edition changes only affect the way the compiler initially parses
-code. Therefore, if you’re using Rust 2015 and one of your dependencies uses
-Rust 2018, your project will compile and be able to use that dependency. The
-opposite situation, where your project uses Rust 2018 and a dependency uses
-Rust 2015, works as well.
+Toate versiunile de compilator Rust suportă fiecare ediție apărută înaintea versiunii acelui compilator și pot interacționa cu dependențele indiferent de ediția în care sunt scrise. Modificările aduse de o nouă ediție alterează doar modul în care compilatorul interpretează codul inițial. Astfel, dacă ai un proiect în Rust 2015 și o dependență care utilizează Rust 2018, proiectul va compila și va lucra fără probleme cu respectiva dependență. La fel, dacă proiectul tău este în Rust 2018 și folosește o dependență în Rust 2015, totul va funcționa corespunzător.
 
-To be clear: most features will be available on all editions. Developers using
-any Rust edition will continue to see improvements as new stable releases are
-made. However, in some cases, mainly when new keywords are added, some new
-features might only be available in later editions. You will need to switch
-editions if you want to take advantage of such features.
+Să fim clari: cele mai multe caracteristici sunt disponibile indiferent de ediția Rust folosită. Dezvoltatorii vor continua să beneficieze de îmbunătățiri, indiferent de ediția Rust pe care o utilizează, pe măsură ce sunt lansate noi versiuni stabile. În anumite situații, mai ales atunci când sunt introduse cuvinte cheie noi, anumite funcționalități noi pot fi limitate doar la ediții mai recente. Pentru a accesa aceste caracteristici, va trebui să treci la o ediție mai nouă.
 
-For more details, the [*Edition
-Guide*](https://doc.rust-lang.org/stable/edition-guide/) is a complete book
-about editions that enumerates the differences between editions and explains
-how to automatically upgrade your code to a new edition via `cargo fix`.
+Pentru detalii suplimentare, [*Ghidul Edițiilor*](https://doc.rust-lang.org/stable/edition-guide/) reprezintă o resursă exhaustivă despre ediții, prezentând diferențele dintre ele și detaliind cum poți actualiza codul la o nouă ediție simplu și automat cu `cargo fix`.

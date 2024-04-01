@@ -1,4 +1,3 @@
-# Appendix
+# Anexă
 
-The following sections contain reference material you may find useful in your
-Rust journey.
+Următoarele secțiuni conțin material de referință care s-ar putea să îți fie util în călătoria ta prin Rust.

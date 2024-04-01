@@ -1,68 +1,66 @@
-## Appendix A: Keywords
+## Anexa A: Cuvinte cheie
 
-The following list contains keywords that are reserved for current or future
-use by the Rust language. As such, they cannot be used as identifiers (except
-as raw identifiers as we’ll discuss in the “[Raw
-Identifiers][raw-identifiers]<!-- ignore -->” section). Identifiers are names
-of functions, variables, parameters, struct fields, modules, crates, constants,
-macros, static values, attributes, types, traits, or lifetimes.
+Următoarea listă conține cuvinte cheie care sunt rezervate pentru uzul curent sau viitor
+de către limbajul Rust. Ca atare, acestea nu pot fi utilizate ca identificatori (cu excepția
+ca identificatori "raw", așa cum vom discuta în secțiunea "[Identificatori Raw][raw-identifiers]<!-- ignore -->"). Identificatorii sunt nume
+de funcții, variabile, parametri, câmpuri struct, module, crate-uri, constante,
+macro-uri, valori statice, atribute, tipuri, traits, sau lifetimes.
 
 [raw-identifiers]: #raw-identifiers
 
-### Keywords Currently in Use
+### Cuvinte cheie actualmente în uz
 
-The following is a list of keywords currently in use, with their functionality
-described.
+Următoarea este o listă de cuvinte cheie actualmente în uz, cu funcționalitatea lor 
+prezentată.
 
-* `as` - perform primitive casting, disambiguate the specific trait containing
-  an item, or rename items in `use` statements
-* `async` -  return a `Future` instead of blocking the current thread
-* `await` - suspend execution until the result of a `Future` is ready
-* `break` - exit a loop immediately
-* `const` - define constant items or constant raw pointers
-* `continue` - continue to the next loop iteration
-* `crate` - in a module path, refers to the crate root
-* `dyn` - dynamic dispatch to a trait object
-* `else` - fallback for `if` and `if let` control flow constructs
-* `enum` - define an enumeration
-* `extern` - link an external function or variable
-* `false` - Boolean false literal
-* `fn` - define a function or the function pointer type
-* `for` - loop over items from an iterator, implement a trait, or specify a
-  higher-ranked lifetime
-* `if` - branch based on the result of a conditional expression
-* `impl` - implement inherent or trait functionality
-* `in` - part of `for` loop syntax
-* `let` - bind a variable
-* `loop` - loop unconditionally
-* `match` - match a value to patterns
-* `mod` - define a module
-* `move` - make a closure take ownership of all its captures
-* `mut` - denote mutability in references, raw pointers, or pattern bindings
-* `pub` - denote public visibility in struct fields, `impl` blocks, or modules
-* `ref` - bind by reference
-* `return` - return from function
-* `Self` - a type alias for the type we are defining or implementing
-* `self` - method subject or current module
-* `static` - global variable or lifetime lasting the entire program execution
-* `struct` - define a structure
-* `super` - parent module of the current module
-* `trait` - define a trait
-* `true` - Boolean true literal
-* `type` - define a type alias or associated type
-* `union` - define a [union][union]<!-- ignore -->; is only a keyword when used
-  in a union declaration
-* `unsafe` - denote unsafe code, functions, traits, or implementations
-* `use` - bring symbols into scope
-* `where` - denote clauses that constrain a type
-* `while` - loop conditionally based on the result of an expression
+* `as` - efectuează tip casting primitiv, disambiguează trait-ul specific care conține
+  un item sau redenumeste items în instrucțiunea `use`
+* `async` - întoarce un `Future` în loc de a bloca firul curent de execuție
+* `await` - suspendă execuția până când rezultatul unui `Future` este gata
+* `break` - iese imediat dintr-o buclă
+* `const` - definește constante sau pointeri raw constanți
+* `continue` - continuă la următoarea iterație de buclă
+* `crate` - în calea unui modul, se referă la rădăcina crate-ului
+* `dyn` - expediază dinamic către un obiect trait
+* `else` - fallback pentru construcții de control `if` și `if let`
+* `enum` - definește o enumerație
+* `extern` - leagă o funcție sau o variabilă externă
+* `false` - literal Boolean fals
+* `fn` - definește o funcție sau tipul unui pointer de funcție
+* `for` - trece prin elementele unui iterator, implementează un trait sau specifică un
+  durată de viață de rang superior
+* `if` - alege în funcție de rezultatul unei expresii condiționale
+* `impl` - implementează funcționalitatea inherentă sau a unei trăsături
+* `in` - face parte din sintaxa buclei `for`
+* `let` - leagă o variabilă
+* `loop` - buclă necondiționată
+* `match` - potrivește o valoare cu modele
+* `mod` - definește un modul
+* `move` - face ca o închidere să preia posesiunea tuturor capturilor sale
+* `mut` - denotă mutabilitate în referințe, pointeri raw, sau legături de pattern
+* `pub` - denotă vizibilitate publică în câmpuri struct, blocuri `impl` sau module
+* `ref` - leagă prin referință
+* `return` - întoarce din funcție
+* `Self` - un alias pentru tipul pe care îl definim sau implementăm
+* `self` - subiectul metodei sau modulul curent
+* `static` - variabilă globală sau timp de viață pe întreaga durată de execuție a programului
+* `struct` - definește o structură
+* `super` - modulul părinte al modulului curent
+* `trait` - definește o trăsătură
+* `true` - literal Boolean adevărat
+* `type` - definește un alias de tip sau un tip asociat
+* `union` - definește o [uniune][union]<!-- ignore -->; este un cuvânt cheie doar când este folosit într-o declarație de uniune
+* `unsafe` - denotă cod, funcții, traits, sau implementări nesigure
+* `use` - aduce simboluri în domeniul de vizibilitate
+* `where` - denotă clauze care constrâng un tip
+* `while` - buclă condiționată bazată pe rezultatul unei expresii
 
 [union]: ../reference/items/unions.html
 
-### Keywords Reserved for Future Use
+### Cuvinte cheie rezervate pentru utilizare viitoare
 
-The following keywords do not yet have any functionality but are reserved by
-Rust for potential future use.
+Următoarele cuvinte cheie nu au încă nicio funcționalitate, dar sunt rezervate de
+Rust pentru o potențială utilizare în viitor.
 
 * `abstract`
 * `become`
@@ -78,15 +76,13 @@ Rust for potential future use.
 * `virtual`
 * `yield`
 
-### Raw Identifiers
+### Identificatori bruți
 
-*Raw identifiers* are the syntax that lets you use keywords where they wouldn’t
-normally be allowed. You use a raw identifier by prefixing a keyword with `r#`.
+*Identificatorii bruți* sunt sintaxa care îți permite să folosești cuvinte cheie acolo unde în mod normal nu ar fi permise. Folosești un identificator brut prin prefixarea unui cuvânt cheie cu `r#`.
 
-For example, `match` is a keyword. If you try to compile the following function
-that uses `match` as its name:
+De exemplu, `match` este un cuvânt cheie. Dacă încerci să compilezi următoarea funcție care folosește `match` ca nume al său:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 fn match(needle: &str, haystack: &str) -> bool {
@@ -94,7 +90,7 @@ fn match(needle: &str, haystack: &str) -> bool {
 }
 ```
 
-you’ll get this error:
+vei primi această eroare:
 
 ```text
 error: expected identifier, found keyword `match`
@@ -104,11 +100,9 @@ error: expected identifier, found keyword `match`
   |    ^^^^^ expected identifier, found keyword
 ```
 
-The error shows that you can’t use the keyword `match` as the function
-identifier. To use `match` as a function name, you need to use the raw
-identifier syntax, like this:
+Eroarea arată că nu poți folosi cuvântul cheie `match` ca identificator al funcției. Pentru a folosi `match` ca nume de funcție, trebuie să folosești sintaxa pentru identificatori bruți, în felul următor:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 fn r#match(needle: &str, haystack: &str) -> bool {
@@ -120,18 +114,8 @@ fn main() {
 }
 ```
 
-This code will compile without any errors. Note the `r#` prefix on the function
-name in its definition as well as where the function is called in `main`.
+Acest cod se va compila fără nicio eroare. Observă prefixul `r#` în numele funcției la definirea acesteia, cât și atunci când funcția este apelată în `main`.
 
-Raw identifiers allow you to use any word you choose as an identifier, even if
-that word happens to be a reserved keyword. This gives us more freedom to
-choose identifier names, as well as lets us integrate with programs written in
-a language where these words aren’t keywords. In addition, raw identifiers
-allow you to use libraries written in a different Rust edition than your crate
-uses. For example, `try` isn’t a keyword in the 2015 edition but is in the 2018
-edition. If you depend on a library that’s written using the 2015 edition and
-has a `try` function, you’ll need to use the raw identifier syntax, `r#try` in
-this case, to call that function from your 2018 edition code. See [Appendix
-E][appendix-e]<!-- ignore --> for more information on editions.
+Identificatorii bruți îți permit să folosești orice cuvânt alegi ca identificator, chiar dacă acel cuvânt se întâmplă să fie un cuvânt cheie rezervat. Acest lucru ne oferă mai multă libertate în alegerea numelor de identificatori, precum și ne permite să ne integrăm cu programe scrise într-un limbaj unde aceste cuvinte nu sunt cuvinte cheie. În plus, identificatorii bruți îți permit să folosești librării scrise într-o ediție Rust diferită față de crate-ul tău. De exemplu, `try` nu este un cuvânt cheie în ediția 2015, dar este în ediția 2018. Dacă depinzi de o librărie care este scrisă folosind ediția 2015 și are o funcție `try`, va trebui să folosești sintaxa pentru identificatori bruți, `r#try` în acest caz, pentru a apela acea funcție din codul tău din ediția 2018. Vezi [Anexa E][appendix-e]<!-- ignore --> pentru mai multe informații despre ediții.
 
 [appendix-e]: appendix-05-editions.html
