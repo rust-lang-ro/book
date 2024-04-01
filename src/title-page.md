@@ -1,26 +1,20 @@
 # Limbajul de programare Rust
 
-*by Steve Klabnik and Carol Nichols, with contributions from the Rust Community*
+*de Steve Klabnik și Carol Nichols, cu contribuții din partea comunității Rust*
 
-This version of the text assumes you’re using Rust 1.76.0 (released 2024-02-08)
-or later. See the [“Installation” section of Chapter 1][install]<!-- ignore -->
-to install or update Rust.
+Această versiune a textului presupune că utilizezi Rust 1.67.1 (lansat pe 2023-02-09) sau o versiune mai nouă. Pentru a instala sau actualiza Rust, accesează [secțiunea "Instalare" din Capitolul 1][install]<!-- ignore -->.
 
-The HTML format is available online at
-[https://doc.rust-lang.org/stable/book/](https://doc.rust-lang.org/stable/book/)
-and offline with installations of Rust made with `rustup`; run `rustup docs
---book` to open.
+Varianta HTML este disponibilă online la [https://rust-lang.ro/](https://rust-lang.ro/) și offline (în engleză) în instalațiile Rust realizate cu `rustup`; executați `rustup docs --book` pentru a o deschide.
 
-Several community [translations] are also available.
+Câteva [traduceri][translations] realizate de comunitate sunt de asemenea disponibile.
 
-This text is available in [paperback and ebook format from No Starch
-Press][nsprust].
+Textul (în engleză) este de asemenea disponibil în [format paperback și ebook de la No Starch Press][nsprust].
 
 [install]: ch01-01-installation.html
 [editions]: appendix-05-editions.html
 [nsprust]: https://nostarch.com/rust-programming-language-2nd-edition
 [translations]: appendix-06-translation.html
 
-> **🚨 Want a more interactive learning experience? Try out a different version
-> of the Rust Book, featuring: quizzes, highlighting, visualizations, and
-> more**: <https://rust-book.cs.brown.edu>
+> **🚨 Îți dorești o experiență de învățare mai interactivă? Încearcă o versiune
+> diferită a Cărții Rust, disponibilă cu: chestionare, funcții de evidențiere,
+> vizualizări și multe altele (în engleză)**: <https://rust-book.cs.brown.edu>
