@@ -1,33 +1,21 @@
-# Programming a Guessing Game
+# Programarea unui joc de ghicit
 
-Let’s jump into Rust by working through a hands-on project together! This
-chapter introduces you to a few common Rust concepts by showing you how to use
-them in a real program. You’ll learn about `let`, `match`, methods, associated
-functions, external crates, and more! In the following chapters, we’ll explore
-these ideas in more detail. In this chapter, you’ll just practice the
-fundamentals.
+Să ne avântăm în Rust lucrând împreună la un proiect direct aplicabil! În acest capitol o să te familiarizezi cu câteva concepte uzitate în Rust, arătându-ți cum să le aplici într-un program concret. Îți vei însuși cunoștințe despre `let`, `match`, metode, funcții asociate, crate-uri externe și mai mult! În capitolele ce urmează, vom aprofunda aceste idei. Pentru moment, ne vom concentra pe exersarea noțiunilor fundamentale.
 
-We’ll implement a classic beginner programming problem: a guessing game. Here’s
-how it works: the program will generate a random integer between 1 and 100. It
-will then prompt the player to enter a guess. After a guess is entered, the
-program will indicate whether the guess is too low or too high. If the guess is
-correct, the game will print a congratulatory message and exit.
+Vom pune în aplicare o problemă emblematică pentru începătorii în programare: un joc de ghicit. Iată în ce constă: programul va genera un număr întreg aleatoriu între 1 și 100. Va solicita apoi jucătorului să introducă o ghicire. După ce un număr a fost introdus, programul va specifica dacă acesta este prea mic sau prea mare. Dacă răspunsul este corect, jocul va afișa un mesaj de felicitare și se va închide.
 
-## Setting Up a New Project
+## Formarea unui proiect nou
 
-To set up a new project, go to the *projects* directory that you created in
-Chapter 1 and make a new project using Cargo, like so:
+Pentru a forma un proiect nou, mergi la directoriul *proiecte* pe care l-ai creat în Capitolul 1 și fă un proiect nou folosind Cargo, astfel:
 
 ```console
 $ cargo new guessing_game
 $ cd guessing_game
 ```
 
-The first command, `cargo new`, takes the name of the project (`guessing_game`)
-as the first argument. The second command changes to the new project’s
-directory.
+Prima comandă, `cargo new`, ia numele proiectului (`guessing_game`) ca prim argument. A doua comandă trece la directoriul noului proiect.
 
-Look at the generated *Cargo.toml* file:
+Aruncă o privire la fișierul *Cargo.toml* generat:
 
 <!-- manual-regeneration
 cd listings/ch02-guessing-game-tutorial
@@ -38,251 +26,156 @@ cargo run > output.txt 2>&1
 cd ../../..
 -->
 
-<span class="filename">Filename: Cargo.toml</span>
+<span class="filename">Numele fișierului: Cargo.toml</span>
 
 ```toml
 {{#include ../listings/ch02-guessing-game-tutorial/no-listing-01-cargo-new/Cargo.toml}}
 ```
 
-As you saw in Chapter 1, `cargo new` generates a “Hello, world!” program for
-you. Check out the *src/main.rs* file:
+După cum ai văzut în Capitolul 1, `cargo new` generează un program “Salut, lume!” pentru tine. Verifică fișierul *src/main.rs*:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/no-listing-01-cargo-new/src/main.rs}}
 ```
 
-Now let’s compile this “Hello, world!” program and run it in the same step
-using the `cargo run` command:
+Acum să compilăm acest program „Salut, lume!" și să îl rulăm în același pas folosind comanda `cargo run`:
 
 ```console
 {{#include ../listings/ch02-guessing-game-tutorial/no-listing-01-cargo-new/output.txt}}
 ```
 
-The `run` command comes in handy when you need to rapidly iterate on a project,
-as we’ll do in this game, quickly testing each iteration before moving on to
-the next one.
+Comanda `run` este utilă când ai nevoie să iterezi rapid pe un proiect, așa cum vom face în acest joc, testând rapid fiecare iterație înainte de a trece la următoarea.
 
-Reopen the *src/main.rs* file. You’ll be writing all the code in this file.
+Deschide din nou fișierul *src/main.rs*. Vei scrie tot codul în acest fișier.
 
-## Processing a Guess
+## Procesarea unei ghiciri
 
-The first part of the guessing game program will ask for user input, process
-that input, and check that the input is in the expected form. To start, we’ll
-allow the player to input a guess. Enter the code in Listing 2-1 into
-*src/main.rs*.
+Prima parte a programului de ghicit va cere intrarea utilizatorului, va procesa acea intrare și va verifica dacă intrarea este în forma așteptată. Pentru început, vom permite jucătorului să introducă o ghicire. Introdu codul din Listare 2-1 în *src/main.rs*.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/listing-02-01/src/main.rs:all}}
 ```
 
-<span class="caption">Listing 2-1: Code that gets a guess from the user and
-prints it</span>
+<span class="caption">Lstarea 2-1: Cod care obține o ghicire de la utilizator și o tipărește</span>
 
-This code contains a lot of information, so let’s go over it line by line. To
-obtain user input and then print the result as output, we need to bring the
-`io` input/output library into scope. The `io` library comes from the standard
-library, known as `std`:
+Acest cod conține o mulțime de informații, deci să-l parcurgem linie cu linie. Pentru a obține intrarea utilizatorului și apoi a printa rezultatul ca ieșire, avem nevoie să aducem biblioteca `io` de intrare/ieșire în scopul nostru. Biblioteca `io` vine din biblioteca standard, cunoscută sub numele de `std`:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/listing-02-01/src/main.rs:io}}
 ```
 
-By default, Rust has a set of items defined in the standard library that it
-brings into the scope of every program. This set is called the *prelude*, and
-you can see everything in it [in the standard library documentation][prelude].
+În mod implicit, Rust are un set de elemente definite în librăria standard pe care le introduce în domeniul de vizibilitatea al fiecărui program. Acest set se numește *prelude*, și poți vedea tot ce se află în el [în documentația librăriei standard][prelude].
 
-If a type you want to use isn’t in the prelude, you have to bring that type
-into scope explicitly with a `use` statement. Using the `std::io` library
-provides you with a number of useful features, including the ability to accept
-user input.
+Dacă un tip pe care dorești să-l folosești nu se află în prelude, trebuie să introduci acel tip explicit în domeniu cu o instrucțiune `use`. Utilizarea librăriei `std::io` îți oferă un număr de caracteristici utile, inclusiv capacitatea de a accepta intrarea utilizatorului.
 
-As you saw in Chapter 1, the `main` function is the entry point into the
-program:
+După cum ai văzut în Capitolul 1, funcția `main` este punctul de intrare în program:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/listing-02-01/src/main.rs:main}}
 ```
 
-The `fn` syntax declares a new function; the parentheses, `()`, indicate there
-are no parameters; and the curly bracket, `{`, starts the body of the function.
+Sintaxa `fn` declară o nouă funcție; parantezele, `()`, indică faptul că nu există parametri; iar paranteza rotundă, `{`, începe corpul funcției.
 
-As you also learned in Chapter 1, `println!` is a macro that prints a string to
-the screen:
+Așa cum ai învățat și în Capitolul 1, `println!` este o macrocomandă care tipărește un string pe ecran:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/listing-02-01/src/main.rs:print}}
 ```
 
-This code is printing a prompt stating what the game is and requesting input
-from the user.
+Acest cod afișează un prompt care indică ce joc este și solicită intrare de la utilizator.
 
-### Storing Values with Variables
+### Păstrarea valorilor cu variabile
 
-Next, we’ll create a *variable* to store the user input, like this:
+În continuare, vom crea o *variabilă* pentru a stoca input-ul utilizatorului, astfel:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/listing-02-01/src/main.rs:string}}
 ```
 
-Now the program is getting interesting! There’s a lot going on in this little
-line. We use the `let` statement to create the variable. Here’s another example:
+Acum programul devine interesant! Se întâmplă multe în această mică linie. Folosim declarația `let` pentru a crea variabila. Iată un alt exemplu:
 
 ```rust,ignore
 let apples = 5;
 ```
 
-This line creates a new variable named `apples` and binds it to the value 5. In
-Rust, variables are immutable by default, meaning once we give the variable a
-value, the value won’t change. We’ll be discussing this concept in detail in
-the [“Variables and Mutability”][variables-and-mutability]<!-- ignore -->
-section in Chapter 3. To make a variable mutable, we add `mut` before the
-variable name:
+Această linie de cod creează o nouă variabilă numită `apples` și o leagă de valoarea 5. În Rust, variabilele sunt imutabile în mod implicit, ceea ce înseamnă că odată ce dăm variabilei o valoare, valoarea nu se va schimba. Vom discuta acest concept în detaliu în secțiunea [„Variabile și mutabilitate”][variables-and-mutability]<!-- ignore --> din Capitolul 3. Pentru a face o variabilă mutabilă, adăugăm `mut` înainte de numele variabilei:
 
 ```rust,ignore
-let apples = 5; // immutable
-let mut bananas = 5; // mutable
+let apples = 5; // imutabil
+let mut bananas = 5; // mutabil
 ```
 
-> Note: The `//` syntax starts a comment that continues until the end of the
-> line. Rust ignores everything in comments. We’ll discuss comments in more
-> detail in [Chapter 3][comments]<!-- ignore -->.
+> Notă: Sintaxa `//` începe un comentariu care continuă până la sfârșitul liniei. Rust ignoră totul în comentarii. Vom discuta comentariile în mai multe detalii în [Capitolul 3][comments]<!-- ignore -->.
 
-Returning to the guessing game program, you now know that `let mut guess` will
-introduce a mutable variable named `guess`. The equal sign (`=`) tells Rust we
-want to bind something to the variable now. On the right of the equal sign is
-the value that `guess` is bound to, which is the result of calling
-`String::new`, a function that returns a new instance of a `String`.
-[`String`][string]<!-- ignore --> is a string type provided by the standard
-library that is a growable, UTF-8 encoded bit of text.
+Revenind la programul de ghicit, acum știi că `let mut guess` va introduce o variabilă mutabilă denumită `guess`. Semnul egal (`=`) spune lui Rust că dorim să legăm ceva la variabilă acum. Pe dreapta semnului egal se află valoarea la care `guess` este legată, care este rezultatul apelării functiei `String::new`, o funcție care returnează o nouă instanță a unui `String`. [`String`][string]<!-- ignore --> este un tip de string furnizat de librăria standard care este un text codificat UTF-8 care poate să crească.
 
-The `::` syntax in the `::new` line indicates that `new` is an associated
-function of the `String` type. An *associated function* is a function that’s
-implemented on a type, in this case `String`. This `new` function creates a
-new, empty string. You’ll find a `new` function on many types because it’s a
-common name for a function that makes a new value of some kind.
+Sintaxa `::` din linia `::new` indică că `new` este o funcție asociată tipului `String`. O *funcție asociată* este o funcție care este implementată pe un tip, în acest caz `String`. Această funcție `new` creează un string nou și gol. Vei găsi o funcție `new` în multe tipuri deoarece este un nume obișnuit pentru o funcție care face o valoare nouă de un anume fel.
 
-In full, the `let mut guess = String::new();` line has created a mutable
-variable that is currently bound to a new, empty instance of a `String`. Whew!
+În întregime, linia `let mut guess = String::new();` a creat o variabilă mutabilă care este în prezent legată de o nouă instanță goală a unui `String`. Uf!
 
-### Receiving User Input
+### Primirea datelor introduse de utilizator
 
-Recall that we included the input/output functionality from the standard
-library with `use std::io;` on the first line of the program. Now we’ll call
-the `stdin` function from the `io` module, which will allow us to handle user
-input:
+Ține minte că am inclus funcționalitatea de intrare/ieșire din biblioteca standard cu `use std::io;` pe prima linie a programului. Acum vom apela funcția `stdin` din modulul `io`, care ne va permite să gestionăm datele introduse de utilizator:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/listing-02-01/src/main.rs:read}}
 ```
 
-If we hadn’t imported the `io` library with `use std::io;` at the beginning of
-the program, we could still use the function by writing this function call as
-`std::io::stdin`. The `stdin` function returns an instance of
-[`std::io::Stdin`][iostdin]<!-- ignore -->, which is a type that represents a
-handle to the standard input for your terminal.
+Dacă nu am fi importat biblioteca `io` cu `use std::io;` la începutul programului, am putea totuși să folosim funcția scriind acest apel de funcție ca `std::io::stdin`. Funcția `stdin` returnează o instanță a [`std::io::Stdin`][iostdin]<!-- ignore -->, care este un tip care reprezintă un handle la intrarea standard pentru terminalul tău.
 
-Next, the line `.read_line(&mut guess)` calls the [`read_line`][read_line]<!--
-ignore --> method on the standard input handle to get input from the user.
-We’re also passing `&mut guess` as the argument to `read_line` to tell it what
-string to store the user input in. The full job of `read_line` is to take
-whatever the user types into standard input and append that into a string
-(without overwriting its contents), so we therefore pass that string as an
-argument. The string argument needs to be mutable so the method can change the
-string’s content.
+Următoarea linie, `.read_line(&mut guess)` apelează metoda [`read_line`][read_line]<!-- ignore --> pe handle-ul de intrare standard pentru a primi datele introduse de utilizator. De asemenea, trimitem `&mut guess` ca argument pentru `read_line`, pentru a-i spune în ce string să stocheze datele introduse de utilizator. Rolul principal al `read_line` este de a prelua tot ceea ce tapează utilizatorul în intrarea standard și de a adăuga aceste date într-un string (fără a-i suprascrie conținutul), deci vom trimite acest string ca argument. String-ul de argument trebuie să fie mutabil pentru ca metoda să poată schimba conținutul lui.
 
-The `&` indicates that this argument is a *reference*, which gives you a way to
-let multiple parts of your code access one piece of data without needing to
-copy that data into memory multiple times. References are a complex feature,
-and one of Rust’s major advantages is how safe and easy it is to use
-references. You don’t need to know a lot of those details to finish this
-program. For now, all you need to know is that, like variables, references are
-immutable by default. Hence, you need to write `&mut guess` rather than
-`&guess` to make it mutable. (Chapter 4 will explain references more
-thoroughly.)
+Simbolul `&` indică faptul că acest argument este o *referință*, care îți oferă o modalitate de a permite mai multor părți ale codului tău să acceseze o singură piesă de date fără a avea nevoie să copiezi acele date în memorie de mai multe ori. Referințele sunt o caracteristică complexă, iar unul dintre principalele avantaje ale Rust este cât de sigur și ușor e de utilizat referințele. Nu ai nevoie să știi o mulțime de acele detalii pentru a termina acest program. Deocamdată, tot ce trebuie să știi este că, la fel ca variabilele, referințele sunt imutabile în mod implicit. De aceea, trebuie să scrii `&mut guess` în loc de `&guess` pentru a-l face mutabil. (Capitolul 4 va explica referințele mai detaliat.)
 
-<!-- Old heading. Do not remove or links may break. -->
-<a id="handling-potential-failure-with-the-result-type"></a>
+<!-- Old heading. Do not remove or links may break. --> <a id="handling-potential-failure-with-the-result-type"></a>
 
-### Handling Potential Failure with `Result`
+### Gestionarea potențialelor eșecuri cu `Result`
 
-We’re still working on this line of code. We’re now discussing a third line of
-text, but note that it’s still part of a single logical line of code. The next
-part is this method:
+Încă lucrăm la această linie de cod. Acum discutăm despre a treia linie de text, dar reține că aceasta face încă parte dintr-o singură linie logică de cod. Partea următoare este această metodă:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/listing-02-01/src/main.rs:expect}}
 ```
 
-We could have written this code as:
+Am fi putut scrie acest cod astfel:
 
 ```rust,ignore
 io::stdin().read_line(&mut guess).expect("Failed to read line");
 ```
 
-However, one long line is difficult to read, so it’s best to divide it. It’s
-often wise to introduce a newline and other whitespace to help break up long
-lines when you call a method with the `.method_name()` syntax. Now let’s
-discuss what this line does.
+Cu toate acestea, o linie lungă este dificil de citit, deci este cel mai bine să o împărțim. Este adesea înțelept să introduci o linie nouă și alte spații albe pentru a ajuta la divizarea liniilor lungi atunci când apelezi o metodă cu sintaxa `.nume_metoda()`. Acum să discutăm ce face această linie.
 
-As mentioned earlier, `read_line` puts whatever the user enters into the string
-we pass to it, but it also returns a `Result` value. [`Result`][result]<!--
-ignore --> is an [*enumeration*][enums]<!-- ignore -->, often called an *enum*,
-which is a type that can be in one of multiple possible states. We call each
-possible state a *variant*.
+După cum am menționat mai devreme, `read_line` introduce ceea ce introduce utilizatorul în string-ul pe care îl transmitem, dar returnează și o valoare de tip `Result`. [`Result`][result]<!-- ignore --> este o [*enumerare*][enums]<!-- ignore -->, adesea numită și *enum*, care este un tip care poate fi într-una din multiple stări posibile. Fiecare stare posibilă o numim *variantă*.
 
-[Chapter 6][enums]<!-- ignore --> will cover enums in more detail. The purpose
-of these `Result` types is to encode error-handling information.
+[Capitolul 6][enums]<!-- ignore --> va acoperi enumerările în mai mult detaliu. Scopul acestor tipuri `Result` este de a codifica informațiile de gestionare a erorilor.
 
-`Result`’s variants are `Ok` and `Err`. The `Ok` variant indicates the
-operation was successful, and inside `Ok` is the successfully generated value.
-The `Err` variant means the operation failed, and `Err` contains information
-about how or why the operation failed.
+Variantele `Result` sunt `Ok` și `Err`. Varianta `Ok` indică faptul că operațiunea a fost reușită, iar în interiorul `Ok` se află valoarea generată cu succes. Varianta `Err` înseamnă că operațiunea a eșuat, iar `Err` conține informații despre cum sau de ce a eșuat operațiunea.
 
-Values of the `Result` type, like values of any type, have methods defined on
-them. An instance of `Result` has an [`expect` method][expect]<!-- ignore -->
-that you can call. If this instance of `Result` is an `Err` value, `expect`
-will cause the program to crash and display the message that you passed as an
-argument to `expect`. If the `read_line` method returns an `Err`, it would
-likely be the result of an error coming from the underlying operating system.
-If this instance of `Result` is an `Ok` value, `expect` will take the return
-value that `Ok` is holding and return just that value to you so you can use it.
-In this case, that value is the number of bytes in the user’s input.
+Valorile de tip `Result`, ca și valorile de orice alt tip, au metode definite asupra lor. O instanță a `Result` are o metodă [`expect`][expect]<!-- ignore --> pe care o poți apela. Dacă această instanță a `Result` este o valoare `Err`, `expect` va provoca căderea programului și afișarea mesajului pe care l-ai transmis ca argument către `expect`. Dacă metoda `read_line` întoarce o `Err`, ar fi probabil rezultatul unei erori provenite de la sistemul de operare de baza. Dacă această instanță a `Result` este o valoare `Ok`, `expect` va prelua valoarea de return pe care `Ok` o deține și îți va returna doar acea valoare pentru a o putea folosi. În acest caz, acea valoare este numărul de octeți în intrarea utilizatorului.
 
-If you don’t call `expect`, the program will compile, but you’ll get a warning:
+Dacă nu apelezi `expect`, programul se va compila, dar vei primi un avertisment:
 
 ```console
 {{#include ../listings/ch02-guessing-game-tutorial/no-listing-02-without-expect/output.txt}}
 ```
 
-Rust warns that you haven’t used the `Result` value returned from `read_line`,
-indicating that the program hasn’t handled a possible error.
+Rust avertizează că nu ai folosit valoarea `Result` returnată de `read_line`, indicând faptul că programul nu a gestionat o posibilă eroare.
 
-The right way to suppress the warning is to actually write error-handling code,
-but in our case we just want to crash this program when a problem occurs, so we
-can use `expect`. You’ll learn about recovering from errors in [Chapter
-9][recover]<!-- ignore -->.
+Modul corect de a suprima avertismentul este de a scrie într-adevăr cod de gestionare a erorilor, dar în cazul nostru dorim doar să prăbușim acest program atunci când apare o problemă, așa că putem folosi `expect`. Vei învăța despre recuperarea din erori în [Capitolul 9][recover]<!-- ignore -->.
 
-### Printing Values with `println!` Placeholders
+### Afișarea valorilor cu substituții `println!`
 
-Aside from the closing curly bracket, there’s only one more line to discuss in
-the code so far:
+Afară de acolada de închidere, nu ne-a mai rămas decât un singur rând de discutat din codul de până acum:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/listing-02-01/src/main.rs:print_guess}}
 ```
 
-This line prints the string that now contains the user’s input. The `{}` set of
-curly brackets is a placeholder: think of `{}` as little crab pincers that hold
-a value in place. When printing the value of a variable, the variable name can
-go inside the curly brackets. When printing the result of evaluating an
-expression, place empty curly brackets in the format string, then follow the
-format string with a comma-separated list of expressions to print in each empty
-curly bracket placeholder in the same order. Printing a variable and the result
-of an expression in one call to `println!` would look like this:
+Acest rând afișează șirul de caractere care conține acum intrarea utilizatorului. Setul de acolade `{}` este un substituent: consideră `{}` ca fiind niște clești de crab care țin o valoare pe loc. La afișarea valorii unei variabile, numele variabilei poate intra în acolade. La afișarea rezultatului evaluării unei expresii, plasați acoladele goale în string-ul de format, apoi urmați string-ul de format cu o listă separată prin virgulă cu expresii care trebuie afișate în fiecare substituent de acolade goale, în aceeași ordine. Afișarea unei variabile și a rezultatului unei expresii într-un singur apel către `println!` ar arăta astfel:
 
 ```rust
 let x = 5;
@@ -291,11 +184,11 @@ let y = 10;
 println!("x = {x} and y + 2 = {}", y + 2);
 ```
 
-This code would print `x = 5 and y + 2 = 12`.
+Acest cod ar afișa `x = 5 and y + 2 = 12`.
 
-### Testing the First Part
+### Testarea primei părți
 
-Let’s test the first part of the guessing game. Run it using `cargo run`:
+Să testăm prima parte a jocului de ghicit. Rulează-l folosind `cargo run`:
 
 <!-- manual-regeneration
 cd listings/ch02-guessing-game-tutorial/listing-02-01/
@@ -314,31 +207,17 @@ Please input your guess.
 You guessed: 6
 ```
 
-At this point, the first part of the game is done: we’re getting input from the
-keyboard and then printing it.
+Până în acest punct, prima parte a jocului este gata: noi primim input de la tastatură și apoi îl afișăm.
 
-## Generating a Secret Number
+## Generarea unui număr secret
 
-Next, we need to generate a secret number that the user will try to guess. The
-secret number should be different every time so the game is fun to play more
-than once. We’ll use a random number between 1 and 100 so the game isn’t too
-difficult. Rust doesn’t yet include random number functionality in its standard
-library. However, the Rust team does provide a [`rand` crate][randcrate] with
-said functionality.
+În continuare, trebuie să generăm un număr secret pe care utilizatorul va încerca să îl ghicească. Numărul secret ar trebui să fie diferit de fiecare dată pentru ca jocul să fie distractiv de jucat de mai multe ori. Vom folosi un număr aleatoriu între 1 și 100 astfel încât jocul să nu fie prea dificil. Rust nu include încă funcționalitatea numerelor aleatorii în biblioteca sa standard. Cu toate acestea, echipa Rust oferă un [crate `rand`][randcrate] cu această funcționalitate.
 
-### Using a Crate to Get More Functionality
+### Utilizarea unui crate pentru a obține mai multă funcționalitate
 
-Remember that a crate is a collection of Rust source code files. The project
-we’ve been building is a *binary crate*, which is an executable. The `rand`
-crate is a *library crate*, which contains code that is intended to be used in
-other programs and can’t be executed on its own.
+Este important să ținem minte că un crate este o colecție de fișiere sursă Rust. Proiectul nostru este un *crate binar*, adică un executabil. În contrast, crate-ul `rand` este un *crate de bibliotecă*, conținând cod destinat să fie utilizat în cadrul altor programe și care nu poate fi executat de sine stătător.
 
-Cargo’s coordination of external crates is where Cargo really shines. Before we
-can write code that uses `rand`, we need to modify the *Cargo.toml* file to
-include the `rand` crate as a dependency. Open that file now and add the
-following line to the bottom, beneath the `[dependencies]` section header that
-Cargo created for you. Be sure to specify `rand` exactly as we have here, with
-this version number, or the code examples in this tutorial may not work:
+Capacitatea lui Cargo de a coordona crate-uri externe este aspectul în care Cargo se evidențiază cu adevărat. Pentru a putea scrie cod ce folosește `rand`, este necesar să facem o ajustare în fișierul *Cargo.toml*, incluzând crate-ul `rand` între dependențe. Deschide fișierul chiar acum și adaugă la partea de jos următoarea linie, dedesubtul secțiunii `[dependencies]` pe care Cargo a generat-o automat pentru tine. E vital să specifici `rand` exact cum e indicat aici, cu această versiune, deoarece în caz contrar exemplele de cod din acest tutorial pot să nu funcționeze normal:
 
 <!-- When updating the version of `rand` used, also update the version of
 `rand` used in these files so they all match:
@@ -346,29 +225,17 @@ this version number, or the code examples in this tutorial may not work:
 * ch14-03-cargo-workspaces.md
 -->
 
-<span class="filename">Filename: Cargo.toml</span>
+<span class="filename">Numele fișierului: Cargo.toml</span>
 
 ```toml
 {{#include ../listings/ch02-guessing-game-tutorial/listing-02-02/Cargo.toml:8:}}
 ```
 
-In the *Cargo.toml* file, everything that follows a header is part of that
-section that continues until another section starts. In `[dependencies]` you
-tell Cargo which external crates your project depends on and which versions of
-those crates you require. In this case, we specify the `rand` crate with the
-semantic version specifier `0.8.5`. Cargo understands [Semantic
-Versioning][semver]<!-- ignore --> (sometimes called *SemVer*), which is a
-standard for writing version numbers. The specifier `0.8.5` is actually
-shorthand for `^0.8.5`, which means any version that is at least 0.8.5 but
-below 0.9.0.
+În fișierul *Cargo.toml*, tot ce se află după un antet aparține acelei secțiuni care continuă până când o altă secțiune începe. În `[dependencies]` indicăm lui Cargo care crate-uri externe sunt necesare proiectului tău și ce versiuni ale acestor crate-uri trebuie utilizate. În acest caz, specificăm crate-ul `rand` cu specificatorul de versiune semantică `0.8.5`. Cargo cunoaște [Versionarea semantică][semver]<!-- ignore --> (adesea numit *SemVer*), care e un standard pentru a scrie numerele de versiune. Specificantul `0.8.5` este de fapt o scurtătură pentru `^0.8.5`, ceea ce înseamnă orice versiune cel puțin 0.8.5 dar mai mică de 0.9.0.
 
-Cargo considers these versions to have public APIs compatible with version
-0.8.5, and this specification ensures you’ll get the latest patch release that
-will still compile with the code in this chapter. Any version 0.9.0 or greater
-is not guaranteed to have the same API as what the following examples use.
+Cargo consideră aceste versiuni ca având API-uri publice compatibile cu versiunea 0.8.5, iar această specificare garantează că vei obține cea mai recentă versiune cu patch-uri compatibile care vor compila corect cu codul din acest capitol. Nu este garantat ca versiunile 0.9.0 sau mai mari să păstreze același API ca exemplele utilizate aici.
 
-Now, without changing any of the code, let’s build the project, as shown in
-Listing 2-2.
+Acum, fără a modifica vreun cod, să construim proiectul, așa cum este ilustrat în Listarea 2-2.
 
 <!-- manual-regeneration
 cd listings/ch02-guessing-game-tutorial/listing-02-02/
@@ -397,33 +264,17 @@ $ cargo build
     Finished dev [unoptimized + debuginfo] target(s) in 2.53s
 ```
 
-<span class="caption">Listing 2-2: The output from running `cargo build` after
-adding the rand crate as a dependency</span>
+<span class="caption">Listarea 2-2: Afișajul rezultat după executarea `cargo build` în urma adăugării crate-ului rand ca dependență</span>
 
-You may see different version numbers (but they will all be compatible with the
-code, thanks to SemVer!) and different lines (depending on the operating
-system), and the lines may be in a different order.
+Poți întâlni numere de versiuni diferite (dar toate vor fi compatibile cu codul, datorită SemVer!) și linii diferite (care vor varia în funcție de sistemul de operare), iar ordinea liniilor poate fi diferită.
 
-When we include an external dependency, Cargo fetches the latest versions of
-everything that dependency needs from the *registry*, which is a copy of data
-from [Crates.io][cratesio]. Crates.io is where people in the Rust ecosystem
-post their open source Rust projects for others to use.
+Atunci când introducem o dependență externă, Cargo caută și descarcă versiunile cele mai recente ale tuturor elementelor necesare acelei dependențe din *registru*, o copie a datelor de pe [Crates.io][cratesio]. Crates.io este platforma unde comunitatea Rust își publică proiectele Rust open source, disponibile pentru folosirea de către toți.
 
-After updating the registry, Cargo checks the `[dependencies]` section and
-downloads any crates listed that aren’t already downloaded. In this case,
-although we only listed `rand` as a dependency, Cargo also grabbed other crates
-that `rand` depends on to work. After downloading the crates, Rust compiles
-them and then compiles the project with the dependencies available.
+Cargo verifică secțiunea `[dependencies]` după ce actualizează registrul și descarcă crate-urile enumerate ce nu au fost încă descărcate. Deși am specificat doar `rand` ca dependență, Cargo a descărcat și alte crate-uri de care `rand` are nevoie pentru funcționarea sa. Odată ce crate-urile sunt descărcate, Rust le compilează, și apoi compilarea proiectului nostru are loc cu aceste dependențe incluse.
 
-If you immediately run `cargo build` again without making any changes, you
-won’t get any output aside from the `Finished` line. Cargo knows it has already
-downloaded and compiled the dependencies, and you haven’t changed anything
-about them in your *Cargo.toml* file. Cargo also knows that you haven’t changed
-anything about your code, so it doesn’t recompile that either. With nothing to
-do, it simply exits.
+Dacă rulezi `cargo build` din nou imediat, fără a modifica ceva, nu vei obține niciun afișaj în afară de linia `Finished`. Cargo știe că a descărcat și compilat deja dependențele și că tu nu ai modificat nimic în fișierul *Cargo.toml*. De asemenea, Cargo înțelege că nici codul tău nu a fost schimbat, așadar nu recompilează nimic. Neavând ce să facă, se închide simplu.
 
-If you open the *src/main.rs* file, make a trivial change, and then save it and
-build again, you’ll only see two lines of output:
+Dacă ești în *src/main.rs*, faci o mică schimbare, salvezi și compilezi din nou, vei observa doar două linii de afișaj:
 
 <!-- manual-regeneration
 cd listings/ch02-guessing-game-tutorial/listing-02-02/
@@ -436,40 +287,17 @@ $ cargo build
     Finished dev [unoptimized + debuginfo] target(s) in 2.53 secs
 ```
 
-These lines show that Cargo only updates the build with your tiny change to the
-*src/main.rs* file. Your dependencies haven’t changed, so Cargo knows it can
-reuse what it has already downloaded and compiled for those.
+Aceste linii arată că Cargo actualizează build-ul doar cu micuța ta modificare la fișierul *src/main.rs*. Dependențele tale nu s-au schimbat, așa că Cargo știe că poate reutiliza ceea ce deja a descărcat și compilat pentru acestea.
 
-#### Ensuring Reproducible Builds with the *Cargo.lock* File
+#### Asigurarea compilărilor reproductibile cu fișierul *Cargo.lock*
 
-Cargo has a mechanism that ensures you can rebuild the same artifact every time
-you or anyone else builds your code: Cargo will use only the versions of the
-dependencies you specified until you indicate otherwise. For example, say that
-next week version 0.8.6 of the `rand` crate comes out, and that version
-contains an important bug fix, but it also contains a regression that will
-break your code. To handle this, Rust creates the *Cargo.lock* file the first
-time you run `cargo build`, so we now have this in the *guessing_game*
-directory.
+Cargo are un mecanism care garantează că poți reconstrui același artefact de fiecare dată când tu sau altcineva compilați codul: Cargo va utiliza doar versiunile specificate de dependențe, până nu decizi altceva. De exemplu, presupunem că săptămâna viitoare va fi lansată versiunea 0.8.6 a crate-ului `rand` și că aceasta include o reparație critică de bug, dar totodată și o regresie care îți va afecta codul. Pentru a gestiona aceasta, Rust generează fișierul *Cargo.lock* prima oară când execuți `cargo build`, deci acum îl avem în directoriul *guessing_game*.
 
-When you build a project for the first time, Cargo figures out all the versions
-of the dependencies that fit the criteria and then writes them to the
-*Cargo.lock* file. When you build your project in the future, Cargo will see
-that the *Cargo.lock* file exists and will use the versions specified there
-rather than doing all the work of figuring out versions again. This lets you
-have a reproducible build automatically. In other words, your project will
-remain at 0.8.5 until you explicitly upgrade, thanks to the *Cargo.lock* file.
-Because the *Cargo.lock* file is important for reproducible builds, it’s often
-checked into source control with the rest of the code in your project.
+La prima compilare a proiectului, Cargo determină toate versiunile compatibile pentru dependențe și le înscrie în fișierul *Cargo.lock*. La compilările ulterioare, Cargo va recunoaște prezența fișierului *Cargo.lock* și va folosi versiunile înregistrate acolo, evitând astfel munca repetitivă de selecție a versiunilor. Astfel, construcția proiectului tău devine reproductibilă automat. În alte cuvinte, proiectul va rămâne la versiunea 0.8.5 până când alegi explicit să faci o actualizare, datorită existenței fișierului *Cargo.lock*. Fiind esențial pentru reproduceri consecvente, fișierul *Cargo.lock* este adesea inclus în controlul de versiune alături de restul codului proiectului tău.
 
-#### Updating a Crate to Get a New Version
+#### Actualizarea unui crate pentru a obține o versiune nouă
 
-When you *do* want to update a crate, Cargo provides the command `update`,
-which will ignore the *Cargo.lock* file and figure out all the latest versions
-that fit your specifications in *Cargo.toml*. Cargo will then write those
-versions to the *Cargo.lock* file. Otherwise, by default, Cargo will only look
-for versions greater than 0.8.5 and less than 0.9.0. If the `rand` crate has
-released the two new versions 0.8.6 and 0.9.0, you would see the following if
-you ran `cargo update`:
+Atunci când dorești să actualizezi un crate, Cargo pune la dispoziție comanda `update`, care va ignora fișierul *Cargo.lock* și va determina cele mai recente versiuni ce se potrivesc specificațiilor din *Cargo.toml*. Cargo va înregistra aceste versiuni în fișierul *Cargo.lock*. Implicit, Cargo caută versiuni care sunt mai mari decât 0.8.5 și mai mici de 0.9.0. Dacă crate-ul `rand` a introdus două noi versiuni, 0.8.6 și 0.9.0, ai vedea următorul rezultat dacă ai executa `cargo update`:
 
 <!-- manual-regeneration
 cd listings/ch02-guessing-game-tutorial/listing-02-02/
@@ -483,69 +311,46 @@ $ cargo update
     Updating rand v0.8.5 -> v0.8.6
 ```
 
-Cargo ignores the 0.9.0 release. At this point, you would also notice a change
-in your *Cargo.lock* file noting that the version of the `rand` crate you are
-now using is 0.8.6. To use `rand` version 0.9.0 or any version in the 0.9.*x*
-series, you’d have to update the *Cargo.toml* file to look like this instead:
+Cargo va ignora lansarea versiunii 0.9.0. De asemenea, ai remarca o modificare în fișierul tău *Cargo.lock*, care arată că acum folosești versiunea 0.8.6 a crate-ului `rand`. Pentru a utiliza versiunea `rand` 0.9.0 sau orice altă versiune din seria 0.9.*x*, trebuie să actualizezi fisierul *Cargo.toml* astfel:
 
 ```toml
 [dependencies]
 rand = "0.9.0"
 ```
 
-The next time you run `cargo build`, Cargo will update the registry of crates
-available and reevaluate your `rand` requirements according to the new version
-you have specified.
 
-There’s a lot more to say about [Cargo][doccargo]<!-- ignore --> and [its
-ecosystem][doccratesio]<!-- ignore -->, which we’ll discuss in Chapter 14, but
-for now, that’s all you need to know. Cargo makes it very easy to reuse
-libraries, so Rustaceans are able to write smaller projects that are assembled
-from a number of packages.
+Data următoare când rulezi `cargo build`, Cargo va actualiza lista de crate-uri disponibile și va reevalua cerința ta pentru `rand` în funcție de noua versiune pe care ai specificat-o.
 
-### Generating a Random Number
+Există multe alte lucruri de spus despre [Cargo][doccargo]<!-- ignore --> și [ecosistemul său][doccratesio]<!-- ignore -->, pe care le vom discuta în Capitolul 14. Până acum, aceste informații sunt tot ce trebuie să știi. Cargo facilitează în mare măsură reutilizarea bibliotecilor, ceea ce permite programatorilor Rust să creeze proiecte mai compacte, compuse din diverse pachete.
 
-Let’s start using `rand` to generate a number to guess. The next step is to
-update *src/main.rs*, as shown in Listing 2-3.
+### Generarea unui număr aleatoriu
 
-<span class="filename">Filename: src/main.rs</span>
+Să începem folosirea bibliotecii `rand` pentru a genera un număr de ghicit. Următorul pas este să actualizăm fișierul *src/main.rs*, așa cum se arată în Listarea 2-3.
+
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/listing-02-03/src/main.rs:all}}
 ```
 
-<span class="caption">Listing 2-3: Adding code to generate a random
-number</span>
+<span class="caption">Listarea 2-3: Adăugarea de cod pentru a genera un număr aleatoriu</span>
 
-First we add the line `use rand::Rng;`. The `Rng` trait defines methods that
-random number generators implement, and this trait must be in scope for us to
-use those methods. Chapter 10 will cover traits in detail.
+În primul rând, adăugăm linia `use rand::Rng;`. Trăsătura `Rng` definește metodele pe care le implementează generatorii de numere aleatorii și trebuie să fie în domeniul de vizibilitate pentru a folosi acele metode. Trăsăturile vor fi explicate în detaliu în Capitolul 10.
 
-Next, we’re adding two lines in the middle. In the first line, we call the
-`rand::thread_rng` function that gives us the particular random number
-generator we’re going to use: one that is local to the current thread of
-execution and is seeded by the operating system. Then we call the `gen_range`
-method on the random number generator. This method is defined by the `Rng`
-trait that we brought into scope with the `use rand::Rng;` statement. The
-`gen_range` method takes a range expression as an argument and generates a
-random number in the range. The kind of range expression we’re using here takes
-the form `start..=end` and is inclusive on the lower and upper bounds, so we
-need to specify `1..=100` to request a number between 1 and 100.
+Următoarea parte implică adăugarea a două linii noi în cod. În prima linie apelăm funcția `rand::thread_rng`, care ne oferă generatorul de numere aleatorii specific firului de execuție curent și care este inițiat de sistemul de operare. Apoi utilizăm metoda `gen_range` de la acel generator de numere. Metoda `gen_range`, definită de trăsătura `Rng` adusă în context cu instrucțiunea `use rand::Rng;`, primește o expresie de diapazon și generează un număr aleatoriu în interiorul acelui diapazon. Expresia de diapazon pe care o utilizăm este `start..=end`, care este inclusivă pentru ambele limite, deci specificăm `1..=100` pentru a obține un număr între 1 și 100.
 
-> Note: You won’t just know which traits to use and which methods and functions
-> to call from a crate, so each crate has documentation with instructions for
-> using it. Another neat feature of Cargo is that running the `cargo doc
-> --open` command will build documentation provided by all your dependencies
-> locally and open it in your browser. If you’re interested in other
-> functionality in the `rand` crate, for example, run `cargo doc --open` and
-> click `rand` in the sidebar on the left.
+> Notă: Nu vei cunoaște întotdeauna care trăsături trebuie utilizate și ce
+> metode și funcții să apelezi de la un crate, prin urmare, fiecare crate vine
+> echipat cu propria documentație și instrucțiuni pentru a te ghida în
+> utilizarea sa. O funcționalitate practică a Cargo este că executarea comenzii
+> `cargo doc --open` va genera documentația furnizată de toate dependențele
+> tale local și o va deschide în navigatorul web. Dacă ai curiozitatea de a
+> explora alte funcții ale crate-ului `rand`, de exemplu, execută
+> `cargo doc --open` și selectează `rand` din bara laterală din partea stângă.
 
-The second new line prints the secret number. This is useful while we’re
-developing the program to be able to test it, but we’ll delete it from the
-final version. It’s not much of a game if the program prints the answer as soon
-as it starts!
+Cea de-a doua linie nouă afișează numărul secret, ceea ce este util pe durata dezvoltării programului pentru a-l putea testa, însă o vom șterge în versiunea finală. Nu se poate spune că este un joc prea incitant dacă programul dezvăluie soluția imediat ce este lansat.
 
-Try running the program a few times:
+Încearcă să rulezi programul de câteva ori:
 
 <!-- manual-regeneration
 cd listings/ch02-guessing-game-tutorial/listing-02-03/
@@ -576,62 +381,31 @@ Please input your guess.
 You guessed: 5
 ```
 
-You should get different random numbers, and they should all be numbers between
-1 and 100. Great job!
+Ar trebui să obții numere aleatorii diferite, iar toate ar trebui să fie numere între 1 și 100. Excelentă treabă!
 
-## Comparing the Guess to the Secret Number
+## Compararea ghicirii cu numărul secret
 
-Now that we have user input and a random number, we can compare them. That step
-is shown in Listing 2-4. Note that this code won’t compile just yet, as we will
-explain.
+Acum că avem o intrare de la utilizator și un număr aleator, le putem compara. Acest pas este arătat în Listarea 2-4. Reține că acest cod nu se va compila încă, așa cum vom explica.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/listing-02-04/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 2-4: Handling the possible return values of
-comparing two numbers</span>
+<span class="caption">Listarea 2-4: Gestionarea posibilelor rezultate ale comparării a două numere</span>
 
-First we add another `use` statement, bringing a type called
-`std::cmp::Ordering` into scope from the standard library. The `Ordering` type
-is another enum and has the variants `Less`, `Greater`, and `Equal`. These are
-the three outcomes that are possible when you compare two values.
+Mai întâi, adăugăm o altă declarație `use`, introducând în scopul nostru un tip numit `std::cmp::Ordering` din biblioteca standard. Tipul `Ordering` este o altă enumerare și are variantele `Less`, `Greater` și `Equal`. Acestea sunt cele trei rezultate posibile când compari două valori.
 
-Then we add five new lines at the bottom that use the `Ordering` type. The
-`cmp` method compares two values and can be called on anything that can be
-compared. It takes a reference to whatever you want to compare with: here it’s
-comparing `guess` to `secret_number`. Then it returns a variant of the
-`Ordering` enum we brought into scope with the `use` statement. We use a
-[`match`][match]<!-- ignore --> expression to decide what to do next based on
-which variant of `Ordering` was returned from the call to `cmp` with the values
-in `guess` and `secret_number`.
+Apoi, adăugăm cinci linii noi la final care utilizează tipul `Ordering`. Metoda `cmp` compară două valori și poate fi apelată pe orice tip de valori comprabile. E primește o referință la ce se dorește de a fi comparat: aici se face compararea între `guess` și `secret_number`. Apoi returnează o variantă a enumerației `Ordering` pe care am adus-o în scop cu declarația `use`. Folosim o expresie [`match`][match]<!-- ignore --> pentru a decide ce să facem în continuare bazat pe ce variantă a `Ordering` a fost returnată de apelul la `cmp` cu valorile din `guess` și `secret_number`.
 
-A `match` expression is made up of *arms*. An arm consists of a *pattern* to
-match against, and the code that should be run if the value given to `match`
-fits that arm’s pattern. Rust takes the value given to `match` and looks
-through each arm’s pattern in turn. Patterns and the `match` construct are
-powerful Rust features: they let you express a variety of situations your code
-might encounter and they make sure you handle them all. These features will be
-covered in detail in Chapter 6 and Chapter 18, respectively.
+O expresie `match` este compusă din *brațe*. Un braț constă dintr-un *model* (numit și pattern) pentru care se face potrivirea, și din codul care ar trebui să ruleze dacă valoarea dată lui `match` se potrivește cu modelul acelui braț. Rust ia valoarea dată lui `match` și o compară cu modelul fiecărui braț pe rând. Modelele și constructul `match` reprezintă caracteristici forte ale lui Rust: îți permit să exprimi o varietate de situații pe care codul tău le-ar putea întâlni și se asigură că le gestionezi pe toate. Aceste caracteristici vor fi acoperite în detaliu în Capitolul 6 și Capitolul 18, respectiv.
 
-Let’s walk through an example with the `match` expression we use here. Say that
-the user has guessed 50 and the randomly generated secret number this time is
-38.
+Acum să trecem printr-un exemplu cu expresia `match` pe care o folosim aici. Să presupunem că utilizatorul a ghicit numărul 50 și de data aceasta numărul secret generat aleator este 38. 
 
-When the code compares 50 to 38, the `cmp` method will return
-`Ordering::Greater` because 50 is greater than 38. The `match` expression gets
-the `Ordering::Greater` value and starts checking each arm’s pattern. It looks
-at the first arm’s pattern, `Ordering::Less`, and sees that the value
-`Ordering::Greater` does not match `Ordering::Less`, so it ignores the code in
-that arm and moves to the next arm. The next arm’s pattern is
-`Ordering::Greater`, which *does* match `Ordering::Greater`! The associated
-code in that arm will execute and print `Too big!` to the screen. The `match`
-expression ends after the first successful match, so it won’t look at the last
-arm in this scenario.
+Atunci când codul compară numărul 50 cu 38, metoda `cmp` va returna `Ordering::Greater`, deoarece 50 este mai mare decât 38. Expresia `match` primește valoarea `Ordering::Greater` și începe să verifice modelul pentru fiecare braț. Analizează primul tipar de braț, `Ordering::Less`, și vede că valoarea `Ordering::Greater` nu se potrivește cu `Ordering::Less`, deci ignoră codul din acel braț și trece la brațul următor. Modelul următorului braț este `Ordering::Greater`, care *se potrivește* cu `Ordering::Greater`! Codul asociat acestui braț va fi executat și va imrima pe ecran `Too big!`. Expresia `match` se încheie după prima potrivire reușită, deci nu se va uita la ultimul braț în acest scenariu.
 
-However, the code in Listing 2-4 won’t compile yet. Let’s try it:
+Totuși, codul din Listarea 2-4 încă nu se va compila. Să încercăm:
 
 <!--
 The error numbers in this output should be that of the code **WITHOUT** the
@@ -642,81 +416,33 @@ anchor or snip comments
 {{#include ../listings/ch02-guessing-game-tutorial/listing-02-04/output.txt}}
 ```
 
-The core of the error states that there are *mismatched types*. Rust has a
-strong, static type system. However, it also has type inference. When we wrote
-`let mut guess = String::new()`, Rust was able to infer that `guess` should be
-a `String` and didn’t make us write the type. The `secret_number`, on the other
-hand, is a number type. A few of Rust’s number types can have a value between 1
-and 100: `i32`, a 32-bit number; `u32`, an unsigned 32-bit number; `i64`, a
-64-bit number; as well as others. Unless otherwise specified, Rust defaults to
-an `i32`, which is the type of `secret_number` unless you add type information
-elsewhere that would cause Rust to infer a different numerical type. The reason
-for the error is that Rust cannot compare a string and a number type.
+Esența erorii indică existența unor *tipuri incompatibile*. Rust se bazează pe un sistem de tipuri puternic și tipizat static. În același timp, Rust suportă inferență de tipuri. Atunci când am scris `let mut guess = String::new()`, Rust a inferat că `guess` ar trebui să fie un `String` fără să fie necesar să specificăm tipul. Pe de altă parte, `secret_number` este de un tip numeric. Există mai multe tipuri numerice în Rust care pot avea valori între 1 și 100: `i32`, un număr pe 32 de biți; `u32`, un număr nesemnat pe 32 de biți; `i64`, un număr pe 64 de biți; printre altele. Dacă nu se indică altfel, Rust alege `i32` în mod implicit, care este tipul pentru `secret_number` dacă nu adăugăm informații despre tip în altă parte care ar determina Rust să infereze un alt tip numeric. Eroarea apare pentru că Rust nu poate face comparație între un string și un tip numeric.
 
-Ultimately, we want to convert the `String` the program reads as input into a
-real number type so we can compare it numerically to the secret number. We do
-so by adding this line to the `main` function body:
+Pentru a o rezolva, intenționăm să convertim `String`-ul primit ca input într-un tip numeric real, astfel încât să putem face comparația numerică cu numărul secret. Acest lucru se realizează adăugând următoarea linie în corpul funcției `main`:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/no-listing-03-convert-string-to-number/src/main.rs:here}}
 ```
 
-The line is:
+Linia este:
 
 ```rust,ignore
 let guess: u32 = guess.trim().parse().expect("Please type a number!");
 ```
 
-We create a variable named `guess`. But wait, doesn’t the program already have
-a variable named `guess`? It does, but helpfully Rust allows us to shadow the
-previous value of `guess` with a new one. *Shadowing* lets us reuse the `guess`
-variable name rather than forcing us to create two unique variables, such as
-`guess_str` and `guess`, for example. We’ll cover this in more detail in
-[Chapter 3][shadowing]<!-- ignore -->, but for now, know that this feature is
-often used when you want to convert a value from one type to another type.
+Creăm o variabilă numită `guess`. Dar așteaptă, nu există deja o variabilă cu numele `guess` în program? Da, dar, convenabil, Rust ne permite să umbrim precedentul `guess` cu unul nou. *Umbrirea* ne permite să reutilizăm numele variabilei `guess` în loc să fim obligați să creăm două variabile diferite, cum ar fi `guess_str` și `guess`, de exemplu. Vom detalia acest concept în [Capitolul 3][shadowing]<!-- ignore -->, dar pentru moment, să știi că această funcționalitate este adesea folosită când vrei să convertești o valoare dintr-un tip în altul.
 
-We bind this new variable to the expression `guess.trim().parse()`. The `guess`
-in the expression refers to the original `guess` variable that contained the
-input as a string. The `trim` method on a `String` instance will eliminate any
-whitespace at the beginning and end, which we must do to be able to compare the
-string to the `u32`, which can only contain numerical data. The user must press
-<span class="keystroke">enter</span> to satisfy `read_line` and input their
-guess, which adds a newline character to the string. For example, if the user
-types <span class="keystroke">5</span> and presses <span
-class="keystroke">enter</span>, `guess` looks like this: `5\n`. The `\n`
-represents “newline.” (On Windows, pressing <span
-class="keystroke">enter</span> results in a carriage return and a newline,
-`\r\n`.) The `trim` method eliminates `\n` or `\r\n`, resulting in just `5`.
+Noua variabilă este asociată expresiei `guess.trim().parse()`. Partea `guess` din cadrul expresiei se referă la variabila originală `guess` care conținea input-ul ca un string. Metoda `trim` pe o instanță `String` va elimina orice spațiu alb (whitespace) de la început și sfârșitul string-ului, lucru necesar pentru a putea compara string-ul cu un `u32`, ce poate conține doar date numerice. Utilizatorul trebuie să apese <span class="keystroke">enter</span> pentru a completa `read_line` și așa să introducă ghicirea sa, adăugând prin asta un caracter de linie nouă la string. De exemplu, dacă utilizatorul scrie <span class="keystroke">5</span> și apasă <span class="keystroke">enter</span>, `guess` arată așa: `5\n`. `\n` reprezintă „newline” (linie nouă). (Pe Windows, apăsarea <span class="keystroke">enter</span> aduce un carriage return și un newline, `\r\n`.) Metoda `trim` înlătură `\n` sau `\r\n`, lăsând doar `5`.
 
-The [`parse` method on strings][parse]<!-- ignore --> converts a string to
-another type. Here, we use it to convert from a string to a number. We need to
-tell Rust the exact number type we want by using `let guess: u32`. The colon
-(`:`) after `guess` tells Rust we’ll annotate the variable’s type. Rust has a
-few built-in number types; the `u32` seen here is an unsigned, 32-bit integer.
-It’s a good default choice for a small positive number. You’ll learn about
-other number types in [Chapter 3][integers]<!-- ignore -->.
+Metoda [`parse` de pe string-uri][parse]<!-- ignore --> transformă un string într-un alt tip. În acest caz, o utilizăm pentru a converti un string într-un număr. Trebuie să specificăm în Rust tipul exact de număr pe care îl dorim, utilizând `let guess: u32`. Două puncte (`:`) care urmează după `guess` indică faptul că vom adnota tipul variabilei. Rust include diferite tipuri de numere; `u32`, pe care îl vedem aici, reprezintă un întreg pozitiv fără semn și de 32 de biți. Este o opțiune predilectă pentru reprezentarea unui număr mic și pozitiv. Despre alte tipuri de numere vei afla în [Capitolul 3][integers]<!-- ignore -->.
 
-Additionally, the `u32` annotation in this example program and the comparison
-with `secret_number` means Rust will infer that `secret_number` should be a
-`u32` as well. So now the comparison will be between two values of the same
-type!
+De asemenea, prin folosirea adnotării `u32` în acest exemplu și prin comparația cu `secret_number`, Rust va înțelege că și `secret_number` trebuie să fie `u32`. Astfel, comparația se va face între două valori de același tip!
 
-The `parse` method will only work on characters that can logically be converted
-into numbers and so can easily cause errors. If, for example, the string
-contained `A👍%`, there would be no way to convert that to a number. Because it
-might fail, the `parse` method returns a `Result` type, much as the `read_line`
-method does (discussed earlier in [“Handling Potential Failure with
-`Result`”](#handling-potential-failure-with-result)<!-- ignore-->). We’ll treat
-this `Result` the same way by using the `expect` method again. If `parse`
-returns an `Err` `Result` variant because it couldn’t create a number from the
-string, the `expect` call will crash the game and print the message we give it.
-If `parse` can successfully convert the string to a number, it will return the
-`Ok` variant of `Result`, and `expect` will return the number that we want from
-the `Ok` value.
+Metoda `parse` este aplicabilă doar caracterelor ce pot fi convertite în mod logic către numere și, prin urmare, este susceptibilă de erori. Dacă, spre exemplu, string-ul ar conţine `A👍%`, nu ar exista nicio modalitate de a-l converti într-un număr. Fiind posibil să eșueze, metoda `parse` returnează un tip `Result`, într-un mod similar cu metoda `read_line` (abordată anterior în [„Tratarea eșecurilor potențiale cu `Result`”](#handling-potential-failure-with-result)<!-- ignore -->). Vom reacționa în fața acestui `Result` în același mod, utilizând din nou metoda `expect`. Dacă `parse` întoarce o variantă de `Err` a tipului `Result`, deoarece nu a putut transforma string-ul într-un număr, apelul `expect` va opri jocul și va tipări mesajul specificat de noi. În situația în care `parse` reușește să convertească string-ul într-un număr cu succes, va returna varianta `Ok` a `Result`, iar metoda `expect` va extrage numărul dorit din valoarea `Ok`.
 
-Let’s run the program now:
+Să rulăm acum programul:
 
 <!-- manual-regeneration
 cd listings/ch02-guessing-game-tutorial/no-listing-03-convert-string-to-number/
@@ -737,36 +463,23 @@ You guessed: 76
 Too big!
 ```
 
-Nice! Even though spaces were added before the guess, the program still figured
-out that the user guessed 76. Run the program a few times to verify the
-different behavior with different kinds of input: guess the number correctly,
-guess a number that is too high, and guess a number that is too low.
+Foarte bine! Deși au fost adăugate spații înainte de ghicire, programul a reușit totuși să-și dea seama că utilizatorul a ghicit numărul 76. Rulează programul de câteva ori pentru a verifica comportamentul diferit cu diferite tipuri de input: ghicește numărul corect, ghicește un număr care este prea mare sau ghicește un număr care este prea mic.
 
-We have most of the game working now, but the user can make only one guess.
-Let’s change that by adding a loop!
+Acum avem majoritatea jocului funcțional, dar utilizatorul poate face doar o singură ghicire. Să schimbăm asta adăugând o buclă!
 
-## Allowing Multiple Guesses with Looping
+## Permiterea multiplelor ghiciri cu bucle
 
-The `loop` keyword creates an infinite loop. We’ll add a loop to give users
-more chances at guessing the number:
+Cuvântul cheie `loop` creează o buclă infinită. Vom adăuga o buclă pentru a oferi utilizatorilor mai multe încercări de a ghici numărul:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/no-listing-04-looping/src/main.rs:here}}
 ```
 
-As you can see, we’ve moved everything from the guess input prompt onward into
-a loop. Be sure to indent the lines inside the loop another four spaces each
-and run the program again. The program will now ask for another guess forever,
-which actually introduces a new problem. It doesn’t seem like the user can quit!
+După cum se poate observa, am mutat tot de la promptul de introducere a ghicirii într-o buclă. Asigură-te că liniile din interiorul buclei sunt indentate cu patru spații suplimentare fiecare și rulează din nou programul. Acum programul va solicita o nouă ghicire la nesfârșit, ceea ce introduce efectiv o nouă problemă: pare că utilizatorul nu are posibilitatea să părăsească programul!
 
-The user could always interrupt the program by using the keyboard shortcut
-<span class="keystroke">ctrl-c</span>. But there’s another way to escape this
-insatiable monster, as mentioned in the `parse` discussion in [“Comparing the
-Guess to the Secret Number”](#comparing-the-guess-to-the-secret-number)<!--
-ignore -->: if the user enters a non-number answer, the program will crash. We
-can take advantage of that to allow the user to quit, as shown here:
+Utilizatorul poate întrerupe întotdeauna programul utilizând combinația de taste <span class="keystroke">ctrl-c</span>. Există însă și o altă cale de a se elibera de acest ciclu infinit, așa cum am menționat în discuția despre `parse` din secțiunea [“Compararea ghicirii cu numărul secret”](#comparing-the-guess-to-the-secret-number)<!--ignore-->: dacă utilizatorul scrie ceva ce nu este un număr, atunci programul va da eroare și se va opri. Putem folosi acest comportament ca o metodă prin care utilizatorul poate opri programul, după cum urmează:
 
 <!-- manual-regeneration
 cd listings/ch02-guessing-game-tutorial/no-listing-04-looping/
@@ -797,68 +510,44 @@ Please input your guess.
 You guessed: 59
 You win!
 Please input your guess.
-quit
+adio
 thread 'main' panicked at 'Please type a number!: ParseIntError { kind: InvalidDigit }', src/main.rs:28:47
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 ```
 
-Typing `quit` will quit the game, but as you’ll notice, so will entering any
-other non-number input. This is suboptimal, to say the least; we want the game
-to also stop when the correct number is guessed.
+Dacă introduci `adio`, jocul se va opri, însă vei observa că se va întâmpla același lucru dacă introduci orice alt input care nu e un număr. Aceasta este departe de a fi ideal; ne dorim ca jocul să se încheie și atunci când numărul ghicit este cel corect.
 
-### Quitting After a Correct Guess
+### Terminarea jocului la o ghicire corectă
 
-Let’s program the game to quit when the user wins by adding a `break` statement:
+Să programăm jocul să se termine atunci când utilizatorul câștigă, prin adăugarea unei instrucțiuni `break`:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/no-listing-05-quitting/src/main.rs:here}}
 ```
 
-Adding the `break` line after `You win!` makes the program exit the loop when
-the user guesses the secret number correctly. Exiting the loop also means
-exiting the program, because the loop is the last part of `main`.
+Introducerea liniei `break` imediat după `You win!` determină programul să părăsească bucla atunci când utilizatorul ghicește numărul secret în mod corect. Părăsirea buclei înseamnă de asemenea finalizarea programului, deoarece bucla reprezintă ultima secțiune a funcției `main`.
 
-### Handling Invalid Input
+### Procesarea intrărilor non-valide
 
-To further refine the game’s behavior, rather than crashing the program when
-the user inputs a non-number, let’s make the game ignore a non-number so the
-user can continue guessing. We can do that by altering the line where `guess`
-is converted from a `String` to a `u32`, as shown in Listing 2-5.
+Pentru a îmbunătăți comportamentul jocului, în loc de a opri programul când utilizatorul introduce ceva ce nu este un număr, putem configura jocul să ignore acest tip de input, permițând utilizatorului să continue să ghicească. Acest lucru poate fi realizat modificând linia în care valoarea `guess` este convertită din `String` în `u32`, așa cum este ilustrat în Listarea 2-5.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/listing-02-05/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 2-5: Ignoring a non-number guess and asking for
-another guess instead of crashing the program</span>
+<span class="caption">Listarea 2-5: Ignorarea unui input care nu este un număr și solicitarea unei noi încercări în locul oprii programului</span>
 
-We switch from an `expect` call to a `match` expression to move from crashing
-on an error to handling the error. Remember that `parse` returns a `Result`
-type and `Result` is an enum that has the variants `Ok` and `Err`. We’re using
-a `match` expression here, as we did with the `Ordering` result of the `cmp`
-method.
+Trecem de la o funcție `expect` la o expresie `match` pentru a gestiona erorile în locul oprii programului. Este important să ne amintim că `parse` returnează un tip `Result` și că `Result` este o enumerare cu variantele `Ok` și `Err`. Folosim o expresie `match`, la fel ca atunci când lucrăm cu `Ordering` rezultatul metodei `cmp`.
 
-If `parse` is able to successfully turn the string into a number, it will
-return an `Ok` value that contains the resultant number. That `Ok` value will
-match the first arm’s pattern, and the `match` expression will just return the
-`num` value that `parse` produced and put inside the `Ok` value. That number
-will end up right where we want it in the new `guess` variable we’re creating.
+Când `parse` poate să convertească în mod eficient string-ul într-un număr, ne întoarce o valoare `Ok` care include numărul rezultat. Această valoare `Ok` se va potrivi cu modelul din primul caz al expresiei `match`, iar ca rezultat, vom primi numărul creat de `parse` și inclus în `Ok`. Numărul va fi pus exact unde trebuie în noua variabilă `guess` pe care o definim.
 
-If `parse` is *not* able to turn the string into a number, it will return an
-`Err` value that contains more information about the error. The `Err` value
-does not match the `Ok(num)` pattern in the first `match` arm, but it does
-match the `Err(_)` pattern in the second arm. The underscore, `_`, is a
-catchall value; in this example, we’re saying we want to match all `Err`
-values, no matter what information they have inside them. So the program will
-execute the second arm’s code, `continue`, which tells the program to go to the
-next iteration of the `loop` and ask for another guess. So, effectively, the
-program ignores all errors that `parse` might encounter!
+Dacă `parse` nu poate să convertească string-ul într-un număr, ne va da o valoare `Err` care deține detalii despre eroare. Valoarea `Err` nu se potrivește cu modelul `Ok(num)` din primul caz al `match`, dar se potrivește cu `Err(_)` din cel de-al doilea caz. Folosind `_` ca wildcard, spunem că dorim să captăm orice fel de valoare `Err`, fără a ne preocupa de conținutul acesteia. Programul va rula codul corespunzător celui de-al doilea caz, adică `continue`, care comandă programului să treacă la următoarea iterație a buclei `loop` și să solicite o încercare nouă. Astfel, ignorăm orice posibilă eroare care ar putea apărea în timpul funcției `parse`.
 
-Now everything in the program should work as expected. Let’s try it:
+Acum totul în program ar trebui să funcționeze conform așteptărilor. Să încercăm:
 
 <!-- manual-regeneration
 cd listings/ch02-guessing-game-tutorial/listing-02-05/
@@ -892,10 +581,7 @@ You guessed: 61
 You win!
 ```
 
-Awesome! With one tiny final tweak, we will finish the guessing game. Recall
-that the program is still printing the secret number. That worked well for
-testing, but it ruins the game. Let’s delete the `println!` that outputs the
-secret number. Listing 2-6 shows the final code.
+Minunat! Cu o mică ultimă ajustare, vom termina jocul de ghicit. Amintește-ți că programul încă afișează numărul secret. Acest lucru a funcționat bine pentru testare, dar strică jocul. Să ștergem `println!` care afișează numărul secret. Listarea 2-6 arată codul final.
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -903,19 +589,13 @@ secret number. Listing 2-6 shows the final code.
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/listing-02-06/src/main.rs}}
 ```
 
-<span class="caption">Listing 2-6: Complete guessing game code</span>
+<span class="caption">Listarea 2-6: Codul complet al jocului de ghicire</span>
 
-At this point, you’ve successfully built the guessing game. Congratulations!
+La acest moment, ai reușit să construiești cu succes jocul de ghicire. Felicitări!
 
-## Summary
+## Sumar
 
-This project was a hands-on way to introduce you to many new Rust concepts:
-`let`, `match`, functions, the use of external crates, and more. In the next
-few chapters, you’ll learn about these concepts in more detail. Chapter 3
-covers concepts that most programming languages have, such as variables, data
-types, and functions, and shows how to use them in Rust. Chapter 4 explores
-ownership, a feature that makes Rust different from other languages. Chapter 5
-discusses structs and method syntax, and Chapter 6 explains how enums work.
+Acest proiect a fost o modalitate practică de a face cunoștință cu multe concepte noi din Rust: `let`, `match`, funcții, utilizarea crate-urilor externe, și multe altele. În următoarele câteva capitole, vei învăța despre aceste concepte în mai multe detalii. Capitolul 3 acoperă funcționalități pe care majoritatea limbajelor de programare le au, cum ar fi variabile, tipuri de date și funcții, și arată cum să le folosești în Rust. Capitolul 4 explorează posesiunea (ownership), o caracteristică ce distinge Rust de alte limbaje. Capitolul 5 discută despre structuri și sintaxa metodelor, iar Capitolul 6 explică cum funcționează enumerările.
 
 [prelude]: ../std/prelude/index.html
 [variables-and-mutability]: ch03-01-variables-and-mutability.html#variables-and-mutability
