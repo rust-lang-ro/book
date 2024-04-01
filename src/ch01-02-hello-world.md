@@ -1,28 +1,23 @@
-## Hello, World!
+## Salut, lume!
 
-Now that you’ve installed Rust, it’s time to write your first Rust program.
-It’s traditional when learning a new language to write a little program that
-prints the text `Hello, world!` to the screen, so we’ll do the same here!
+Acum că ai instalat Rust, este timpul să scrii primul tău program în Rust. Tradițional, când învățăm un limbaj nou, scriem un mic program care afișează textul `Salut, lume!` pe ecran. Așadar, vom face la fel și aici!
 
-> Note: This book assumes basic familiarity with the command line. Rust makes
-> no specific demands about your editing or tooling or where your code lives, so
-> if you prefer to use an integrated development environment (IDE) instead of
-> the command line, feel free to use your favorite IDE. Many IDEs now have some
-> degree of Rust support; check the IDE’s documentation for details. The Rust
-> team has been focusing on enabling great IDE support via `rust-analyzer`. See
-> [Appendix D][devtools]<!-- ignore --> for more details.
+> Notă: Această carte presupune cunoștințe de bază a liniei de comandă. 
+> Rust nu are cerințe specifice despre editarea, uneltele tale sau locul unde
+> se află codul tău, așa că dacă preferi să folosești un mediu de dezvoltare
+> integrat (IDE) în locul liniei de comandă, nu ezita să folosești IDE-ul tău
+> preferat. Multe IDE-uri au acum un anumit grad de suport Rust; verifică
+> documentația IDE-ului pentru detalii. Echipa Rust s-a concentrat pe
+> facilitarea unui  suport IDE excelent prin `rust-analyzer`. 
+> Vezi [Anexa D][devtools] <!-- ignore --> pentru mai multe detalii.
 
-### Creating a Project Directory
+### Crearea unui directoriu pentru proiect
 
-You’ll start by making a directory to store your Rust code. It doesn’t matter
-to Rust where your code lives, but for the exercises and projects in this book,
-we suggest making a *projects* directory in your home directory and keeping all
-your projects there.
+O să începem prin a crea un directoriu unde să îți stochezi codul Rust. Pentru Rust nu contează unde este situat codul tău, însă pentru exercițiile și proiectele din această carte, recomandăm crearea unui directoriu *projects* în directoriu tău home și să menții toate proiectele acolo.
 
-Open a terminal and enter the following commands to make a *projects* directory
-and a directory for the “Hello, world!” project within the *projects* directory.
+Deschide un terminal și execută următoarele comenzi pentru a crea un directoriu *projects* și un directoriu pentru proiectul "Hello, world!" în cadrul directoriu *projects*.
 
-For Linux, macOS, and PowerShell on Windows, enter this:
+Pentru Linux, macOS și PowerShell pe Windows, execută acestea:
 
 ```console
 $ mkdir ~/projects
@@ -31,7 +26,7 @@ $ mkdir hello_world
 $ cd hello_world
 ```
 
-For Windows CMD, enter this:
+Pentru CMD pe Windows, introdu asta:
 
 ```cmd
 > mkdir "%USERPROFILE%\projects"
@@ -40,55 +35,45 @@ For Windows CMD, enter this:
 > cd hello_world
 ```
 
-### Writing and Running a Rust Program
+### Scrierea și rularea unui program Rust
 
-Next, make a new source file and call it *main.rs*. Rust files always end with
-the *.rs* extension. If you’re using more than one word in your filename, the
-convention is to use an underscore to separate them. For example, use
-*hello_world.rs* rather than *helloworld.rs*.
+În continuare, creează un nou fișier sursă și numește-l *main.rs*. Fișierele Rust se termină întotdeauna cu extensiunea *.rs*. Dacă folosești mai mult de un cuvânt în numele fișierului tău, convenția este să folosești un underscore pentru a le separa. De exemplu, folosește *hello_world.rs* în loc de *helloworld.rs*.
 
-Now open the *main.rs* file you just created and enter the code in Listing 1-1.
+Acum deschide fișierul *main.rs* pe care tocmai l-ai creat și introdu codul din Listarea 1-1.
 
-<span class="filename">Filename: main.rs</span>
+<span class="filename">Numele fișierului: main.rs</span>
 
 ```rust
 fn main() {
-    println!("Hello, world!");
+    println!("Salut, lume!");
 }
 ```
 
-<span class="caption">Listing 1-1: A program that prints `Hello, world!`</span>
+<span class="caption">Listarea 1-1: Un program care afișează `Salut, lume!`</span>
 
-Save the file and go back to your terminal window in the
-*~/projects/hello_world* directory. On Linux or macOS, enter the following
-commands to compile and run the file:
+Salvează fișierul și întoarce-te la fereastra terminalului în directorul *~/projects/hello_world*. Pe Linux sau macOS, introdu următoarele comenzi pentru a compila și a rula fișierul:
 
 ```console
 $ rustc main.rs
 $ ./main
-Hello, world!
+Salut, lume!
 ```
 
-On Windows, enter the command `.\main.exe` instead of `./main`:
+Pe Windows, introdu comanda `.\main.exe` în loc de `./main`:
 
 ```powershell
 > rustc main.rs
 > .\main.exe
-Hello, world!
+Salut, lume!
 ```
 
-Regardless of your operating system, the string `Hello, world!` should print to
-the terminal. If you don’t see this output, refer back to the
-[“Troubleshooting”][troubleshooting]<!-- ignore --> part of the Installation
-section for ways to get help.
+Indiferent de sistemul tău de operare, `Salut, lume!` ar trebui să fie afișat în terminal. Dacă nu vezi acest rezultat, verifică din nou partea de [„Depanare”][troubleshooting]<!-- ignore --> a secțiunii de instalare pentru a obține ajutor.
 
-If `Hello, world!` did print, congratulations! You’ve officially written a Rust
-program. That makes you a Rust programmer—welcome!
+Dacă `Salut, lume!` a apărut, felicitări! Ai scris oficial un program Rust. Asta te face un programator Rust - bun venit!
 
-### Anatomy of a Rust Program
+### Anatomia unui program Rust
 
-Let’s review this “Hello, world!” program in detail. Here’s the first piece of
-the puzzle:
+Să revizuim în detaliu acest program "Salut, lume!". Iată prima piesă a puzzle-ului:
 
 ```rust
 fn main() {
@@ -96,106 +81,72 @@ fn main() {
 }
 ```
 
-These lines define a function named `main`. The `main` function is special: it
-is always the first code that runs in every executable Rust program. Here, the
-first line declares a function named `main` that has no parameters and returns
-nothing. If there were parameters, they would go inside the parentheses `()`.
+Aceste linii definesc o funcție numită `main`. Funcția `main` este specială: este întotdeauna primul cod care rulează în fiecare program Rust executabil. Aici, prima linie declară o funcție numită `main` care nu are parametri și nu returnează nimic. Dacă ar fi existat parametri, aceștia ar fi fost specificați între parantezele `()`.
 
-The function body is wrapped in `{}`. Rust requires curly brackets around all
-function bodies. It’s good style to place the opening curly bracket on the same
-line as the function declaration, adding one space in between.
+Corpul funcției este înconjurat de `{}`. Rust necesită acolade în jurul tuturor corpurilor de funcție. Este considerat un stil bun să plasezi acolada de deschidere pe aceeași linie cu declarația funcției, adăugând un spațiu între acestea.
 
-> Note: If you want to stick to a standard style across Rust projects, you can
-> use an automatic formatter tool called `rustfmt` to format your code in a
-> particular style (more on `rustfmt` in
-> [Appendix D][devtools]<!-- ignore -->). The Rust team has included this tool
-> with the standard Rust distribution, as `rustc` is, so it should already be
-> installed on your computer!
+> Notă: Dacă vrei să urmezi un stil standard în toate proiectele tale Rust,
+> poți folosi un utilitar de formatare automată denumit `rustfmt` pentru a-ți
+> formata codul într-o manieră specifică (vei găsi mai multe detalii despre
+> `rustfmt` în [Anexa D][devtools]<!-- ignore -->). Acest utilitar este inclus
+> de echipa Rust în distribuția standard de Rust, la fel ca `rustc`, așa că cel
+> mai probabil este deja instalat pe computerul tău!
 
-The body of the `main` function holds the following code:
+Corpul funcției `main` conține următorul cod:
 
 ```rust
-    println!("Hello, world!");
+    println!("Salut, lume!");
 ```
 
-This line does all the work in this little program: it prints text to the
-screen. There are four important details to notice here.
+Această linie efectuează toată munca în acest program simplu: tipărește textul pe ecran. Sunt patru detalii importante de observat aici.
 
-First, Rust style is to indent with four spaces, not a tab.
+În primul rând, stilul Rust este de a indenta cu patru spații, nu cu un tab.
 
-Second, `println!` calls a Rust macro. If it had called a function instead, it
-would be entered as `println` (without the `!`). We’ll discuss Rust macros in
-more detail in Chapter 19. For now, you just need to know that using a `!`
-means that you’re calling a macro instead of a normal function and that macros
-don’t always follow the same rules as functions.
+În al doilea rând, `println!` apelează un macro Rust. Dacă ar fi apelat o funcție în loc, ar fi fost introdus ca `println` (fără `!`). Vom discuta macrourile Rust în detaliu în Capitolul 19. Deocamdată, trebuie doar să știi că utilizarea unui `!` înseamnă că apelezi un macro în locul unei funcții normale și că macrourile nu urmează întotdeauna aceleași reguli ca funcțiile.
 
-Third, you see the `"Hello, world!"` string. We pass this string as an argument
-to `println!`, and the string is printed to the screen.
+În al treilea rând, observăm string-ul "Salut, lume!". Noi trecem acest string ca un argument către `println!`, iar string-ul este tipărit pe ecran.
 
-Fourth, we end the line with a semicolon (`;`), which indicates that this
-expression is over and the next one is ready to begin. Most lines of Rust code
-end with a semicolon.
+În al patrulea rând, încheiem linia cu un punct și virgulă (`;`), care indică faptul că această expresie s-a încheiat și următoarea este gata să înceapă. Cele mai multe linii de cod Rust se încheie cu un punct și virgulă.
 
-### Compiling and Running Are Separate Steps
+### Compilarea și rularea sunt etape separate
 
-You’ve just run a newly created program, so let’s examine each step in the
-process.
+Tocmai ai rulat un program nou creat, așadar să examinăm fiecare pas în proces.
 
-Before running a Rust program, you must compile it using the Rust compiler by
-entering the `rustc` command and passing it the name of your source file, like
-this:
+Înainte de a rula un program Rust, trebuie să îl compilezi folosind compilatorul Rust, introducând comanda `rustc` în consolă și trecând numele fișierului tău sursă, astfel:
 
 ```console
 $ rustc main.rs
 ```
 
-If you have a C or C++ background, you’ll notice that this is similar to `gcc`
-or `clang`. After compiling successfully, Rust outputs a binary executable.
+Dacă ai experiență cu C sau C++, vei observa că acest lucru este similar cu `gcc` sau `clang`. După o compilare reușită, Rust generează un executabil binar.
 
-On Linux, macOS, and PowerShell on Windows, you can see the executable by
-entering the `ls` command in your shell:
+Pe Linux, macOS, și în PowerShell pe Windows, poți vedea executabilul introducând comanda `ls` în consolă:
 
 ```console
 $ ls
 main  main.rs
 ```
 
-On Linux and macOS, you’ll see two files. With PowerShell on Windows, you’ll
-see the same three files that you would see using CMD. With CMD on Windows, you
-would enter the following:
+Pe Linux și macOS, vei vedea două fișiere: 'main' și 'main.rs'. Pe Windows, folosind PowerShell sau CMD, vei vedea, de asemenea, fișierul 'main.exe' și un fișier de depanare cu extensia *.pdb*, alături de *main.rs*. Cu CMD pe Windows, ai introduce următoarea comandă:
 
 ```cmd
-> dir /B %= the /B option says to only show the file names =%
+> dir /B %= opțiunea /B indică doar numele fișierelor =%
 main.exe
 main.pdb
 main.rs
 ```
 
-This shows the source code file with the *.rs* extension, the executable file
-(*main.exe* on Windows, but *main* on all other platforms), and, when using
-Windows, a file containing debugging information with the *.pdb* extension.
-From here, you run the *main* or *main.exe* file, like this:
+Aceasta afişează fișierul sursă cu extensia *.rs*, fișierul executabil (*main.exe* pe Windows, dar *main* pe toate celelalte platforme), și, atunci când folosești Windows, un fișier care conține informații de depanare cu extensia *.pdb*. De aici, rulezi fișierul *main* sau *main.exe*, astfel:
 
 ```console
-$ ./main # or .\main.exe on Windows
+$ ./main # sau .\main.exe pe Windows
 ```
 
-If your *main.rs* is your “Hello, world!” program, this line prints `Hello,
-world!` to your terminal.
+Dacă *main.rs* este programul tău „Salut, lume!”, această linie va afișa în consolă `Salut, lume!`.
 
-If you’re more familiar with a dynamic language, such as Ruby, Python, or
-JavaScript, you might not be used to compiling and running a program as
-separate steps. Rust is an *ahead-of-time compiled* language, meaning you can
-compile a program and give the executable to someone else, and they can run it
-even without having Rust installed. If you give someone a *.rb*, *.py*, or
-*.js* file, they need to have a Ruby, Python, or JavaScript implementation
-installed (respectively). But in those languages, you only need one command to
-compile and run your program. Everything is a trade-off in language design.
+Dacă ai început cu un limbaj dinamic, așa cum sunt Ruby, Python sau JavaScript, este posibil să nu-ți fie clar faptul de a compila și rula un program în pași separați. Rust este un limbaj *compilat înainte de execuție*, ceea ce înseamnă că poți să compilezi un program și să dai executabilul cuiva altcuiva, și aceștia vor putea să îl ruleze chiar și fără să aibă Rust instalat. În schimb, dacă dai cuiva un fișier *.rb*, *.py*, sau *.js*, persoana respectivă trebuie să aibă instalată o variantă corespunzătoare de Ruby, Python sau JavaScript. Cu toate acestea, în limbaje precum Ruby, Python sau JavaScript, compilezi și rulezi programul tău folosind o singură comandă. Fiecare decizie în designul limbajului de programare reprezintă un compromis.
 
-Just compiling with `rustc` is fine for simple programs, but as your project
-grows, you’ll want to manage all the options and make it easy to share your
-code. Next, we’ll introduce you to the Cargo tool, which will help you write
-real-world Rust programs.
+Compilarea doar cu `rustc` este adecvată pentru programele simple, dar pe măsură ce proiectul tău se extinde, vei dori să controlezi toate opțiunile și să îți facilitezi partajarea codului. În continuare, vom explora utilizarea utilitarului Cargo, care ne va sprijini în scrierea programelor Rust pentru scenarii din lumea reală.
 
 [troubleshooting]: ch01-01-installation.html#troubleshooting
-[devtools]: appendix-04-useful-development-tools.html
+[devtools]: appendix-04-useful-development-tools.md

@@ -1,8 +1,7 @@
-# Getting Started
+# Să începem
 
-Let’s start your Rust journey! There’s a lot to learn, but every journey starts
-somewhere. In this chapter, we’ll discuss:
+Să începem aventura noastră în Rust! Avem multe de învățat, dar orice călătorie începe cu un punct de pornire. În acest capitol, vom acoperi:
 
-* Installing Rust on Linux, macOS, and Windows
-* Writing a program that prints `Hello, world!`
-* Using `cargo`, Rust’s package manager and build system
+* Instalarea Rust pe sistemele de operare Linux, macOS și Windows.
+* Crearea unui program care afișează `Salut, lume!`
+* Utilizarea `cargo`, managerul de pachete și sistemul de build specific Rust.

@@ -1,145 +1,113 @@
-## Installation
+## Instalare
 
-The first step is to install Rust. We’ll download Rust through `rustup`, a
-command line tool for managing Rust versions and associated tools. You’ll need
-an internet connection for the download.
+Primul pas este să instalezi Rust. Vom descărca Rust folosind `rustup`, un instrument de linie de comandă pentru gestionarea versiunilor Rust și a uneltelor asociate. Vei avea nevoie de o conexiune la internet pentru descărcare.
 
-> Note: If you prefer not to use `rustup` for some reason, please see the
-> [Other Rust Installation Methods page][otherinstall] for more options.
+> Notă: Dacă preferi să nu folosești `rustup` dintr-un motiv oarecare, te rugăm
+> să consulți [pagina cu Alte metode de instalare Rust][otherinstall] pentru
+> mai multe opțiuni.
 
-The following steps install the latest stable version of the Rust compiler.
-Rust’s stability guarantees ensure that all the examples in the book that
-compile will continue to compile with newer Rust versions. The output might
-differ slightly between versions because Rust often improves error messages and
-warnings. In other words, any newer, stable version of Rust you install using
-these steps should work as expected with the content of this book.
+Următorii pași instalează cea mai recentă versiune stabilă a compilatorului Rust. Rust oferă garanții de stabilitate care asigură că toate exemplele din carte compatibile cu versiuni anterioare vor rămâne funcționale și pe versiunile Rust ulterioare. Ieșirea s-ar putea să difere ușor între versiuni deoarece Rust îmbunătățește adesea mesajele de eroare și avertismentele. Cu alte cuvinte, orice versiune stabilă mai nouă de Rust pe care o instalezi folosind acești pași ar trebui să funcționeze așa cum este de așteptat cu conținutul acestei cărți.
 
-> ### Command Line Notation
+> ### Notația pentru linia de comandă
 >
-> In this chapter and throughout the book, we’ll show some commands used in the
-> terminal. Lines that you should enter in a terminal all start with `$`. You
-> don’t need to type the `$` character; it’s the command line prompt shown to
-> indicate the start of each command. Lines that don’t start with `$` typically
-> show the output of the previous command. Additionally, PowerShell-specific
-> examples will use `>` rather than `$`.
+> De-a lungul acestui capitol și a cărții, vom indica diferite comenzi
+> utilizate în terminal. Liniile ce urmează să le tastezi într-un terminal
+> încep cu `$`. Nu trebuie să tastezi caracterul `$`; acesta semnalizează
+> începutul unei comenzi în terminal. Liniile care nu încep cu `$` reprezintă
+> în mod obișnuit output-ul comenzii anterioare. În plus, exemplele destinate
+> PowerShell vor utiliza `>` în loc de `$`.
 
-### Installing `rustup` on Linux or macOS
+### Instalarea `rustup` pe Linux sau macOS
 
-If you’re using Linux or macOS, open a terminal and enter the following command:
+Dacă folosești Linux sau macOS, deschide un terminal și introduce următoarea comandă:
 
 ```console
 $ curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
 ```
 
-The command downloads a script and starts the installation of the `rustup`
-tool, which installs the latest stable version of Rust. You might be prompted
-for your password. If the install is successful, the following line will appear:
+Comanda descarcă un script și începe instalarea instrumentului `rustup`, care instalează cea mai recentă versiune stabilă a Rust. S-ar putea să ți se ceară parola. Dacă instalarea este reușită, va apărea următoarea linie:
 
 ```text
 Rust is installed now. Great!
 ```
 
-You will also need a *linker*, which is a program that Rust uses to join its
-compiled outputs into one file. It is likely you already have one. If you get
-linker errors, you should install a C compiler, which will typically include a
-linker. A C compiler is also useful because some common Rust packages depend on
-C code and will need a C compiler.
+De asemenea, va trebui să ai un *linker*, care este un program pe care Rust îl folosește pentru a uni toate afișajele sale compilate într-un singur fișier. Probabil deja ai unul. Dacă primești erori legate de linker, ar trebui să instalezi un compilator C, acesta include de obicei un linker. Un compilator C este util și pentru că unele pachete comune din Rust depind de codul C și vor avea nevoie de un compilator C.
 
-On macOS, you can get a C compiler by running:
+Pe macOS, poți obține un compilator C cu următoarea comandă:
 
 ```console
 $ xcode-select --install
 ```
 
-Linux users should generally install GCC or Clang, according to their
-distribution’s documentation. For example, if you use Ubuntu, you can install
-the `build-essential` package.
+Utilizatorii de Linux ar trebui să instaleze, în general, GCC sau Clang, conform documentației distribuției lor. De exemplu, dacă folosești Ubuntu, poți instala pachetul `build-essential`. 
 
-### Installing `rustup` on Windows
+### Instalarea `rustup` pe Windows
 
-On Windows, go to [https://www.rust-lang.org/tools/install][install] and follow
-the instructions for installing Rust. At some point in the installation, you’ll
-receive a message explaining that you’ll also need the MSVC build tools for
-Visual Studio 2013 or later.
+Pe Windows, accesează [https://www.rust-lang.org/tools/install][install] și urmează instrucțiunile pentru instalarea Rust. La un moment dat în procesul de instalare, vei primi un mesaj care îți explică faptul că este necesar să ai și instrumentele de compilare MSVC pentru Visual Studio 2013 sau mai târziu.
 
-To acquire the build tools, you’ll need to install [Visual Studio
-2022][visualstudio]. When asked which workloads to install, include:
+Pentru a obține instrumentele de compilare, trebuie să instalezi [Visual Studio 2022][visualstudio]. Când îți va fi solicitat să alegi ce utilități de lucru să instalezi, asigură-te că incluzi:
 
-* “Desktop Development with C++”
-* The Windows 10 or 11 SDK
-* The English language pack component, along with any other language pack of
-  your choosing
+* „Desktop Development with C++”
+* SDK-ul pentru Windows 10 sau 11
+* Componenta pachetului de limbă engleză, împreună cu orice alte pachete de limbă după preferință
 
-The rest of this book uses commands that work in both *cmd.exe* and PowerShell.
-If there are specific differences, we’ll explain which to use.
+Restul acestei cărți utilizează comenzi compatibile atât cu *cmd.exe*, cât și cu PowerShell. Dacă există diferențe specifice între acestea, noi vom explica care versiune trebuie utilizată.
 
-### Troubleshooting
+### Depanare
 
-To check whether you have Rust installed correctly, open a shell and enter this
-line:
+Pentru a verifica dacă ai instalat corect Rust, deschide o consolă și introdu această linie:
 
 ```console
 $ rustc --version
 ```
 
-You should see the version number, commit hash, and commit date for the latest
-stable version that has been released, in the following format:
+Ar trebui să vezi numărul versiunii, hash-ul commit-ului și data commit-ului pentru cea mai recent lansată versiune stabilă, în următorul format:
 
 ```text
 rustc x.y.z (abcabcabc yyyy-mm-dd)
 ```
 
-If you see this information, you have installed Rust successfully! If you don’t
-see this information, check that Rust is in your `%PATH%` system variable as
-follows.
+Dacă vezi aceste informații, ai instalat cu succes Rust! Dacă nu vezi aceste informații, verifică dacă Rust se află în variabila de sistem %PATH%` în felul următor.
 
-In Windows CMD, use:
+În CMD Windows, folosește:
 
 ```console
 > echo %PATH%
 ```
 
-In PowerShell, use:
+În PowerShell, folosește:
 
 ```powershell
 > echo $env:Path
 ```
 
-In Linux and macOS, use:
+În Linux și macOS, folosește:
 
 ```console
 $ echo $PATH
 ```
 
-If that’s all correct and Rust still isn’t working, there are a number of
-places you can get help. Find out how to get in touch with other Rustaceans (a
-silly nickname we call ourselves) on [the community page][community].
+Dacă totul este corect și Rust tot nu funcționează, există mai multe locuri în care poți obține ajutor. Află cum să iei legătura cu alți Rustaceani (un pseudonim amuzant pe care noi îl folosim) pe [pagina comunității][community].
 
-### Updating and Uninstalling
+### Actualizare și dezinstalare
 
-Once Rust is installed via `rustup`, updating to a newly released version is
-easy. From your shell, run the following update script:
+Odată ce Rust este instalat prin intermediul `rustup`, actualizarea la o versiune nou lansată este ușoară. Din terminalul tău, rulează următorul script de actualizare:
 
 ```console
 $ rustup update
 ```
 
-To uninstall Rust and `rustup`, run the following uninstall script from your
-shell:
+Pentru a dezinstala Rust și `rustup`, rulează următorul script de dezinstalare din terminal:
 
 ```console
 $ rustup self uninstall
 ```
 
-### Local Documentation
+### Documentație locală
 
-The installation of Rust also includes a local copy of the documentation so
-that you can read it offline. Run `rustup doc` to open the local documentation
-in your browser.
+Instalarea Rust include și o copie locală a documentației, astfel încât să o poți citi offline. Rulează `rustup doc` pentru a deschide documentația locală în browserul tău.
 
-Any time a type or function is provided by the standard library and you’re not
-sure what it does or how to use it, use the application programming interface
-(API) documentation to find out!
+De fiecare dată când un tip sau o funcție este furnizată de biblioteca standard și nu ești sigur ce face sau cum să o folosești, apelează la documentația interfeței de programare a aplicațiilor (API) pentru a afla!
 
 [otherinstall]: https://forge.rust-lang.org/infra/other-installation-methods.html
 [install]: https://www.rust-lang.org/tools/install

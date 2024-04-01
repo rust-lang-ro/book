@@ -1,64 +1,40 @@
-## Hello, Cargo!
+## Salut, Cargo!
 
-Cargo is Rust’s build system and package manager. Most Rustaceans use this tool
-to manage their Rust projects because Cargo handles a lot of tasks for you,
-such as building your code, downloading the libraries your code depends on, and
-building those libraries. (We call the libraries that your code needs
-*dependencies*.)
+Cargo este sistemul de construcție și managerul de pachete al lui Rust. Majoritatea programatorilor Rust folosesc acest instrument pentru a-și gestiona proiectele Rust deoarece Cargo se ocupă de o mulțime de sarcini pentru tine, precum compilarea codului, descărcarea librăriilor de care depinde el și compilarea acestor librării. (Noi, de regulă, numim librăriile *dependențe*.)
 
-The simplest Rust programs, like the one we’ve written so far, don’t have any
-dependencies. If we had built the “Hello, world!” project with Cargo, it would
-only use the part of Cargo that handles building your code. As you write more
-complex Rust programs, you’ll add dependencies, and if you start a project
-using Cargo, adding dependencies will be much easier to do.
+Cele mai simple programe Rust, ca cel pe care l-am scris până acum, nu au nicio dependență. Dacă am fi compilat proiectul „Salut, lume!” cu Cargo, atunci doar partea responsabilă de compilare din Cargo ar fi fost utilizată. Pe măsură ce proiectele tale Rust devin mai complexe, este probabil să adaugi mai multe dependențe și dacă începi un proiect folosind Cargo, adăugarea dependențelor va fi mult mai ușor de făcut.
 
-Because the vast majority of Rust projects use Cargo, the rest of this book
-assumes that you’re using Cargo too. Cargo comes installed with Rust if you
-used the official installers discussed in the
-[“Installation”][installation]<!-- ignore --> section. If you installed Rust
-through some other means, check whether Cargo is installed by entering the
-following in your terminal:
+Deoarece majoritatea covârșitoare a proiectelor Rust folosesc Cargo, în restul acestei cărți vom presupune că și tu folosești Cargo. Cargo vine instalat cu Rust dacă ai folosit instalatoarele oficiale discutate în secțiunea [„Instalare”][installation]<!-- ignore -->. Dacă ai instalat Rust prin alte mijloace, poți verifica dacă Cargo este instalat prin introducerea următoarei comenzi în terminal:
 
 ```console
 $ cargo --version
 ```
 
-If you see a version number, you have it! If you see an error, such as `command
-not found`, look at the documentation for your method of installation to
-determine how to install Cargo separately.
+Dacă vezi un număr de versiune, îl ai! Dacă vezi o eroare, cum ar fi `command not found`, uită-te la documentația metodei tale de instalare pentru a determina cum să instalezi Cargo separat.
 
-### Creating a Project with Cargo
+### Crearea unui proiect cu Cargo
 
-Let’s create a new project using Cargo and look at how it differs from our
-original “Hello, world!” project. Navigate back to your *projects* directory
-(or wherever you decided to store your code). Then, on any operating system,
-run the following:
+Să creăm un proiect nou folosind Cargo și să vedem cum se deosebește de proiectul nostru original „Salut, lume!”. Navighează înapoi în directoriul tău *proiecte* (sau oriunde ai ales să-ți stochezi codul). Apoi, pe orice sistem de operare, rulează următoarele:
 
 ```console
 $ cargo new hello_cargo
 $ cd hello_cargo
 ```
 
-The first command creates a new directory and project called *hello_cargo*.
-We’ve named our project *hello_cargo*, and Cargo creates its files in a
-directory of the same name.
+Prima comandă creează un directoriu și un proiect nou numit *hello_cargo*. Noi am numit proiectul nostru *hello_cargo*, iar Cargo creează fișierele sale într-un directoriu cu același nume.
 
-Go into the *hello_cargo* directory and list the files. You’ll see that Cargo
-has generated two files and one directory for us: a *Cargo.toml* file and a
-*src* directory with a *main.rs* file inside.
+Du-te în directoriul *hello_cargo* și listează fișierele. Vei vedea că Cargo a generat două fișiere și un directoriu: un fișier *Cargo.toml* și un directoriu *src* cu un fișier *main.rs* în interior.
 
-It has also initialized a new Git repository along with a *.gitignore* file.
-Git files won’t be generated if you run `cargo new` within an existing Git
-repository; you can override this behavior by using `cargo new --vcs=git`.
+A creat de asemenea un nou repozitoriu Git împreună cu un fișier *.gitignore*. Cargo nu va iniția un nou repozitoriu Git dacă comanda `cargo new` este rulată în interiorul unui repozitoriu Git existent; poți anula această comportare folosind `cargo new --vcs=git`.
 
-> Note: Git is a common version control system. You can change `cargo new` to
-> use a different version control system or no version control system by using
-> the `--vcs` flag. Run `cargo new --help` to see the available options.
+> Notă: Git este un sistem popular de control al versiunilor. Poți modifica
+> `cargo new` pentru a folosi un alt sistem de control al versiunilor sau
+> niciun sistem de control al versiunilor folosind comutația `--vcs`. Rulează
+> `cargo new --help` pentru a vedea opțiunile disponibile.
 
-Open *Cargo.toml* in your text editor of choice. It should look similar to the
-code in Listing 1-2.
+Deschide *Cargo.toml* în editorul tău de text preferat. Ar trebui să arate similar cu codul din Listarea 1-2.
 
-<span class="filename">Filename: Cargo.toml</span>
+<span class="filename">Numele fișierului: Cargo.toml</span>
 
 ```toml
 [package]
@@ -71,56 +47,35 @@ edition = "2021"
 [dependencies]
 ```
 
-<span class="caption">Listing 1-2: Contents of *Cargo.toml* generated by `cargo
-new`</span>
+<span class="caption">Listarea 1-2: Conținutul lui *Cargo.toml* generat de `cargo new`</span>
 
-This file is in the [*TOML*][toml]<!-- ignore --> (*Tom’s Obvious, Minimal
-Language*) format, which is Cargo’s configuration format.
+Acest fișier este în formatul [*TOML*][toml]<!-- ignore --> (*Tom’s Obvious, Minimal Language*), care este formatul de configurare al lui Cargo.
 
-The first line, `[package]`, is a section heading that indicates that the
-following statements are configuring a package. As we add more information to
-this file, we’ll add other sections.
+Prima linie, `[package]`, este o rubrică de secțiune care indică faptul că declarațiile următoare configurează un pachet. Pe măsură ce adăugăm mai multe informații la acest fișier, vom adăuga și alte secțiuni.
 
-The next three lines set the configuration information Cargo needs to compile
-your program: the name, the version, and the edition of Rust to use. We’ll talk
-about the `edition` key in [Appendix E][appendix-e]<!-- ignore -->.
+Următoarele trei linii setează informațiile de configurare de care Cargo are nevoie pentru a compila programul tău: numele, versiunea și ediția Rust pe care să o folosească. Vom vorbi despre cheia `edition` în [Anexa E][appendix-e]<!-- ignore -->.
 
-The last line, `[dependencies]`, is the start of a section for you to list any
-of your project’s dependencies. In Rust, packages of code are referred to as
-*crates*. We won’t need any other crates for this project, but we will in the
-first project in Chapter 2, so we’ll use this dependencies section then.
+Ultima linie, `[dependencies]`, este începutul unei secțiuni în care poți enumera orice dependențe ale proiectului tău. În Rust, pachetele de cod sunt numite *crates*. Nu vom avea nevoie de alte crate-uri pentru acest proiect, dar vom avea în primul proiect din Capitolul 2, deci vom folosi această secțiune de dependențe atunci.
 
-Now open *src/main.rs* and take a look:
+Acum deschide *src/main.rs* și aruncă o privire:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 fn main() {
-    println!("Hello, world!");
+    println!("Salut, lume!");
 }
 ```
 
-Cargo has generated a “Hello, world!” program for you, just like the one we
-wrote in Listing 1-1! So far, the differences between our project and the
-project Cargo generated are that Cargo placed the code in the *src* directory
-and we have a *Cargo.toml* configuration file in the top directory.
+Cargo tocmai a generat un program „Salut, lume!”, identic cu cel pe care l-am realizat noi în Listarea 1-1! Până acum, principalele diferențe dintre proiectul nostru și cel creat de Cargo sunt așezarea codului în directoriul *src* și existența unui fișier de configurare *Cargo.toml* în directoriul rădăcină.
 
-Cargo expects your source files to live inside the *src* directory. The
-top-level project directory is just for README files, license information,
-configuration files, and anything else not related to your code. Using Cargo
-helps you organize your projects. There’s a place for everything, and
-everything is in its place.
+Cargo așteaptă ca fișierele sursă să fie poziționate în interiorul directoriului *src*. Directoriul rădăcină al proiectului este destinat doar pentru fișierele README, informațiile despre licență, fișiere de configurare și orice altceva care nu este direct legat de cod. Utilizarea Cargo contribuie la organizarea eficientă a proiectelor tale, având un loc bine definit pentru fiecare componentă și asigurându-se că toate componentele sunt la locul potrivit.
 
-If you started a project that doesn’t use Cargo, as we did with the “Hello,
-world!” project, you can convert it to a project that does use Cargo. Move the
-project code into the *src* directory and create an appropriate *Cargo.toml*
-file.
+Dacă ai început un proiect fără să folosești Cargo, așa cum am procedat noi cu proiectul „Salut, lume!”, poți să îl transformi într-un proiect care utilizează Cargo. Trebuie să muti codul în directoriul *src* și să creezi un fișier *Cargo.toml* adecvat.
 
-### Building and Running a Cargo Project
+### Compilarea și rularea unui proiect Cargo
 
-Now let’s look at what’s different when we build and run the “Hello, world!”
-program with Cargo! From your *hello_cargo* directory, build your project by
-entering the following command:
+Acum să ne uităm la ce e diferit când compilăm și rulăm programul „Salut, lume!” cu Cargo! Din directoriul tău *hello_cargo*, compilează proiectul prin introducerea următoarei comenzi:
 
 ```console
 $ cargo build
@@ -128,54 +83,39 @@ $ cargo build
     Finished dev [unoptimized + debuginfo] target(s) in 2.85 secs
 ```
 
-This command creates an executable file in *target/debug/hello_cargo* (or
-*target\debug\hello_cargo.exe* on Windows) rather than in your current
-directory. Because the default build is a debug build, Cargo puts the binary in
-a directory named *debug*. You can run the executable with this command:
+Această comandă creează un fișier executabil în *target/debug/hello_cargo* (sau
+*target\debug\hello_cargo.exe* pe Windows) mai degrabă decât în directoriul tău curent. Pentru că build-ul implicit este un build de depanare, Cargo pune binarul într-un directoriu numit *debug*. Poți rula executabilul cu această comandă:
 
 ```console
-$ ./target/debug/hello_cargo # or .\target\debug\hello_cargo.exe on Windows
-Hello, world!
+$ ./target/debug/hello_cargo # sau .\target\debug\hello_cargo.exe pe Windows
+Salut, lume!
 ```
 
-If all goes well, `Hello, world!` should print to the terminal. Running `cargo
-build` for the first time also causes Cargo to create a new file at the top
-level: *Cargo.lock*. This file keeps track of the exact versions of
-dependencies in your project. This project doesn’t have dependencies, so the
-file is a bit sparse. You won’t ever need to change this file manually; Cargo
-manages its contents for you.
+Dacă totul merge conform planului, `Hello, world!` ar trebui să fie afișat în terminal. Folosirea comenzii `cargo build` pentru prima oară, de asemenea, determină Cargo să creeze un fișier nou la nivelul cel mai de sus: *Cargo.lock*. Acest fișier ține evidența versiunilor exacte ale dependențelor din proiectul tău. Proiectul acesta nu are dependențe, așadar fișierul este destul de simplu. Nu va fi necesar să intervenim manual asupra acestui fișier; Cargo va gestiona conținutul pentru noi.
 
-We just built a project with `cargo build` and ran it with
-`./target/debug/hello_cargo`, but we can also use `cargo run` to compile the
-code and then run the resultant executable all in one command:
+Am compilat un proiect folosind `cargo build` și l-am executat cu `./target/debug/hello_cargo`, însă putem de asemenea să utilizăm comanda `cargo run` pentru a compila codul și apoi a executa fișierul rezultat, totul printr-o singură comandă:
+
 
 ```console
 $ cargo run
     Finished dev [unoptimized + debuginfo] target(s) in 0.0 secs
      Running `target/debug/hello_cargo`
-Hello, world!
+Salut, lume!
 ```
 
-Using `cargo run` is more convenient than having to remember to run `cargo
-build` and then use the whole path to the binary, so most developers use `cargo
-run`.
+Utilizarea `cargo run` este mai convenabilă decât să trebuiască să ne amintim să executăm `cargo build` și apoi să accedem toată calea către executabil, așa că majoritatea dezvoltatorilor preferă `cargo run`.
 
-Notice that this time we didn’t see output indicating that Cargo was compiling
-`hello_cargo`. Cargo figured out that the files hadn’t changed, so it didn’t
-rebuild but just ran the binary. If you had modified your source code, Cargo
-would have rebuilt the project before running it, and you would have seen this
-output:
+Observă că de această dată nu am văzut un afișaj care să indice dacă Cargo a compilat `hello_cargo`. Cargo a înțeles că fișierele nu au suferit modificări, și prin urmare, nu a necesitat o recompilare ci doar a executat binarul. Dacă ai modificat codul sursă, Cargo ar fi recompilat proiectul înainte de a-l executa, și ai fi observat acest afișaj:
 
 ```console
 $ cargo run
    Compiling hello_cargo v0.1.0 (file:///projects/hello_cargo)
     Finished dev [unoptimized + debuginfo] target(s) in 0.33 secs
      Running `target/debug/hello_cargo`
-Hello, world!
+Salut, lume!
 ```
 
-Cargo also provides a command called `cargo check`. This command quickly checks
-your code to make sure it compiles but doesn’t produce an executable:
+Cargo oferă de asemenea o comandă numită `cargo check`. Această comandă verifică rapid codul tău pentru a se asigura că se compilează, dar nu produce un executabil:
 
 ```console
 $ cargo check
@@ -183,52 +123,27 @@ $ cargo check
     Finished dev [unoptimized + debuginfo] target(s) in 0.32 secs
 ```
 
-Why would you not want an executable? Often, `cargo check` is much faster than
-`cargo build` because it skips the step of producing an executable. If you’re
-continually checking your work while writing the code, using `cargo check` will
-speed up the process of letting you know if your project is still compiling! As
-such, many Rustaceans run `cargo check` periodically as they write their
-program to make sure it compiles. Then they run `cargo build` when they’re
-ready to use the executable.
+De ce nu ai vrea un executabil? Adesea, `cargo check` este mult mai rapidă decât `cargo build` pentru că omite pasul de producere a unui executabil. Dacă verifici în continuu ce lucrezi în timp ce scrii codul, folosirea `cargo check` va accelera procesul de a te informa dacă proiectul tău încă se compilează! Astfel, mulți Rustaceani rulează `cargo check` periodic în timp ce scriu programul lor pentru a se asigura că se compilează. Apoi ei rulează `cargo build` când sunt gata să folosească executabilul.
 
-Let’s recap what we’ve learned so far about Cargo:
+Să recapitulăm ce am învățat până acum despre Cargo:
 
-* We can create a project using `cargo new`.
-* We can build a project using `cargo build`.
-* We can build and run a project in one step using `cargo run`.
-* We can build a project without producing a binary to check for errors using
-  `cargo check`.
-* Instead of saving the result of the build in the same directory as our code,
-  Cargo stores it in the *target/debug* directory.
+* Putem crea un proiect folosind `cargo new`.
+* Putem compila un proiect folosind `cargo build`.
+* Putem compila și rula un proiect într-un singur pas folosind `cargo run`.
+* Putem compila un proiect fără a produce un binar pentru a verifica erorile folosind `cargo check`.
+* În loc sa salvăm rezultatul build-ului in același directoriu cu codul nostru, Cargo il stocheaza in directoriul *target/debug*.
 
-An additional advantage of using Cargo is that the commands are the same no
-matter which operating system you’re working on. So, at this point, we’ll no
-longer provide specific instructions for Linux and macOS versus Windows.
+Un avantaj suplimentar al folosirii lui Cargo este că comenzile sunt la fel, indiferent de sistemul de operare pe care lucrezi. Așadar, de la acest punct nu vom mai oferi instrucțiuni specifice pentru Linux și macOS versus Windows.
 
-### Building for Release
+### Compilarea pentru lansare
 
-When your project is finally ready for release, you can use `cargo build
---release` to compile it with optimizations. This command will create an
-executable in *target/release* instead of *target/debug*. The optimizations
-make your Rust code run faster, but turning them on lengthens the time it takes
-for your program to compile. This is why there are two different profiles: one
-for development, when you want to rebuild quickly and often, and another for
-building the final program you’ll give to a user that won’t be rebuilt
-repeatedly and that will run as fast as possible. If you’re benchmarking your
-code’s running time, be sure to run `cargo build --release` and benchmark with
-the executable in *target/release*.
+Când proiectul tău este în sfârșit gata de lansare, poți utiliza `cargo build --release` pentru a-l compila cu optimizări. Această comandă va crea un executabil în *target/release* în loc de *target/debug*. Optimizările fac codul tău Rust să ruleze mai rapid, dar activarea lor mărește timpul necesar pentru compilarea programului. Din acest motiv există două profiluri diferite: unul pentru dezvoltare, când vrei să recompilezi repede și des, și altul pentru compilarea programului final pe care îl vei oferi unui utilizator care nu va fi recompilat în mod repetat și care va rula cât mai rapid posibil. Dacă îți evaluezi timpul de rulare al codului, nu uita să folosești comanda `cargo build --release` și să realizezi evaluarea cu executabilul din *target/release*
 
-### Cargo as Convention
+### Cargo în calitate de convenție
 
-With simple projects, Cargo doesn’t provide a lot of value over just using
-`rustc`, but it will prove its worth as your programs become more intricate.
-Once programs grow to multiple files or need a dependency, it’s much easier to
-let Cargo coordinate the build.
+Pentru proiecte simple, Cargo nu oferă multă valoare peste utilizarea directă a lui `rustc`, dar își va demonstra valoarea pe măsură ce programele tale devin mai complexe. Odată ce programele cresc la mai multe fișiere sau au nevoie de o dependență, este mult mai ușor să lași Cargo să coordoneze compilarea.
 
-Even though the `hello_cargo` project is simple, it now uses much of the real
-tooling you’ll use in the rest of your Rust career. In fact, to work on any
-existing projects, you can use the following commands to check out the code
-using Git, change to that project’s directory, and build:
+Deși proiectul `hello_cargo` este simplu, acum folosește o mare parte din instrumentele reale pe care le vei folosi în restul carierei tale Rust. De fapt, pentru a lucra la orice proiecte existente, poți folosi următoarele comenzi pentru a verifica codul folosind Git, pentru a schimba directoriul către acel proiect și pentru a compila:
 
 ```console
 $ git clone example.org/someproject
@@ -236,23 +151,19 @@ $ cd someproject
 $ cargo build
 ```
 
-For more information about Cargo, check out [its documentation][cargo].
+Pentru mai multe informații despre Cargo, vezi [documentația sa][cargo].
 
-## Summary
+## Sumar
 
-You’re already off to a great start on your Rust journey! In this chapter,
-you’ve learned how to:
+Ești deja pe drumul cel bun în călătoria ta cu Rust! În acest capitol, ai învățat să:
 
-* Install the latest stable version of Rust using `rustup`
-* Update to a newer Rust version
-* Open locally installed documentation
-* Write and run a “Hello, world!” program using `rustc` directly
-* Create and run a new project using the conventions of Cargo
+* Instalezi cea mai recentă versiune stabilă a Rust folosind `rustup`
+* Actualizezi la o versiune mai nouă a Rust
+* Deschizi documentația instalată local
+* Scrii și rulezi un program „Salut, lume!” folosind `rustc` direct
+* Creezi și rulezi un proiect nou folosind convențiile Cargo
 
-This is a great time to build a more substantial program to get used to reading
-and writing Rust code. So, in Chapter 2, we’ll build a guessing game program.
-If you would rather start by learning how common programming concepts work in
-Rust, see Chapter 3 and then return to Chapter 2.
+Acesta este momentul perfect pentru a crea un program mai substanțial pentru a te familiariza cu citirea și scrierea codului Rust. Așadar, în Capitolul 2, vom scrie un program de joc de ghicit. Dacă ai prefera mai degrabă să începi prin a învăța cum funcționează conceptele comune de programare în Rust, vezi Capitolul 3 și apoi întoarce-te la Capitolul 2.
 
 [installation]: ch01-01-installation.html#installation
 [toml]: https://toml.io
