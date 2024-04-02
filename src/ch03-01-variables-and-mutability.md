@@ -1,188 +1,105 @@
-## Variables and Mutability
+## Variabile și mutabilitate
 
-As mentioned in the [“Storing Values with
-Variables”][storing-values-with-variables]<!-- ignore --> section, by default,
-variables are immutable. This is one of many nudges Rust gives you to write
-your code in a way that takes advantage of the safety and easy concurrency that
-Rust offers. However, you still have the option to make your variables mutable.
-Let’s explore how and why Rust encourages you to favor immutability and why
-sometimes you might want to opt out.
+Așa cum am menționat în secțiunea [„Păstrarea valorilor cu variabile”][storing-values-with-variables]<!-- ignore -->, în mod implicit, variabilele sunt imutabile. Acesta este unul dintre numeroasele stimulente pe care Rust ți le oferă pentru a scrie codul tău într-un mod care să profite de siguranța și concurența ușoară pe care Rust le oferă. Cu toate acestea, ai încă opțiunea de a-ți face variabilele mutabile. Să explorăm cum și de ce Rust încurajează preferința pentru imutabilitate și de ce uneori ai putea vrea să alegi variabilele mutabile.
 
-When a variable is immutable, once a value is bound to a name, you can’t change
-that value. To illustrate this, generate a new project called *variables* in
-your *projects* directory by using `cargo new variables`.
+Când o variabilă este imutabilă, odată ce o valoare este atribuită unui nume, nu poți schimba acea valoare. Pentru a ilustra acest lucru, generează un nou proiect numit *variables* în directoriul tău *projects* utilizând `cargo new variables`.
 
-Then, in your new *variables* directory, open *src/main.rs* and replace its
-code with the following code, which won’t compile just yet:
+Apoi, în noul tău directoriu *variables*, deschide *src/main.rs* și înlocuiește codul său cu următorul cod, care încă nu se va compila:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-01-variables-are-immutable/src/main.rs}}
 ```
 
-Save and run the program using `cargo run`. You should receive an error message
-regarding an immutability error, as shown in this output:
-
+Salvează și rulează programul folosind `cargo run`. Ar trebui să primești un mesaj de eroare privind o eroare de imutabilitate, așa cum se arată în această ieșire:
 ```console
 {{#include ../listings/ch03-common-programming-concepts/no-listing-01-variables-are-immutable/output.txt}}
 ```
 
-This example shows how the compiler helps you find errors in your programs.
-Compiler errors can be frustrating, but really they only mean your program
-isn’t safely doing what you want it to do yet; they do *not* mean that you’re
-not a good programmer! Experienced Rustaceans still get compiler errors.
+Acest exemplu arată cum compilatorul te ajută să găsești erorile din programele tale. Erorile de compilare pot fi frustrante, dar în realitate ele înseamnă doar că programul tău nu face încă în siguranță ceea ce vrei să facă; ele *nu* înseamnă că nu ești un bun programator! Rustaceanii cu experiență tot primesc erori de compilare.
 
-You received the error message `` cannot assign twice to immutable variable `x`
-`` because you tried to assign a second value to the immutable `x` variable.
+Ai primit mesajul de eroare ``cannot assign twice to immutable variable `x` `` pentru că ai încercat să atribui o a doua valoare variabilei imutabile `x`.
 
-It’s important that we get compile-time errors when we attempt to change a
-value that’s designated as immutable because this very situation can lead to
-bugs. If one part of our code operates on the assumption that a value will
-never change and another part of our code changes that value, it’s possible
-that the first part of the code won’t do what it was designed to do. The cause
-of this kind of bug can be difficult to track down after the fact, especially
-when the second piece of code changes the value only *sometimes*. The Rust
-compiler guarantees that when you state that a value won’t change, it really
-won’t change, so you don’t have to keep track of it yourself. Your code is thus
-easier to reason through.
+Este important să primim erori la timpul compilării când încercăm să schimbăm o valoare care este desemnată ca imutabilă, deoarece această situație poate duce la bug-uri. Dacă o parte a codului nostru funcționează pe presupunerea că o valoare nu se va schimba niciodată și o altă parte a codului nostru schimbă acea valoare, este posibil ca prima parte a codului să nu facă ceea ce a fost proiectat să facă. Cauza acestui tip de bug poate fi dificil de urmărit ulterior, mai ales când a doua parte a codului schimbă valoarea doar *uneori*. Compilatorul Rust garantează că atunci când declari că o valoare nu se va schimba, ea cu adevărat nu se va schimba, astfel încât nu trebuie să urmărești asta singur. Astfel, codul tău este mai ușor de înțeles.
 
-But mutability can be very useful, and can make code more convenient to write.
-Although variables are immutable by default, you can make them mutable by
-adding `mut` in front of the variable name as you did in [Chapter
-2][storing-values-with-variables]<!-- ignore -->. Adding `mut` also conveys
-intent to future readers of the code by indicating that other parts of the code
-will be changing this variable’s value.
+Dar mutabilitatea poate fi foarte utilă și poate face codul mai convenabil de scris. Deși variabilele sunt imutabile în mod implicit, le poți face mutabile adăugând `mut` în fața numelui variabilei, așa cum ai făcut în [Capitolul 2][storing-values-with-variables]<!-- ignore -->. Adăugarea `mut` transmite și intenția cititorilor viitori ai codului, indicând că alte părți ale codului vor schimba această valoare a variabilei.
 
-For example, let’s change *src/main.rs* to the following:
+De exemplu, să schimbăm *src/main.rs* în următorul mod:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-02-adding-mut/src/main.rs}}
 ```
 
-When we run the program now, we get this:
+Când rulăm acum programul, obținem asta:
 
 ```console
 {{#include ../listings/ch03-common-programming-concepts/no-listing-02-adding-mut/output.txt}}
 ```
 
-We’re allowed to change the value bound to `x` from `5` to `6` when `mut` is
-used. Ultimately, deciding whether to use mutability or not is up to you and
-depends on what you think is clearest in that particular situation.
+Ni se permite să modificăm valoarea legată la `x` de la `5` la `6` când este utilizat `mut`. În cele din urmă, decizia de a utiliza sau nu mutabilitatea depinde de tine și de ceea ce crezi că este cel mai evident în acea situație particulară.
 
-### Constants
+### Constante
 
-Like immutable variables, *constants* are values that are bound to a name and
-are not allowed to change, but there are a few differences between constants
-and variables.
+La fel ca variabilele imutabile, *constantele* sunt valori care sunt legate de un nume și nu li se permite să se schimbe, dar există câteva diferențe între constante și variabile.
 
-First, you aren’t allowed to use `mut` with constants. Constants aren’t just
-immutable by default—they’re always immutable. You declare constants using the
-`const` keyword instead of the `let` keyword, and the type of the value *must*
-be annotated. We’ll cover types and type annotations in the next section,
-[“Data Types”][data-types]<!-- ignore -->, so don’t worry about the details
-right now. Just know that you must always annotate the type.
+În primul rând, nu ai voie să folosești `mut` cu constante. Constantele nu sunt doar imutabile în mod implicit - sunt întotdeauna imutabile. Declari constante folosind cuvântul cheie `const`, în loc de cuvântul cheie `let`, iar tipul valorii *trebuie* să fie adnotat. Vom acoperi tipurile și adnotările de tip în următoarea secțiune, [„Tipuri de date”][data-types]<!-- ignore -->, așa că nu-ți face griji despre aceste detalii acum. Trebuie doar să știi că trebuie întotdeauna să adnotezi tipul.
 
-Constants can be declared in any scope, including the global scope, which makes
-them useful for values that many parts of code need to know about.
+Constantele pot fi declarate în orice domeniul de vizibilitatea, inclusiv în cel global, ceea ce le face utile pentru valorile de care multe părți ale codului au nevoie să știe.
 
-The last difference is that constants may be set only to a constant expression,
-not the result of a value that could only be computed at runtime.
+Ultima diferență este că constantele pot fi setate numai la o expresie constantă, nu la rezultatul unei valori care ar putea fi calculate doar în timpul rulării.
 
-Here’s an example of a constant declaration:
+Iată un exemplu de declarare a unei constante:
 
 ```rust
 const THREE_HOURS_IN_SECONDS: u32 = 60 * 60 * 3;
 ```
 
-The constant’s name is `THREE_HOURS_IN_SECONDS` and its value is set to the
-result of multiplying 60 (the number of seconds in a minute) by 60 (the number
-of minutes in an hour) by 3 (the number of hours we want to count in this
-program). Rust’s naming convention for constants is to use all uppercase with
-underscores between words. The compiler is able to evaluate a limited set of
-operations at compile time, which lets us choose to write out this value in a
-way that’s easier to understand and verify, rather than setting this constant
-to the value 10,800. See the [Rust Reference’s section on constant
-evaluation][const-eval] for more information on what operations can be used
-when declaring constants.
+Numele constantei este `THREE_HOURS_IN_SECONDS` și valoarea sa este setată la rezultatul înmulțirii cu 60 (numărul de secunde într-un minut) cu 60 (numărul de minute într-o oră) cu 3 (numărul de ore pe care dorim să le numărăm în acest program). Convenția de denumire a Rust pentru constante este să folosească doar majuscule cu subliniere între cuvinte. Compilatorul este capabil să evalueze un set limitat de operațiuni la momentul compilării, ceea ce ne permite să alegem să scriem această valoare într-un mod mai ușor de înțeles și de verificat, decât să setăm această constantă la valoarea 10,800. Vezi [secțiunea Rust Reference privind evaluarea constantă][const-eval] pentru mai multe informații despre ce operațiuni pot fi utilizate la declararea constantelor.
 
-Constants are valid for the entire time a program runs, within the scope in
-which they were declared. This property makes constants useful for values in
-your application domain that multiple parts of the program might need to know
-about, such as the maximum number of points any player of a game is allowed to
-earn, or the speed of light.
+Constantele sunt valabile pentru întreaga durată a rulării unui program, în cadrul în care au fost declarate. Această proprietate face ca constantele să fie utile pentru valorile din domeniul aplicației tale despre care multe părți ale programului ar putea avea nevoie să știe, cum ar fi numărul maxim de puncte pe care orice participant al unui joc are voie să le câștige, sau viteza luminii.
 
-Naming hardcoded values used throughout your program as constants is useful in
-conveying the meaning of that value to future maintainers of the code. It also
-helps to have only one place in your code you would need to change if the
-hardcoded value needed to be updated in the future.
+Specificând valorile particulare folosite într-un program ca fiind constante este util în a transmite semnificația acelei valori către viitorii întreținători ai codului. De asemenea, este util să avem doar un singur loc în codul nostru unde ar trebui să modificăm dacă eventual valoarea codificată ar trebui să fie actualizată în viitor.
 
-### Shadowing
+### Umbrirea
 
-As you saw in the guessing game tutorial in [Chapter
-2][comparing-the-guess-to-the-secret-number]<!-- ignore -->, you can declare a
-new variable with the same name as a previous variable. Rustaceans say that the
-first variable is *shadowed* by the second, which means that the second
-variable is what the compiler will see when you use the name of the variable.
-In effect, the second variable overshadows the first, taking any uses of the
-variable name to itself until either it itself is shadowed or the scope ends.
-We can shadow a variable by using the same variable’s name and repeating the
-use of the `let` keyword as follows:
+Cum am văzut în tutorialul jocului de ghicit în capitolul 2, putem declara o nouă variabilă cu același nume ca o variabilă anterioară. Rustacenii spun că prima variabilă este *umbrită* de a doua, ceea ce înseamnă că a doua variabilă este cea pe care compilatorul o va vedea atunci când folosești numele variabilei. Practic, a doua variabilă eclipsează prima, preluând orice utilizări ale numelui variabilei până când este la rândul său umbrită sau până când se termină contextul. Putem umbri o variabilă folosind același nume de variabilă și repetând utilizarea cuvântului cheie `let` astfel:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-03-shadowing/src/main.rs}}
 ```
 
-This program first binds `x` to a value of `5`. Then it creates a new variable
-`x` by repeating `let x =`, taking the original value and adding `1` so the
-value of `x` is then `6`. Then, within an inner scope created with the curly
-brackets, the third `let` statement also shadows `x` and creates a new
-variable, multiplying the previous value by `2` to give `x` a value of `12`.
-When that scope is over, the inner shadowing ends and `x` returns to being `6`.
-When we run this program, it will output the following:
+Acest program leagă întâi `x` la o valoare de `5`. Apoi creează o nouă variabilă `x` repetând `let x =`, luând valoarea originală și adăugând `1`, astfel încât valoarea `x` este apoi `6`. Apoi, într-un context intern creat cu acolade, a treia declarație `let` umbrește, de asemenea, `x` și creează o nouă variabilă, înmulțind valoarea anterioară cu `2`, pentru a da `x` o valoare de `12`. Când acest context se termină, umbrirea internă se termină și `x` revine la a fi `6`. Când rulăm acest program, va afișa următoarele:
 
 ```console
 {{#include ../listings/ch03-common-programming-concepts/no-listing-03-shadowing/output.txt}}
 ```
 
-Shadowing is different from marking a variable as `mut` because we’ll get a
-compile-time error if we accidentally try to reassign to this variable without
-using the `let` keyword. By using `let`, we can perform a few transformations
-on a value but have the variable be immutable after those transformations have
-been completed.
+Umbrirea este diferită de marcarea unei variabile ca `mut`, deoarece vom obține o eroare la compilare dacă încercăm accidental să realocăm această variabilă fără a folosi cuvântul cheie `let`. Folosind `let`, putem efectua câteva transformări pe o valoare, dar avem variabila imutabilă după ce aceste transformări au fost finalizate.
 
-The other difference between `mut` and shadowing is that because we’re
-effectively creating a new variable when we use the `let` keyword again, we can
-change the type of the value but reuse the same name. For example, say our
-program asks a user to show how many spaces they want between some text by
-inputting space characters, and then we want to store that input as a number:
+Cea de-a doua diferență între `mut` și umbrire este că, deoarece creăm efectiv o nouă variabilă atunci când folosim din nou cuvântul cheie `let`, putem schimba tipul valorii, dar refolosim același nume. De exemplu, spunem că programul nostru cere unui utilizator să arate câte spații dorește între un text prin introducerea de caractere spațiu și apoi dorim să stocăm această intrare ca număr:
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-04-shadowing-can-change-types/src/main.rs:here}}
 ```
 
-The first `spaces` variable is a string type and the second `spaces` variable
-is a number type. Shadowing thus spares us from having to come up with
-different names, such as `spaces_str` and `spaces_num`; instead, we can reuse
-the simpler `spaces` name. However, if we try to use `mut` for this, as shown
-here, we’ll get a compile-time error:
+Prima variabilă `spaces` este de tip string și a doua variabilă `spaces` este de tip număr. Astfel, umbrirea ne scutește să găsim nume diferite, cum ar fi `spaces_str` și `spaces_num`; în schimb, putem reutiliza numele mai simplu `spaces`. Cu toate acestea, dacă încercăm să folosim `mut` pentru acest lucru, așa cum se arată aici, vom obține o eroare la timpul de compilare:
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-05-mut-cant-change-types/src/main.rs:here}}
 ```
 
-The error says we’re not allowed to mutate a variable’s type:
+Eroarea spune că nu avem voie să modificăm tipul unei variabile:
 
 ```console
 {{#include ../listings/ch03-common-programming-concepts/no-listing-05-mut-cant-change-types/output.txt}}
 ```
 
-Now that we’ve explored how variables work, let’s look at more data types they
-can have.
+Acum că am explorat cum funcționează variabilele, să examinăm mai multe tipuri de date pe care le pot avea.
 
 [comparing-the-guess-to-the-secret-number]:
 ch02-00-guessing-game-tutorial.html#comparing-the-guess-to-the-secret-number

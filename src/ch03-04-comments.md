@@ -1,45 +1,37 @@
-## Comments
+## Comentarii
 
-All programmers strive to make their code easy to understand, but sometimes
-extra explanation is warranted. In these cases, programmers leave *comments* in
-their source code that the compiler will ignore but people reading the source
-code may find useful.
+Toți programatorii se străduiesc să facă codul lor ușor de înțeles, dar uneori este necesară o explicație suplimentară. În aceste cazuri, programatorii lasă *comentarii* în codul lor sursă pe care compilatorul îl va ignora, dar persoanele care citesc codul sursă le-ar considera utile.
 
-Here’s a simple comment:
+Acesta este un comentariu simplu:
 
 ```rust
-// hello, world
+// salutare, lume
 ```
 
-In Rust, the idiomatic comment style starts a comment with two slashes, and the
-comment continues until the end of the line. For comments that extend beyond a
-single line, you’ll need to include `//` on each line, like this:
+În Rust, stilul idiomatic de a scrie comentarii începe cu două liniuțe, și comentariul continuă până la sfârșitul liniei. Pentru comentarii care se extind mai mult decât o linie, va trebui să includeți `//` pe fiecare linie, așa:
 
 ```rust
-// So we’re doing something complicated here, long enough that we need
-// multiple lines of comments to do it! Whew! Hopefully, this comment will
-// explain what’s going on.
+// Deci facem ceva complex aici, suficient de lung încât avem nevoie
+// de mai multe linii de comentarii pentru a face asta! Uff! 
+// Sperăm că acest comentariu va clarifica ce se întâmplă.
 ```
 
-Comments can also be placed at the end of lines containing code:
+Comentariile pot fi, de asemenea, plasate la sfârșitul liniilor care conțin cod:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-24-comments-end-of-line/src/main.rs}}
 ```
 
-But you’ll more often see them used in this format, with the comment on a
-separate line above the code it’s annotating:
+Dar le vei vedea mai des utilizate în acest format, cu comentariul pe o linie separată, deasupra codului pe care îl comentează:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-25-comments-above-line/src/main.rs}}
 ```
 
-Rust also has another kind of comment, documentation comments, which we’ll
-discuss in the [“Publishing a Crate to Crates.io”][publishing]<!-- ignore -->
-section of Chapter 14.
+Rust dispune și de un alt tip de comentariu, comentariile de documentare, despre care vom discuta în secțiunea [„Publicarea unui crate la crates.io”][publishing] <!-- ignore --> a Capitolului 14.
 
 [publishing]: ch14-02-publishing-to-crates-io.html
