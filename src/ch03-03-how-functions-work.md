@@ -1,168 +1,111 @@
-## Functions
+## Funcții
 
-Functions are prevalent in Rust code. You’ve already seen one of the most
-important functions in the language: the `main` function, which is the entry
-point of many programs. You’ve also seen the `fn` keyword, which allows you to
-declare new functions.
+Funcțiile sunt omniprezente în codul Rust. Ai văzut deja una dintre cele mai importante funcții din limbaj: funcția `main`, care este punctul de intrare în multe programe. Ai văzut deja și cuvântul cheie `fn`, care îți permite să declari funcții noi.
 
-Rust code uses *snake case* as the conventional style for function and variable
-names, in which all letters are lowercase and underscores separate words.
-Here’s a program that contains an example function definition:
+Codul Rust folosește *snake case* ca stil convențional pentru numele funcțiilor și variabilelor, în care toate literele sunt minuscule și cuvintele sunt separate de caracterele de underscore. Iată un program care conține o definiție exemplară a unei funcții:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-16-functions/src/main.rs}}
 ```
 
-We define a function in Rust by entering `fn` followed by a function name and a
-set of parentheses. The curly brackets tell the compiler where the function
-body begins and ends.
+Definim o funcție în Rust prin introducerea `fn` urmată de un nume de funcție și un set de paranteze. Parantezele acolade indică compilatorului unde începe și se termină corpul funcției.
 
-We can call any function we’ve defined by entering its name followed by a set
-of parentheses. Because `another_function` is defined in the program, it can be
-called from inside the `main` function. Note that we defined `another_function`
-*after* the `main` function in the source code; we could have defined it before
-as well. Rust doesn’t care where you define your functions, only that they’re
-defined somewhere in a scope that can be seen by the caller.
+Putem apela orice funcție pe care am definit-o introducând numele său urmat de un set de paranteze. Deoarece `another_function` este definită în program, ea poate fi apelată din interiorul funcției `main`. Observă că am definit `another_function` *după* funcția `main` în codul sursă; am fi putut să o definim și înainte. Rust nu îi pasă unde definim funcțiile noastre, doar că sunt definite într-un loc vizibil pentru codul apelant.
 
-Let’s start a new binary project named *functions* to explore functions
-further. Place the `another_function` example in *src/main.rs* and run it. You
-should see the following output:
+Să începem un nou proiect binar denumit *functions* pentru a continua explorarea funcțiilore. Pune exemplul `another_function` în *src/main.rs* și rulează-l. Ar trebui să vezi următoarea ieșire:
 
 ```console
 {{#include ../listings/ch03-common-programming-concepts/no-listing-16-functions/output.txt}}
 ```
 
-The lines execute in the order in which they appear in the `main` function.
-First the “Hello, world!” message prints, and then `another_function` is called
-and its message is printed.
+Liniile se execută în ordinea în care apar în funcția `main`. Mai întâi mesajul „Salut, lume!” este tipărit, apoi `another_function` este apelată și mesajul său este tipărit.
 
-### Parameters
+### Parametri
 
-We can define functions to have *parameters*, which are special variables that
-are part of a function’s signature. When a function has parameters, you can
-provide it with concrete values for those parameters. Technically, the concrete
-values are called *arguments*, but in casual conversation, people tend to use
-the words *parameter* and *argument* interchangeably for either the variables
-in a function’s definition or the concrete values passed in when you call a
-function.
+Funcțiile pot fi definite cu *parametri*, aceștia fiind variabile speciale care fac parte din semnătura unei funcții. Când o funcție are parametri ea poate fi apelată cu valori concrete pentru acești parametri. Tehnic, aceste valori concrete se numesc *argumente*, dar în conversațiile de zi cu zi, oamenii tind să folosească termenii *parametru* și *argument* în mod interschimbabil atât pentru fiecare variabilă în definiția unei funcții, cât și pentru valorile concrete transmise când o funcție este apelată.
 
-In this version of `another_function` we add a parameter:
+În această versiune a lui `another_function`, noi adăugăm un parametru:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-17-functions-with-parameters/src/main.rs}}
 ```
 
-Try running this program; you should get the following output:
+Încearcă să rulezi acest program; ar trebui să primești următoarea ieșire:
 
 ```console
 {{#include ../listings/ch03-common-programming-concepts/no-listing-17-functions-with-parameters/output.txt}}
 ```
 
-The declaration of `another_function` has one parameter named `x`. The type of
-`x` is specified as `i32`. When we pass `5` in to `another_function`, the
-`println!` macro puts `5` where the pair of curly brackets containing `x` was
-in the format string.
+Declarația `another_function` are un parametru numit `x`. Tipul lui `x` este specificat ca fiind `i32`. Când transmitem `5` la `another_function`, macro `println!` plasează `5` acolo unde perechea de acolade cu `x` era în șirul de caractere format.
 
-In function signatures, you *must* declare the type of each parameter. This is
-a deliberate decision in Rust’s design: requiring type annotations in function
-definitions means the compiler almost never needs you to use them elsewhere in
-the code to figure out what type you mean. The compiler is also able to give
-more helpful error messages if it knows what types the function expects.
+În semnăturile funcțiilor, *trebuie* să declari tipul fiecărui parametru. Acest lucru este o decizie deliberată în designul Rust: cererea de adnotații de tip în definițiile funcțiilor înseamnă că compilatorul aproape niciodată nu are nevoie de ele în alte părți din cod pentru a afla ce tip ai vrut să spui. De asemenea, compilatorul este capabil să ofere mesaje de eroare mult mai utile dacă știe ce tipuri așteaptă funcția.
 
-When defining multiple parameters, separate the parameter declarations with
-commas, like this:
+Când definești mai mulți parametri, separă declarațiile de parametri cu virgule, în acest fel:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-18-functions-with-multiple-parameters/src/main.rs}}
 ```
 
-This example creates a function named `print_labeled_measurement` with two
-parameters. The first parameter is named `value` and is an `i32`. The second is
-named `unit_label` and is type `char`. The function then prints text containing
-both the `value` and the `unit_label`.
+Acest exemplu creează o funcție numită `print_labeled_measurement` cu doi parametri. Primul parametru se numește `value` și este `i32`. Al doilea se numește `unit_label` și este de tip `char`. Funcția apoi afișează text care conține atât `value` cât și `unit_label`.
 
-Let’s try running this code. Replace the program currently in your *functions*
-project’s *src/main.rs* file with the preceding example and run it using `cargo
-run`:
+Să încercăm să rulăm acest cod: înlocuiește programul curent din fișierul *src/main.rs* al proiectului tău *functions* cu exemplul de mai sus și rulează-l folosind `cargo run`:
 
 ```console
 {{#include ../listings/ch03-common-programming-concepts/no-listing-18-functions-with-multiple-parameters/output.txt}}
 ```
 
-Because we called the function with `5` as the value for `value` and `'h'` as
-the value for `unit_label`, the program output contains those values.
+Deoarece am apelat funcția cu `5` ca valoare pentru `value` și `'h'` ca valoare pentru `unit_label`, ieșirea programului conține anume aceste valori.
 
-### Statements and Expressions
+### Instrucțiuni și expresii
 
-Function bodies are made up of a series of statements optionally ending in an
-expression. So far, the functions we’ve covered haven’t included an ending
-expression, but you have seen an expression as part of a statement. Because
-Rust is an expression-based language, this is an important distinction to
-understand. Other languages don’t have the same distinctions, so let’s look at
-what statements and expressions are and how their differences affect the bodies
-of functions.
+Corpurile funcțiilor sunt compuse dintr-o serie de instrucțiuni, care se pot încheia opțional cu o expresie. Până acum, funcțiile pe care le-am discutat nu au inclus o expresie finală, însă ai observat expresii utilizate ca parte a instrucțiunilor. Spre deosebire de multe alte limbaje de programare, Rust este un limbaj bazat pe expresii - o distincție importantă de înțeles. În continuare, să analizăm ce reprezintă instrucțiunile și expresiile și cum această diferențiere influențează structura corpurilor funcțiilor.
 
-* **Statements** are instructions that perform some action and do not return
-  a value.
-* **Expressions** evaluate to a resultant value. Let’s look at some examples.
+* **Instrucțiunile** sunt directive care realizează o anumită acțiune și nu returnează o valoare.
+* **Expresiile** evaluează o valoare rezultantă. Să vedem câteva exemple.
 
-We’ve actually already used statements and expressions. Creating a variable and
-assigning a value to it with the `let` keyword is a statement. In Listing 3-1,
-`let y = 6;` is a statement.
+De fapt, am folosit deja instrucțiuni și expresii. Crearea unei variabile și atribuirea unei valori cu un cuvânt cheie `let` este o instrucțiune. În listarea 3-1, `let y = 6;` este o instrucțiune.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/listing-03-01/src/main.rs}}
 ```
 
-<span class="caption">Listing 3-1: A `main` function declaration containing one statement</span>
+<span class="caption">Listarea 3-1: O declarație a funcției `main` conținând o instrucțiune</span>
 
-Function definitions are also statements; the entire preceding example is a
-statement in itself.
+Definițiile de funcții sunt, de asemenea, instrucțiuni; întregul exemplu precedent este o instrucțiune în sine.
 
-Statements do not return values. Therefore, you can’t assign a `let` statement
-to another variable, as the following code tries to do; you’ll get an error:
+Instrucțiunile nu returnează valori. Prin urmare, nu poți atribui o instrucțiune `let` unei alte variabile, așa cum încearcă să facă următorul cod; vei obține o eroare:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-19-statements-vs-expressions/src/main.rs}}
 ```
 
-When you run this program, the error you’ll get looks like this:
+Când rulezi acest program, eroarea pe care o obții arată așa:
 
 ```console
 {{#include ../listings/ch03-common-programming-concepts/no-listing-19-statements-vs-expressions/output.txt}}
 ```
 
-The `let y = 6` statement does not return a value, so there isn’t anything for
-`x` to bind to. This is different from what happens in other languages, such as
-C and Ruby, where the assignment returns the value of the assignment. In those
-languages, you can write `x = y = 6` and have both `x` and `y` have the value
-`6`; that is not the case in Rust.
+Instrucțiunea `let y = 6` nu returnează o valoare, deci nu există nimic de atribuit lui `x`. Acest lucru este diferit față de ceea ce se întâmplă în alte limbaje, cum ar fi C și Ruby, unde atribuirea returnează valoarea atribuirii. În acele limbaje, poți scrie `x = y = 6` și atât `x`, cât și `y` vor avea valoarea `6`; însă nu în cazul lui Rust.
 
-Expressions evaluate to a value and make up most of the rest of the code that
-you’ll write in Rust. Consider a math operation, such as `5 + 6`, which is an
-expression that evaluates to the value `11`. Expressions can be part of
-statements: in Listing 3-1, the `6` in the statement `let y = 6;` is an
-expression that evaluates to the value `6`. Calling a function is an
-expression. Calling a macro is an expression. A new scope block created with
-curly brackets is an expression, for example:
+Expresiile evaluează o valoare și alcătuiesc majoritatea celorlalte coduri pe care le vei scrie în Rust. Consideră o operație matematică, cum ar fi `5 + 6`, care este o expresie care evaluează la valoarea `11`. Expresiile pot face parte din instrucțiuni: în Listarea 3-1, `6` în instrucțiunea `let y = 6;` este o expresie care evaluează valoarea `6`. Apelarea unei funcții este o expresie. Apelarea unui macro este o expresie. Și un nou bloc de cod creat cu acolade este o expresie, spre exemplu:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-20-blocks-are-expressions/src/main.rs}}
 ```
 
-This expression:
+Expresia:
 
 ```rust,ignore
 {
@@ -171,81 +114,52 @@ This expression:
 }
 ```
 
-is a block that, in this case, evaluates to `4`. That value gets bound to `y`
-as part of the `let` statement. Note that the `x + 1` line doesn’t have a
-semicolon at the end, which is unlike most of the lines you’ve seen so far.
-Expressions do not include ending semicolons. If you add a semicolon to the end
-of an expression, you turn it into a statement, and it will then not return a
-value. Keep this in mind as you explore function return values and expressions
-next.
+este un bloc care, în acest caz, evaluează la `4`. În continuare această valoare este atribuită lui `y` ca parte a instrucțiunii `let`. Reține că linia `x + 1` nu are un punct și virgulă la sfârșit, spre deosebire de cele mai multe linii pe care le-ai văzut până acum. Cauza e că expresiile nu includ semicoalone la sfârșit. Dacă adaugi un punct și virgulă la sfârșitul unei expresii, o transformi într-o instrucțiune, și ea nu va mai returna o valoare. Ține acest lucru în minte pe măsură ce vom explora în continuare valorile de retur a funcțiilor și expresiile.
 
-### Functions with Return Values
+### Funcții cu valori de retur
 
-Functions can return values to the code that calls them. We don’t name return
-values, but we must declare their type after an arrow (`->`). In Rust, the
-return value of the function is synonymous with the value of the final
-expression in the block of the body of a function. You can return early from a
-function by using the `return` keyword and specifying a value, but most
-functions return the last expression implicitly. Here’s an example of a
-function that returns a value:
+Funcțiile pot întoarce valori codului care le apelează. Noi nu dăm un nume valorilor de retur, dar trebuie să le declarăm tipul după o săgeată (`->`). În Rust, valoarea de retur a funcției este sinonimă cu valoarea ultimei expresii din blocul corpului acelei funcții. Poți returna mai devreme dintr-o funcție folosind cuvântul cheie `return` și specificând o valoare, dar majoritatea funcțiilor returnează ultima expresie în mod implicit. Iată un exemplu de funcție care returnează o valoare:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-21-function-return-values/src/main.rs}}
 ```
 
-There are no function calls, macros, or even `let` statements in the `five`
-function—just the number `5` by itself. That’s a perfectly valid function in
-Rust. Note that the function’s return type is specified too, as `-> i32`. Try
-running this code; the output should look like this:
+Nu sunt apeluri de funcții, macrouri sau chiar declarații `let` în funcția `five` - doar numărul `5` în sine. Aceasta este o funcție perfect valabilă în Rust. Observă că tipul de retur al funcției este specificat și el, ca `-> i32`. Încearcă să rulezi acest cod; rezultatul ar trebui să arate așa:
 
 ```console
 {{#include ../listings/ch03-common-programming-concepts/no-listing-21-function-return-values/output.txt}}
 ```
 
-The `5` in `five` is the function’s return value, which is why the return type
-is `i32`. Let’s examine this in more detail. There are two important bits:
-first, the line `let x = five();` shows that we’re using the return value of a
-function to initialize a variable. Because the function `five` returns a `5`,
-that line is the same as the following:
+Numărul `5` în `five` este valoarea de retur a funcției, motiv pentru care tipul de retur este `i32`. Să examinăm acest lucru mai detaliat. Sunt două aspecte importante: În primul rând, linia `let x = five();` arată că folosim valoarea de retur a unei funcții pentru a inițializa o variabilă. Deoarece funcția `five` returnează un `5`, această linie ar fi echivalentă cu următoarea:
 
 ```rust
 let x = 5;
 ```
 
-Second, the `five` function has no parameters and defines the type of the
-return value, but the body of the function is a lonely `5` with no semicolon
-because it’s an expression whose value we want to return.
+În al doilea rând, funcția `five` nu are parametri și definește tipul valorii de retur, dar corpul funcției este un singur `5`, fără punct și virgulă, pentru că este anume expresia a cărei valoare vrem să o returnăm.
 
-Let’s look at another example:
+Să vedem un alt exemplu:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-22-function-parameter-and-return/src/main.rs}}
 ```
 
-Running this code will print `The value of x is: 6`. But if we place a
-semicolon at the end of the line containing `x + 1`, changing it from an
-expression to a statement, we’ll get an error:
+Rularea acestui cod va afișa `Valoarea lui x este: 6`. Dar dacă punem un punct și virgulă la finalul liniei care conține `x + 1`, schimbând-o dintr-o expresie într-o declarație, vom obține o eroare:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-23-statements-dont-return-values/src/main.rs}}
 ```
 
-Compiling this code produces an error, as follows:
+Compilarea acestui cod produce o eroare, astfel:
 
 ```console
 {{#include ../listings/ch03-common-programming-concepts/no-listing-23-statements-dont-return-values/output.txt}}
 ```
 
-The main error message, `mismatched types`, reveals the core issue with this
-code. The definition of the function `plus_one` says that it will return an
-`i32`, but statements don’t evaluate to a value, which is expressed by `()`,
-the unit type. Therefore, nothing is returned, which contradicts the function
-definition and results in an error. In this output, Rust provides a message to
-possibly help rectify this issue: it suggests removing the semicolon, which
-would fix the error.
+Mesajul principal de eroare, `mismatched types`, relevă problema de bază cu acest cod. Definiția funcției `plus_one` spune că va returna un `i32`, dar declarațiile nu evaluează la o valoare, ceea ce este exprimat prin `()`, tipul unit. Prin urmare, nu se returnează nimic, ceea ce contrazice definiția funcției și duce la o eroare. În această ieșire Rust chiar oferă un mesaj care ar putea ajuta la corectarea problemei: sugerează eliminarea punctului și virgulei, care într-adevăr ar remedia eroarea.

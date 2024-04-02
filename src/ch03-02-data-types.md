@@ -1,377 +1,258 @@
-## Data Types
+## Tipuri de date
 
-Every value in Rust is of a certain *data type*, which tells Rust what kind of
-data is being specified so it knows how to work with that data. We’ll look at
-two data type subsets: scalar and compound.
+Fiecare valoare în Rust este de un anumit *tip de date*, care indică Rust ce fel de
+date sunt specificate pentru a ști cum să lucreze cu acele date. Vom analiza
+două subansamble de tipuri de date: scalar și compus.
 
-Keep in mind that Rust is a *statically typed* language, which means that it
-must know the types of all variables at compile time. The compiler can usually
-infer what type we want to use based on the value and how we use it. In cases
-when many types are possible, such as when we converted a `String` to a numeric
-type using `parse` in the [“Comparing the Guess to the Secret
-Number”][comparing-the-guess-to-the-secret-number]<!-- ignore --> section in
-Chapter 2, we must add a type annotation, like this:
+Amintiți-vă că Rust este un limbaj *cu tipizare statică*, ceea ce înseamnă că trebuie
+să cunoaște tipurile tuturor variabilelor la momentul compilării. În general, compilatorul poate infera ce tip dorim să folosim în funcție de valoare și cum o utilizăm. În cazurile când sunt posibile mai multe tipuri, cum ar fi atunci când am convertit un `String` într-un tip numeric folosind `parse` în secțiunea [„Comparând guess-ul cu numărul secret”][comparing-the-guess-to-the-secret-number]<!-- ignore --> din Capitolul 2, trebuie să adăugăm o adnotare de tip, astfel:
 
 ```rust
-let guess: u32 = "42".parse().expect("Not a number!");
+let guess: u32 = "42".parse().expect("Nu este un număr!");
 ```
 
-If we don’t add the `: u32` type annotation shown in the preceding code, Rust
-will display the following error, which means the compiler needs more
-information from us to know which type we want to use:
+Dacă nu adăugăm adnotarea de tip `: u32` arătată în codul precedent, Rust va afișa următoarea eroare, ceea ce înseamnă că compilatorul are nevoie de mai multe informații de la noi pentru a ști ce tip dorim să folosim:
 
 ```console
 {{#include ../listings/ch03-common-programming-concepts/output-only-01-no-type-annotations/output.txt}}
 ```
 
-You’ll see different type annotations for other data types.
+Vei vedea adnotări de tip diferite pentru alte tipuri de date.
 
-### Scalar Types
+### Tipuri scalare
 
-A *scalar* type represents a single value. Rust has four primary scalar types:
-integers, floating-point numbers, Booleans, and characters. You may recognize
-these from other programming languages. Let’s jump into how they work in Rust.
+Un *tip scalar* reprezintă o singură valoare. Rust are patru tipuri scalare principale: numere întregi, numere în virgulă mobilă, Booleani și caractere. S-ar putea ca acestea să ți se pară familiare din alte limbaje de programare. Să trecem la modul în care funcționează tipurile scalabile în Rust.
 
-#### Integer Types
+#### Tipuri de întregi
 
-An *integer* is a number without a fractional component. We used one integer
-type in Chapter 2, the `u32` type. This type declaration indicates that the
-value it’s associated with should be an unsigned integer (signed integer types
-start with `i` instead of `u`) that takes up 32 bits of space. Table 3-1 shows
-the built-in integer types in Rust. We can use any of these variants to declare
-the type of an integer value.
+Un *întreg* este un număr fără componentă fracționară. Am folosit un tip de întreg în Capitolul 2, tipul `u32`. Această declarație de tip indică faptul că valoarea cu care este asociată ar trebui să fie un întreg fără semn (tipurile de întregi cu semn încep cu `i` în loc de `u`) care ocupă 32 de biți de spațiu. Tabelul 3-1 arată tipurile de întregi integrate în Rust. Putem folosi fiecare dintre aceste variante pentru a declara tipul unei valori întregi.
 
-<span class="caption">Table 3-1: Integer Types in Rust</span>
+<span class="caption">Tabelul 3-1: Tipuri de întregi în Rust</span>
 
-| Length  | Signed  | Unsigned |
-|---------|---------|----------|
-| 8-bit   | `i8`    | `u8`     |
-| 16-bit  | `i16`   | `u16`    |
-| 32-bit  | `i32`   | `u32`    |
-| 64-bit  | `i64`   | `u64`    |
-| 128-bit | `i128`  | `u128`   |
-| arch    | `isize` | `usize`  |
+| Lungime  | Cu semn | Fără semn |
+|----------|---------|-----------|
+| 8-biți   | `i8`    | `u8`      |
+| 16-biți  | `i16`   | `u16`     |
+| 32-biți  | `i32`   | `u32`     |
+| 64-biți  | `i64`   | `u64`     |
+| 128-biți | `i128`  | `u128`    |
+| arhitect.| `isize` | `usize`   |
 
-Each variant can be either signed or unsigned and has an explicit size.
-*Signed* and *unsigned* refer to whether it’s possible for the number to be
-negative—in other words, whether the number needs to have a sign with it
-(signed) or whether it will only ever be positive and can therefore be
-represented without a sign (unsigned). It’s like writing numbers on paper: when
-the sign matters, a number is shown with a plus sign or a minus sign; however,
-when it’s safe to assume the number is positive, it’s shown with no sign.
-Signed numbers are stored using [two’s complement][twos-complement]<!-- ignore
---> representation.
+Fiecare variantă poate fi fie cu semn, fie fără semn, și are o dimensiune explicită. *Cu semn* și *fără semn* se referă la faptul dacă este posibil ca numărul să fie negativ - cu alte cuvinte, dacă numărul are nevoie să aibă un semn asociat (signed) sau dacă va fi mereu pozitiv și deci poate fi reprezentat fără un semn (unsigned). Este similar cu scrierea numerelor pe hârtie: când semnul contează, un număr este prezentat cu un semn plus sau un semn minus; totuși, când este sigur că numărul este pozitiv, acesta este prezentat fără semn. Numerele cu semn sunt stocate folosind reprezentarea de [complement față de doi][twos-complement]<!-- ignore --> .
 
-Each signed variant can store numbers from -(2<sup>n - 1</sup>) to 2<sup>n -
-1</sup> - 1 inclusive, where *n* is the number of bits that variant uses. So an
-`i8` can store numbers from -(2<sup>7</sup>) to 2<sup>7</sup> - 1, which equals
--128 to 127. Unsigned variants can store numbers from 0 to 2<sup>n</sup> - 1,
-so a `u8` can store numbers from 0 to 2<sup>8</sup> - 1, which equals 0 to 255.
+Fiecare variantă cu semn poate stoca numere de la -(2<sup>n - 1</sup>) la 2<sup>n - 1</sup> - 1 inclusiv, unde *n* este numărul de biți pe care îl folosește acea variantă. Așadar un `i8` poate stoca numere de la -(2<sup>7</sup>) la 2<sup>7</sup> - 1, care este egal cu -128 până la 127. Variantele fără semn pot stoca numere de la 0 la 2<sup>n</sup> - 1, așadar un `u8` poate stoca numere de la 0 la 2<sup>8</sup> - 1, care este egal cu 0 până la 255.
 
-Additionally, the `isize` and `usize` types depend on the architecture of the
-computer your program is running on, which is denoted in the table as “arch”:
-64 bits if you’re on a 64-bit architecture and 32 bits if you’re on a 32-bit
-architecture.
+În plus, tipurile `isize` si `usize` depind de arhitectura computerului pe care rulează programul, care este notată în tabelul de mai sus ca „arhitectura sistemului”: 64 de biți dacă te afli pe o arhitectură de 64-biți și 32 de biți dacă te afli pe o arhitectură de 32-biți.
 
-You can write integer literals in any of the forms shown in Table 3-2. Note
-that number literals that can be multiple numeric types allow a type suffix,
-such as `57u8`, to designate the type. Number literals can also use `_` as a
-visual separator to make the number easier to read, such as `1_000`, which will
-have the same value as if you had specified `1000`.
+Poți scrie literali întregi în oricare dintre formele prezentate în Tabelul 3-2. Observă că literali numerici care pot fi de mai multe tipuri numerice permit un sufix de tip, cum ar fi `57u8`, pentru a desemna tipul. Literalii numerici pot de asemenea folosi `_` ca separator vizual pentru a face numărul mai ușor de citit, precum `1_000`, care va avea aceeași valoare ca și cum ai fi specificat `1000`.
 
-<span class="caption">Table 3-2: Integer Literals in Rust</span>
+<span class="caption">Tabelul 3-2: Literali întregi în Rust</span>
 
-| Number literals  | Example       |
-|------------------|---------------|
-| Decimal          | `98_222`      |
-| Hex              | `0xff`        |
-| Octal            | `0o77`        |
-| Binary           | `0b1111_0000` |
-| Byte (`u8` only) | `b'A'`        |
+| Literali numerici | Exemplu       |
+|-------------------|---------------|
+| Zecimal           | `98_222`      |
+| Hexadecimal       | `0xff`        |
+| Octal             | `0o77`        |
+| Binar             | `0b1111_0000` |
+| Byte (doar `u8`)  | `b'A'`        |
 
-So how do you know which type of integer to use? If you’re unsure, Rust’s
-defaults are generally good places to start: integer types default to `i32`.
-The primary situation in which you’d use `isize` or `usize` is when indexing
-some sort of collection.
+Deci, cum să știi ce tip de întreg să folosești? Dacă nu ești sigur, valorile setate inițial de Rust sunt în general un punct bun de plecare: tipurile întregi au implicit setat `i32`. Principala situație în care ai folosi `isize` sau `usize` este atunci când indexezi o colecție de elemente.
 
-> ##### Integer Overflow
+> ##### Depășirea întregilor
 >
-> Let’s say you have a variable of type `u8` that can hold values between 0 and
-> 255. If you try to change the variable to a value outside that range, such as
-> 256, *integer overflow* will occur, which can result in one of two behaviors.
-> When you’re compiling in debug mode, Rust includes checks for integer overflow
-> that cause your program to *panic* at runtime if this behavior occurs. Rust
-> uses the term *panicking* when a program exits with an error; we’ll discuss
-> panics in more depth in the [“Unrecoverable Errors with
-> `panic!`”][unrecoverable-errors-with-panic]<!-- ignore --> section in Chapter
-> 9.
+> Să presupunem că ai o variabilă de tip `u8` care poate stoca valori între 0
+> și 255. Dacă încerci să schimbi valoarea variabilei în afara acestui
+> interval, cum ar fi 256, va apărea o *depășire a întregilor* (integer
+> overflow), care poate produce unul dintre două comportamente. Atunci când
+> compilezi în modul de depanare, Rust include verificări pentru depășirea
+> întregilor care cauzează *panica* programului la runtime dacă acest
+> comportament apare. Rust utilizează termenul de *panică* când un program se
+> închide cu o eroare; vom discuta despre panici în profunzime în secțiunea
+> [„Erorile irecuperabile cu `panic!`”][unrecoverable-errors-with-panic] în
+> Capitolul 9. 
 >
-> When you’re compiling in release mode with the `--release` flag, Rust does
-> *not* include checks for integer overflow that cause panics. Instead, if
-> overflow occurs, Rust performs *two’s complement wrapping*. In short, values
-> greater than the maximum value the type can hold “wrap around” to the minimum
-> of the values the type can hold. In the case of a `u8`, the value 256 becomes
-> 0, the value 257 becomes 1, and so on. The program won’t panic, but the
-> variable will have a value that probably isn’t what you were expecting it to
-> have. Relying on integer overflow’s wrapping behavior is considered an error.
+> Când compilezi în modul de release cu opțiunea `--release`, Rust *nu* include
+> verificări pentru depășirea întregilor care cauzează panici. În schimb,
+> dacă apare o depășire, Rust efectuează *împachetarea complementul lui doi*.
+> Pe scurt, valorile mai mari decât valoarea maximă pe care o poate deține
+> tipul „este împachetat” la minimul valorilor pe care tipul le poate deţine.
+> În cazul unui `u8`, valoarea 256 devine 0, valoarea 257 devine 1 și așa mai
+> departe. Programul nu va genera panică, dar variabila va avea o valoare care
+> probabil nu este ceea ce te așteptai să aibă. Să te bazezi pe comportamentul
+> de împachetare a întregilor depășiți este considerat greșit.
 >
-> To explicitly handle the possibility of overflow, you can use these families
-> of methods provided by the standard library for primitive numeric types:
+> Pentru a gestiona în mod explicit posibilitatea de depășire, poți folosi
+> aceste familii de metode oferite de biblioteca standard pentru tipurile
+> numerice primitive:
 >
-> * Wrap in all modes with the `wrapping_*` methods, such as `wrapping_add`.
-> * Return the `None` value if there is overflow with the `checked_*` methods.
-> * Return the value and a boolean indicating whether there was overflow with
->   the `overflowing_*` methods.
-> * Saturate at the value’s minimum or maximum values with the `saturating_*`
->   methods.
+> * Împachetează toate operațiunile cu metodele `wrapping_*`, cum ar fi
+>   `wrapping_add`.
+> * Întoarce valoarea `None` dacă există depășire cu metodele
+>   `checked_*`.
+> * Întoarce valoarea și un boolean care indică dacă a existat depășire
+>   cu metodele `overflowing_*`.
+> * Saturează la valorile minime sau maxime ale valorii cu metodele
+>   `saturating_*`.
 
-#### Floating-Point Types
+#### Tipurile cu virgulă mobilă
 
-Rust also has two primitive types for *floating-point numbers*, which are
-numbers with decimal points. Rust’s floating-point types are `f32` and `f64`,
-which are 32 bits and 64 bits in size, respectively. The default type is `f64`
-because on modern CPUs, it’s roughly the same speed as `f32` but is capable of
-more precision. All floating-point types are signed.
+Rust are, de asemenea, două tipuri primitive pentru *numerele în virgulă mobilă*, care sunt numerele cu puncte zecimale. Tipurile Rust cu virgulă mobilă sunt `f32` și `f64`, care au 32 de biți și 64 de biți în dimensiune, respectiv. Tipul implicit este `f64` deoarece pe procesoarele moderne este aproximativ la fel de rapid ca `f32`, dar este capabil de mai multă precizie. Toate tipurile cu virgulă mobilă sunt semnate.
 
-Here’s an example that shows floating-point numbers in action:
+Iată un exemplu care arată numerele cu virgulă mobilă în acțiune:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-06-floating-point/src/main.rs}}
 ```
 
-Floating-point numbers are represented according to the IEEE-754 standard. The
-`f32` type is a single-precision float, and `f64` has double precision.
+Numerele cu virgulă mobilă sunt reprezentate conform standardului IEEE-754. Tipul `f32` este un număr cu precizie simplă, iar `f64` are precizie dublă.
 
-#### Numeric Operations
+#### Operațiuni numerice
 
-Rust supports the basic mathematical operations you’d expect for all the number
-types: addition, subtraction, multiplication, division, and remainder. Integer
-division truncates toward zero to the nearest integer. The following code shows
-how you’d use each numeric operation in a `let` statement:
+Rust suportă operațiunile matematice de bază pe care le-ai aștepta pentru toate tipurile de numere: adunare, scădere, înmulțire, împărțire și rest. Împărțirea întreagă trunchiază spre zero la cel mai apropiat număr întreg. Următorul cod arată cum ai folosi fiecare operațiune numerică într-o declarație `let`:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-07-numeric-operations/src/main.rs}}
 ```
 
-Each expression in these statements uses a mathematical operator and evaluates
-to a single value, which is then bound to a variable. [Appendix
-B][appendix_b]<!-- ignore --> contains a list of all operators that Rust
-provides.
+Fiecare expresie în aceste declarații folosește un operator matematic și evaluează la o singură valoare, care este apoi legată la o variabilă. [Anexa B][appendix_b]<!-- ignore --> conține o listă cu toți operatorii pe care Rust îi pune la dispoziție.
 
-#### The Boolean Type
+#### Tipul Boolean
 
-As in most other programming languages, a Boolean type in Rust has two possible
-values: `true` and `false`. Booleans are one byte in size. The Boolean type in
-Rust is specified using `bool`. For example:
+Ca în majoritatea celorlalte limbaje de programare, un tip Boolean în Rust are două posibile valori: `true` și `false`. Booleanii au dimensiunea de un octet. Tipul Boolean în Rust este specificat folosind `bool`. De exemplu:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-08-boolean/src/main.rs}}
 ```
 
-The main way to use Boolean values is through conditionals, such as an `if`
-expression. We’ll cover how `if` expressions work in Rust in the [“Control
-Flow”][control-flow]<!-- ignore --> section.
+Principalul mod de a folosi valorile Boolean este prin condiționale, cum ar fi o expresie `if`. Vom discuta cum funcționează expresiile `if` în Rust în secțiunea [„Fluxul de control”][control-flow]<!-- ignore -->.
 
-#### The Character Type
+#### Tipul caracter
 
-Rust’s `char` type is the language’s most primitive alphabetic type. Here are
-some examples of declaring `char` values:
+Tipul `char` al lui Rust este cel mai primitiv tip alfabetic al limbajului. Aici avem câteva exemple de declarare a valorilor `char`:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-09-char/src/main.rs}}
 ```
 
-Note that we specify `char` literals with single quotes, as opposed to string
-literals, which use double quotes. Rust’s `char` type is four bytes in size and
-represents a Unicode Scalar Value, which means it can represent a lot more than
-just ASCII. Accented letters; Chinese, Japanese, and Korean characters; emoji;
-and zero-width spaces are all valid `char` values in Rust. Unicode Scalar
-Values range from `U+0000` to `U+D7FF` and `U+E000` to `U+10FFFF` inclusive.
-However, a “character” isn’t really a concept in Unicode, so your human
-intuition for what a “character” is may not match up with what a `char` is in
-Rust. We’ll discuss this topic in detail in [“Storing UTF-8 Encoded Text with
-Strings”][strings]<!-- ignore --> in Chapter 8.
+Observați că specificăm constantele de tip `char` cu ghilimele simple, spre deosebire de sirurile de caractere, care utilizează ghilimele duble. Tipul `char` al lui Rust este de patru octeți și reprezintă o valoare scalară Unicode, ceea ce înseamnă că poate reprezenta mult mai mult decât doar ASCII. Litere accentuate; caractere chinezești, japoneze și coreene; emoji și spații de lățime zero sunt toate valori `char` valide în Rust. Valorile scalare Unicode variază de la `U+0000` la `U+D7FF` și `U+E000` la `U+10FFFF` inclusiv. Totuși, un „caracter” nu este chiar un concept în Unicode, așa că intuiția ta umană pentru ceea ce este un „caracter” s-ar putea să nu se potrivească cu ceea ce este un `char` în Rust. Vom discuta acest subiect în detaliu în [„Stocarea textului codificat UTF-8 cu string-uri”][strings]<!-- ignore --> în Capitolul 8.
 
-### Compound Types
+### Tipuri compuse
 
-*Compound types* can group multiple values into one type. Rust has two
-primitive compound types: tuples and arrays.
+*Tipurile compuse* pot grupa mai multe valori într-un singur tip. Rust are două tipuri compuse primitive: tuple și array-uri.
 
-#### The Tuple Type
+#### Tipul tuplă
 
-A *tuple* is a general way of grouping together a number of values with a
-variety of types into one compound type. Tuples have a fixed length: once
-declared, they cannot grow or shrink in size.
+O *tuplă* este o modalitate generală de a grupa împreună un număr de valori cu o varietate de tipuri într-un singur tip compus. Tuplele au o lungime fixă: odată declarate, nu pot crește sau scădea în dimensiune.
 
-We create a tuple by writing a comma-separated list of values inside
-parentheses. Each position in the tuple has a type, and the types of the
-different values in the tuple don’t have to be the same. We’ve added optional
-type annotations in this example:
+Creăm o tuplă scriind o listă de valori separate prin virgulă între paranteze. Fiecare poziție din tuplă are un tip, și tipurile diferitelor valori din tuplă nu trebuie să fie aceleași. Am adăugat în acest exemplu opțional adnotări de tip:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-10-tuples/src/main.rs}}
 ```
 
-The variable `tup` binds to the entire tuple because a tuple is considered a
-single compound element. To get the individual values out of a tuple, we can
-use pattern matching to destructure a tuple value, like this:
+Variabila `tup` se leagă de întreaga tuplă pentru că o tuplă este considerată un singur element compus. Pentru a obține valorile individuale dintr-o tuplă, putem folosi potrivirea de modele pentru a destrucura o valoare a tuplei, așa cum este arătat aici:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-11-destructuring-tuples/src/main.rs}}
 ```
 
-This program first creates a tuple and binds it to the variable `tup`. It then
-uses a pattern with `let` to take `tup` and turn it into three separate
-variables, `x`, `y`, and `z`. This is called *destructuring* because it breaks
-the single tuple into three parts. Finally, the program prints the value of
-`y`, which is `6.4`.
+Acest program creează mai întâi o tuplă și o leagă la variabila `tup`. Apoi folosește un model cu `let` pentru a lua `tup` și a o transforma în trei variabile separate, `x`, `y`, și `z`. Acest lucru este numit *destructurare* pentru că descompune singura tuplă în trei părți. În final, programul afișează valoarea lui `y`, care este `6.4`.
 
-We can also access a tuple element directly by using a period (`.`) followed by
-the index of the value we want to access. For example:
+Putem accesa direct un element al tuplei folosind un punct (`.`) urmat de indexul valorii pe care dorim să o accesăm. De exemplu:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-12-tuple-indexing/src/main.rs}}
 ```
 
-This program creates the tuple `x` and then accesses each element of the tuple
-using their respective indices. As with most programming languages, the first
-index in a tuple is 0.
+Acest program creează tupla `x` și apoi accesează fiecare element al tuplei folosind indicii lor respectivi. La fel ca în majoritatea limbajelor de programare, primul index într-o tuplă este 0.
 
-The tuple without any values has a special name, *unit*. This value and its
-corresponding type are both written `()` and represent an empty value or an
-empty return type. Expressions implicitly return the unit value if they don’t
-return any other value.
+Tupla fără nicio valoare are un nume special, *unit*. Această valoare și tipul său corespunzător sunt ambele scrise `()` și reprezintă o valoare goală sau un tip de returnare gol. Expresiile returnează implicit valoarea unit dacă nu returnează nicio altă valoare.
 
-#### The Array Type
+#### Tipul array
 
-Another way to have a collection of multiple values is with an *array*. Unlike
-a tuple, every element of an array must have the same type. Unlike arrays in
-some other languages, arrays in Rust have a fixed length.
+Un alt mod de a avea o colecție de valori multiple este cu un *array*. Spre deosebire de o tuplă, fiecare element al unui array trebuie să aibă același tip. Spre deosebire de array-urile din alte limbaje, array-urile din Rust au o lungime fixă.
 
-We write the values in an array as a comma-separated list inside square
-brackets:
+Scriem valorile într-un array ca o listă separată prin virgule în interiorul parantezelor pătrate:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-13-arrays/src/main.rs}}
 ```
 
-Arrays are useful when you want your data allocated on the stack rather than
-the heap (we will discuss the stack and the heap more in [Chapter
-4][stack-and-heap]<!-- ignore -->) or when you want to ensure you always have a
-fixed number of elements. An array isn’t as flexible as the vector type,
-though. A *vector* is a similar collection type provided by the standard
-library that *is* allowed to grow or shrink in size. If you’re unsure whether
-to use an array or a vector, chances are you should use a vector. [Chapter
-8][vectors]<!-- ignore --> discusses vectors in more detail.
+Array-urile sunt utile când vrem ca datele să fie alocate pe stivă, nu pe heap (vom discuta mai mult despre stivă și heap în [Capitolul 4][stack-and-heap]<!-- ignore -->) sau când dorim să ne asigurăm că avem întotdeauna un număr fix de elemente. Un array nu este la fel de flexibil precum tipul vector, totuși. Un *vector* este un tip de colecție similar oferit de biblioteca standard dar care *are voie* să crească sau să scadă în dimensiune. Dacă nu ești sigur dacă să folosești un array sau un vector, atunci probabil că ar trebui să folosești un vector. [Capitolul 8][vectors]<!-- ignore --> discută vectorii în mai multe detalii.
 
-However, arrays are more useful when you know the number of elements will not
-need to change. For example, if you were using the names of the month in a
-program, you would probably use an array rather than a vector because you know
-it will always contain 12 elements:
+Totuși, array-urile sunt mai utile când știi că numărul de elemente nu va avea nevoie să se schimbe. De exemplu, dacă ai folosi numele lunilor într-un program, ai folosi probabil un array în loc de un vector, deoarece știi că acesta va conține întotdeauna 12 elemente:
 
 ```rust
 let months = ["January", "February", "March", "April", "May", "June", "July",
               "August", "September", "October", "November", "December"];
 ```
 
-You write an array’s type using square brackets with the type of each element,
-a semicolon, and then the number of elements in the array, like so:
+Scrii tipul unui array folosind paranteze pătrate cu tipul fiecărui element, un punct și virgulă, și apoi numărul de elemente din array, așa:
 
 ```rust
 let a: [i32; 5] = [1, 2, 3, 4, 5];
 ```
 
-Here, `i32` is the type of each element. After the semicolon, the number `5`
-indicates the array contains five elements.
+Aici, `i32` este tipul fiecărui element. După punctul și virgula, numărul `5` indică faptul că array-ul conține cinci elemente.
 
-You can also initialize an array to contain the same value for each element by
-specifying the initial value, followed by a semicolon, and then the length of
-the array in square brackets, as shown here:
+Poți de asemenea inițializa un array pentru a conține aceeași valoare pentru fiecare element, specificând valoarea inițială, urmată de un punct și virgulă, și apoi lungimea array-ului în paranteze pătrate, așa cum este afișat aici:
 
 ```rust
 let a = [3; 5];
 ```
 
-The array named `a` will contain `5` elements that will all be set to the value
-`3` initially. This is the same as writing `let a = [3, 3, 3, 3, 3];` but in a
-more concise way.
+Array-ul numit `a` va conține `5` elemente care vor fi inițializate toate cu valoarea `3`. Acest lucru este la fel ca scrierea `let a = [3, 3, 3, 3, 3];`, dar într-un mod mai concis.
 
-##### Accessing Array Elements
+##### Accesarea elementelor unui array
 
-An array is a single chunk of memory of a known, fixed size that can be
-allocated on the stack. You can access elements of an array using indexing,
-like this:
+Un array este un singur segment de memorie de o dimensiune cunoscută, fixă, care poate fi alocat pe stiva. Poți accesa elementele unui array folosind indexarea, în acest fel:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-14-array-indexing/src/main.rs}}
 ```
 
-In this example, the variable named `first` will get the value `1` because that
-is the value at index `[0]` in the array. The variable named `second` will get
-the value `2` from index `[1]` in the array.
+În acest exemplu, variabila numită `first` va primi valoarea `1` pentru că aceasta
+este valoarea la indexul `[0]` în array. Variabila numită `second` va primi
+valoarea `2` de la indexul `[1]` în array.
 
-##### Invalid Array Element Access
+##### Acces invalid la un element al unui array
 
-Let’s see what happens if you try to access an element of an array that is past
-the end of the array. Say you run this code, similar to the guessing game in
-Chapter 2, to get an array index from the user:
+Să vedem ce se întâmplă dacă începi să accesezi un element al unui array care este după sfârșitul array-ului. Să zicem că rulezi acest cod, asemănător cu jocul de ghicit din Capitolul 2, pentru a obține un index de array de la utilizator:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,panics
 {{#rustdoc_include ../listings/ch03-common-programming-concepts/no-listing-15-invalid-array-access/src/main.rs}}
 ```
 
-This code compiles successfully. If you run this code using `cargo run` and
-enter `0`, `1`, `2`, `3`, or `4`, the program will print out the corresponding
-value at that index in the array. If you instead enter a number past the end of
-the array, such as `10`, you’ll see output like this:
-
-<!-- manual-regeneration
-cd listings/ch03-common-programming-concepts/no-listing-15-invalid-array-access
-cargo run
-10
--->
+Cod se compilează cu succes. Dacă rulezi acest cod folosind `cargo run` și introduci `0`, `1`, `2`, `3`, sau `4`, programul va afișa valoarea corespunzătoare acelui index în array. Dacă introduci un număr după sfârșitul array-ului, cum ar fi `10`, vei vedea o ieșire de acest gen:
 
 ```console
-thread 'main' panicked at src/main.rs:19:19:
-index out of bounds: the len is 5 but the index is 10
+thread 'main' panicked at 'index out of bounds: the len is 5 but the index is 10', src/main.rs:19:19
 note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
 ```
 
-The program resulted in a *runtime* error at the point of using an invalid
-value in the indexing operation. The program exited with an error message and
-didn’t execute the final `println!` statement. When you attempt to access an
-element using indexing, Rust will check that the index you’ve specified is less
-than the array length. If the index is greater than or equal to the length,
-Rust will panic. This check has to happen at runtime, especially in this case,
-because the compiler can’t possibly know what value a user will enter when they
-run the code later.
+Programul a rezultat într-o eroare de *runtime* în momentul utilizării unei valori invalide în operația de indexare. Programul se închide cu un mesaj de eroare și nu execută instrucțiunea finală `println!`. Când încerci să accesezi un  element folosind indexarea, Rust va verifica dacă indexul specificat de tine este mai mic decât lungimea array-ului. Dacă indexul este mai mare sau egal cu lungimea, Rust va stopa cu panică. Verificarea dată trebuie să se întâmple la runtime, în special în așa caz, pentru că compilatorul nu poate ști cu siguranță ce valoare va introduce un utilizator când va rula codul mai târziu.
 
-This is an example of Rust’s memory safety principles in action. In many
-low-level languages, this kind of check is not done, and when you provide an
-incorrect index, invalid memory can be accessed. Rust protects you against this
-kind of error by immediately exiting instead of allowing the memory access and
-continuing. Chapter 9 discusses more of Rust’s error handling and how you can
-write readable, safe code that neither panics nor allows invalid memory access.
+Acesta este un exemplu al principiilor de siguranță ale memoriei din Rust în acțiune. În multe limbaje de nivel scăzut, verificare de acces în array nu se face, și, când furnizezi un index incorect, poate fi accesată memorie invalidă. Rust te protejează împotriva acestui fel de erori prin ieșirea imediată în loc de a permitere accesul la memorie și continuare. Capitolul 9 discută mai multe despre gestionarea erorilor în Rust și cum poți să scrii un cod lizibil și sigur, care nu face niciun fel de panică nici nu permite acces la memorie invalidă.
 
 [comparing-the-guess-to-the-secret-number]:
 ch02-00-guessing-game-tutorial.html#comparing-the-guess-to-the-secret-number
