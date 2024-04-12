@@ -1,14 +1,5 @@
-# Using Structs to Structure Related Data
+# Folosirea structurilor pentru organizarea datelor interconectate
 
-A *struct*, or *structure*, is a custom data type that lets you package
-together and name multiple related values that make up a meaningful group. If
-you’re familiar with an object-oriented language, a *struct* is like an
-object’s data attributes. In this chapter, we’ll compare and contrast tuples
-with structs to build on what you already know and demonstrate when structs are
-a better way to group data.
+O *structură*, sau mai simplu *struct*, este un tip de date personalizat care ne permite să grupăm împreună și să denumim valorile diferite, dar conexate, într-un ansamblu unitar și însemnat. Dacă ești familiarizat cu un limbaj de programare orientat pe obiecte, o *structură* ar putea fi similară cu atributele de date ale unui obiect. În acest capitol, vom face o analiză comparativă între tuple și structuri, bazându-ne pe ceea ce deja cunoști, și vom arăta când este mai avantajos să folosim structurile pentru a grupa datele.
 
-We’ll demonstrate how to define and instantiate structs. We’ll discuss how to
-define associated functions, especially the kind of associated functions called
-*methods*, to specify behavior associated with a struct type. Structs and enums
-(discussed in Chapter 6) are the building blocks for creating new types in your
-program’s domain to take full advantage of Rust’s compile-time type checking.
+Vom exemplifica cum se definesc și se inițializează structurile. Vom discuta cum se definesc funcțiile asociate, în special tipul de funcții asociate, cunoscute sub numele de *metode*, pentru a descrie comportamentul asociat cu un tip de structură. Structurile și enumerările (discutate în Capitolul 6) stau la baza creării de noi tipuri în domeniul propriului tău program, pentru a beneficia la maximum de verificarea tipurilor datelor în timpul compilării în limbajul Rust.

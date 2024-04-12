@@ -4,7 +4,7 @@ Abilitatea de a rula unele coduri în funcție dacă o condiție este `true` și
 
 ### Expresiile `if`
 
-O expresie `if` îți permite să amifici codul în funcție de condiții. Tu furnizezi o condiție și apoi afirmi: „Dacă această condiție este îndeplinită, rulează acest bloc de cod. Dacă condiția nu este îndeplinită, nu rula acest bloc de cod”.
+O expresie `if` îți permite să ramifici codul în funcție de condiții. Tu furnizezi o condiție și apoi afirmi: „Dacă această condiție este îndeplinită, rulează acest bloc de cod. Dacă condiția nu este îndeplinită, nu rula acest bloc de cod”.
 
 Creează un proiect nou numit *branches* în directoriul tău *projects* pentru a explora expresia `if`. În fișierul *src/main.rs*, introdu următoarea linie:
 
