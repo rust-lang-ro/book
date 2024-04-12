@@ -1,7 +1,3 @@
-# Understanding Ownership
+# Înțelegerea posesiunii
 
-Ownership is Rust’s most unique feature and has deep implications for the rest
-of the language. It enables Rust to make memory safety guarantees without
-needing a garbage collector, so it’s important to understand how ownership
-works. In this chapter, we’ll talk about ownership as well as several related
-features: borrowing, slices, and how Rust lays data out in memory.
+Posesiunea este cea mai distinctă trăsătură a Rust și are implicații profunde pentru restul limbajului. Aceasta permite Rust să facă garanții de siguranță a memoriei fără a necesita un colector de gunoi (garbage collector, GC), deci este important să înțelegi cum funcționează posesiunea. În acest capitol, vom discuta despre posesiune, dar și despre câteva caractereistici conexe: împrumutarea, secționarea și cum Rust structurează datele în memorie.

@@ -1,152 +1,101 @@
-## The Slice Type
+## Tipul Slice
 
-*Slices* let you reference a contiguous sequence of elements in a collection
-rather than the whole collection. A slice is a kind of reference, so it does
-not have ownership.
+*Secționarea* (slicing) îți permite să referențiezi o secvență contiguă de elemente dintr-o colecție, fără a face referire la întreaga colecție. O secțiune este un fel de referință și, prin urmare, ea nu deține posesiunea.
 
-Here’s a small programming problem: write a function that takes a string of
-words separated by spaces and returns the first word it finds in that string.
-If the function doesn’t find a space in the string, the whole string must be
-one word, so the entire string should be returned.
+Iată o problemă de programare interesantă: scrie o funcție care acceptă un string format din cuvinte separate de spații și care returnează primul cuvânt descoperit în acest string. Dacă funcția nu găsește vreun spațiu în string, atunci întregul string este un singur cuvânt, caz în care întregul string ar trebui returnat.
 
-Let’s work through how we’d write the signature of this function without using
-slices, to understand the problem that slices will solve:
+Să analizăm cum am formula semnătura acestei funcții fără a utiliza secționări, pentru a înțelege mai bine problema pe care secționarea o va soluționa:
 
 ```rust,ignore
 fn first_word(s: &String) -> ?
 ```
 
-The `first_word` function has a `&String` as a parameter. We don’t want
-ownership, so this is fine. But what should we return? We don’t really have a
-way to talk about *part* of a string. However, we could return the index of the
-end of the word, indicated by a space. Let’s try that, as shown in Listing 4-7.
+Funcția `first_word` utilizează un parametru de tip `&String`. Nu ne interesează posesiunea asupra valorii, deci acesta este modul corect de a proceda. Însă, ce valoare ar trebui să returneze funcția? În momentul de față, nu dispunem de un mijloc prin care să ne referim la o *porțiune* a unui string. Totuși, o soluție ar fi să returnăm indexul la care se încheie cuvântul, index care este marcat de un spațiu. Să încercăm această abordare, așa cum este prezentată în Listarea 4-7.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/listing-04-07/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 4-7: The `first_word` function that returns a
-byte index value into the `String` parameter</span>
+<span class="caption">Listare 4-7: Funcția `first_word` care returnează un
+index de byte în cadrul parametrului de tip `String`</span>
 
-Because we need to go through the `String` element by element and check whether
-a value is a space, we’ll convert our `String` to an array of bytes using the
-`as_bytes` method.
+Avem nevoie să parcurgem `String`-ul element cu element și să determinăm dacă
+o valoare este un spațiu. Pentru aceasta, vom converti `String` într-un array de byte utilizând metoda `as_bytes`.
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch04-understanding-ownership/listing-04-07/src/main.rs:as_bytes}}
 ```
 
-Next, we create an iterator over the array of bytes using the `iter` method:
+În pasul următor, vom crea un iterator care să parcurgă array-ul de bytes, folosind metoda `iter`:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch04-understanding-ownership/listing-04-07/src/main.rs:iter}}
 ```
 
-We’ll discuss iterators in more detail in [Chapter 13][ch13]<!-- ignore -->.
-For now, know that `iter` is a method that returns each element in a collection
-and that `enumerate` wraps the result of `iter` and returns each element as
-part of a tuple instead. The first element of the tuple returned from
-`enumerate` is the index, and the second element is a reference to the element.
-This is a bit more convenient than calculating the index ourselves.
+Vom detalia mai mult despre iteratori în Capitolul 13. Până atunci, este important de ştiut că `iter` este o metodă care returnează fiecare element al unei colecții, iar `enumerate` este un înveliş peste rezultatul lui `iter`. Ea returnează fiecare element ca parte a unei tuple. Primul element al tuplei returnate de `enumerate` este indexul, iar al doilea este o referință la element. Acest lucru este mai practic decât să calculăm noi înșine indexul.
 
-Because the `enumerate` method returns a tuple, we can use patterns to
-destructure that tuple. We’ll be discussing patterns more in [Chapter
-6][ch6]<!-- ignore -->. In the `for` loop, we specify a pattern that has `i`
-for the index in the tuple and `&item` for the single byte in the tuple.
-Because we get a reference to the element from `.iter().enumerate()`, we use
-`&` in the pattern.
+Faptul că metoda `enumerate` returnează o tuplă ne dă posibilitatea de a folosi anumite modele pentru a destrăma acea tuplă. Vom detalia mai mult despre aceste modele în Capitolul 6. În cadrul buclei `for`, folosim un model care plasează `i` pe postura de index în tuplă, și `&item` pentru unicul byte din tuplă. Din moment ce `.iter().enumerate()` ne furnizează o referință la element, folosim `&` în model.
 
-Inside the `for` loop, we search for the byte that represents the space by
-using the byte literal syntax. If we find a space, we return the position.
-Otherwise, we return the length of the string by using `s.len()`.
+În interiorul buclei `for`, căutăm byte-ul care semnifică spațiul, folosind sintaxa literală a byte-ului. Dacă găsim un spațiu, vom returna poziția acestuia. Dacă nu, returnăm lungimea string-ului prin utilizarea `s.len()`.
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch04-understanding-ownership/listing-04-07/src/main.rs:inside_for}}
 ```
 
-We now have a way to find out the index of the end of the first word in the
-string, but there’s a problem. We’re returning a `usize` on its own, but it’s
-only a meaningful number in the context of the `&String`. In other words,
-because it’s a separate value from the `String`, there’s no guarantee that it
-will still be valid in the future. Consider the program in Listing 4-8 that
-uses the `first_word` function from Listing 4-7.
+Avem acum o metodă prin care putem identifica indexul corespunzător sfârșitului primului cuvânt din string. Totuși, întâmpinăm o problemă. Valoarea pe care o returnăm este un `usize` care, luat izolat, este doar un număr cu semnificație în contextul `&String`. Altfel spus, dat fiind faptul că acesta este o valoare separată de `String`, nu putem garanta faptul că aceasta va rămâne validă în viitor. Ia în considerare programul din Listarea 4-8 care utilizează funcția `first_word` din Listarea 4-7.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/listing-04-08/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 4-8: Storing the result from calling the
-`first_word` function and then changing the `String` contents</span>
+<span class="caption">Listarea 4-8: Stocarea rezultatului obținut în urma apelării funcției `first_word`, urmată de modificarea conținutului variabilei tip `String` </span>
 
-This program compiles without any errors and would also do so if we used `word`
-after calling `s.clear()`. Because `word` isn’t connected to the state of `s`
-at all, `word` still contains the value `5`. We could use that value `5` with
-the variable `s` to try to extract the first word out, but this would be a bug
-because the contents of `s` have changed since we saved `5` in `word`.
+Acest program este compilat fără nicio eroare și ar continua să funcționeze corect chiar și dacă am folosi `word`  după apelarea metodei `s.clear()`. Întrucât `word` nu este legat de starea lui `s` în nici un fel, `word` păstrează în continuare valoarea `5`. Am putea utiliza valoarea `5` cu variabila `s` pentru a încerca să extragem primul cuvânt, însă am avea de-a face cu un bug, deoarece conținutul lui `s` s-a modificat de la momentul stocării valorii `5` în `word`.
 
-Having to worry about the index in `word` getting out of sync with the data in
-`s` is tedious and error prone! Managing these indices is even more brittle if
-we write a `second_word` function. Its signature would have to look like this:
+Preocuparea constantă legată de faptul că indexul din `word` ar putea să nu mai fie în sincronizare cu datele din `s` este anevoioasă și ne expune erorilor! Administrarea acestor indici devine și mai fragilă dacă am scrie o funcție `second_word`. Semnătura acesteia ar trebui să arate în felul următor:
 
 ```rust,ignore
 fn second_word(s: &String) -> (usize, usize) {
 ```
 
-Now we’re tracking a starting *and* an ending index, and we have even more
-values that were calculated from data in a particular state but aren’t tied to
-that state at all. We have three unrelated variables floating around that need
-to be kept in sync.
+Acum există doi indici pe care trebuie să-i urmărim: cel de început *și* cel de sfârșit. În plus, avem din ce în ce mai multe valori care rezultă din date procesate într-o anumită stare, dar nu se conectează cu acea stare. Suntem înconjurați de trei variabile nelegate care trebuie să rămână sincronizate.
 
-Luckily, Rust has a solution to this problem: string slices.
+Din fericire, Rust oferă o soluție eficientă la această problemă: secționarea string-urilor.
 
-### String Slices
+### Secțiuni de string-uri
 
-A *string slice* is a reference to part of a `String`, and it looks like this:
+O *secțiune de string* reprezintă o referință la o porțiune dintr-un `String`, având următoarea formă:
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-17-slice/src/main.rs:here}}
 ```
 
-Rather than a reference to the entire `String`, `hello` is a reference to a
-portion of the `String`, specified in the extra `[0..5]` bit. We create slices
-using a range within brackets by specifying `[starting_index..ending_index]`,
-where `starting_index` is the first position in the slice and `ending_index` is
-one more than the last position in the slice. Internally, the slice data
-structure stores the starting position and the length of the slice, which
-corresponds to `ending_index` minus `starting_index`. So, in the case of `let
-world = &s[6..11];`, `world` would be a slice that contains a pointer to the
-byte at index 6 of `s` with a length value of `5`.
+`hello` nu este o referință la întregul `String`, ci la o secțiune din acesta, secțiune specificată prin adăugarea elementului `[0..5]`. Secțiunile sunt create utilizând un interval în cadrul parantezelor pătrate, prin specificarea formatului `[indexul_de_start..indexul_de_sfârșit]`, unde `indexul_de_start` reprezintă prima poziție din secțiune, iar `indexul_de_sfârșit` este cu o unitate mai mare decât ultima poziție din secțiune. Intern, structura de date a secțiunii stochează poziția de start și lungimea secțiunii, lungime care corespunde cu diferența dintre `indexul_de_sfârșit` și `indexul_de_start`. Astfel, în cazul `let world = &s[6..11];`, `world` este o secțiune care conține un pointer către octetul din poziția 6 din `s`, având lungimea de `5`.
 
-Figure 4-6 shows this in a diagram.
+Figura 4-6 ilustrează clar acest aspect.
 
-<img alt="Three tables: a table representing the stack data of s, which points
-to the byte at index 0 in a table of the string data &quot;hello world&quot; on
-the heap. The third table rep-resents the stack data of the slice world, which
-has a length value of 5 and points to byte 6 of the heap data table."
+<img alt="Trei tabele: primul tabel reprezintă datele de pe stivă ale lui s, care indică octetul de la indexul 0 din tabelul ce conține datele string-ului &quot;hello world&quot; aflat pe heap. Al treilea tabel reprezintă datele de pe stivă ale secțiunii world, care au lungimea de 5 și indică octetul 6 din tabelul cu datele de pe heap."
 src="img/trpl04-06.svg" class="center" style="width: 50%;" />
 
-<span class="caption">Figure 4-6: String slice referring to part of a
-`String`</span>
+<span class="caption">Figura 4-6: Secțiune de string ce face referire la o parte a unui `String`</span>
 
-With Rust’s `..` range syntax, if you want to start at index 0, you can drop
-the value before the two periods. In other words, these are equal:
+Folosind sintaxa specifică Rust pentru diapazoane, `..`, dacă vrei să începi de la indexul 0, poți omite valoarea înaintea celor două puncte. Altfel spus, cele două exemple de mai jos sunt echivalente:
 
 ```rust
-let s = String::from("hello");
+let s = String::from("salut");
 
 let slice = &s[0..2];
 let slice = &s[..2];
 ```
 
-By the same token, if your slice includes the last byte of the `String`, you
-can drop the trailing number. That means these are equal:
+La fel, dacă secțiunea ta include ultimul byte al string-ului, poți omite numărul de la final. Prin urmare, următoarele două exemple sunt echivalente:
 
 ```rust
-let s = String::from("hello");
+let s = String::from("salut");
 
 let len = s.len();
 
@@ -154,11 +103,10 @@ let slice = &s[3..len];
 let slice = &s[3..];
 ```
 
-You can also drop both values to take a slice of the entire string. So these
-are equal:
+De asemenea, poți renunța la ambele valori pentru a prelua o secțiune din întregul string. Acest fapt înseamnă că următoarele două exemple sunt identice:
 
 ```rust
-let s = String::from("hello");
+let s = String::from("salut");
 
 let len = s.len();
 
@@ -166,130 +114,97 @@ let slice = &s[0..len];
 let slice = &s[..];
 ```
 
-> Note: String slice range indices must occur at valid UTF-8 character
-> boundaries. If you attempt to create a string slice in the middle of a
-> multibyte character, your program will exit with an error. For the purposes
-> of introducing string slices, we are assuming ASCII only in this section; a
-> more thorough discussion of UTF-8 handling is in the [“Storing UTF-8 Encoded
-> Text with Strings”][strings]<!-- ignore --> section of Chapter 8.
+> Notă: Indicii de interval pentru secțiunea de string-uri trebuie să
+> corespundă la limitele caracterelor UTF-8 valide. Dacă încerci să creezi o
+> secțiune de string în mijlocul unui caracter multi-byte, programul tău va
+> ieși cu o eroare. Pentru a introduce conceptul de secțiuni de string-uri,
+> presupunem că utilizăm doar ASCII în această secțiune. O discuție mai
+> detaliată despre manipularea UTF-8 se găsește în secțiunea
+> [„Stocarea textului codificat UTF-8 cu String-uri”][strings]<!-- ignore -->
+> din Capitolul 8.
 
-With all this information in mind, let’s rewrite `first_word` to return a
-slice. The type that signifies “string slice” is written as `&str`:
+Cu toate aceste informații în minte, să rescriem funcția `first_word` pentru a returna o secțiune. Tipul ce denotă "secțiunea de string" se scrie ca `&str`.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-18-first-word-slice/src/main.rs:here}}
 ```
 
-We get the index for the end of the word the same way we did in Listing 4-7, by
-looking for the first occurrence of a space. When we find a space, we return a
-string slice using the start of the string and the index of the space as the
-starting and ending indices.
+Obținem indexul corespunzător sfârșitului cuvântului într-un mod similar cu cel prezentat în Listarea 4-7, prin identificarea primei apariții a unui spațiu. În momentul în care identificăm un spațiu, returnăm o secțiune din string folosind punctul de început al string-ului și indexul spațiului ca indici de început și sfârșit.
 
-Now when we call `first_word`, we get back a single value that is tied to the
-underlying data. The value is made up of a reference to the starting point of
-the slice and the number of elements in the slice.
+Astfel, la apelul funcției `first_word`, primim o singură valoare, care este strâns legată de datele inițiale. Această valoare este constituită dintr-o referință către punctul de start al secțiunii și numărul de elemente ce se regăsesc în secțiune.
 
-Returning a slice would also work for a `second_word` function:
+Similar, returnarea unei secțiuni ar funcționa și în cazul unei funcții numite `second_word`:
 
 ```rust,ignore
 fn second_word(s: &String) -> &str {
 ```
 
-We now have a straightforward API that’s much harder to mess up because the
-compiler will ensure the references into the `String` remain valid. Remember
-the bug in the program in Listing 4-8, when we got the index to the end of the
-first word but then cleared the string so our index was invalid? That code was
-logically incorrect but didn’t show any immediate errors. The problems would
-show up later if we kept trying to use the first word index with an emptied
-string. Slices make this bug impossible and let us know we have a problem with
-our code much sooner. Using the slice version of `first_word` will throw a
-compile-time error:
+Acum dispunem de o interfață API simplificată, al cărei utilizare eronată este semnificativ redusă, deoarece compilatorul se va asigura că referințele din `String` rămân valide. Îți amintești de erorile din programul prezentat în Listarea 4-8? Acolo, am obținut indexul care indica sfârșitul primului cuvânt, dar ulterior am golit string-ul, ceea ce a făcut ca indexul nostru să devină inutilizabil. Deși acest cod era logic incorect, nu am întâmpinat nicio eroare imediată. Problemele ar fi devenit vizibile mai târziu, dacă am fi continuat să folosim indexul primului cuvânt cu un string gol. Utilizarea secțiunilor face această eroare imposibilă și ne avertizează mult mai devreme cu privire la problemele din codul nostru. Folosind versiunea de secțiune a `first_word`, vom întâmpina o eroare în timpul compilării:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-19-slice-error/src/main.rs:here}}
 ```
 
-Here’s the compiler error:
+Avem următoarea eroare de compilare:
 
 ```console
 {{#include ../listings/ch04-understanding-ownership/no-listing-19-slice-error/output.txt}}
 ```
 
-Recall from the borrowing rules that if we have an immutable reference to
-something, we cannot also take a mutable reference. Because `clear` needs to
-truncate the `String`, it needs to get a mutable reference. The `println!`
-after the call to `clear` uses the reference in `word`, so the immutable
-reference must still be active at that point. Rust disallows the mutable
-reference in `clear` and the immutable reference in `word` from existing at the
-same time, and compilation fails. Not only has Rust made our API easier to use,
-but it has also eliminated an entire class of errors at compile time!
+Luați în considerare regulile de împrumutare: dacă avem o referință imutabilă la un anumit element, nu putem obține, în același timp, și o referință mutabilă la acel element. Funcția `clear` are nevoie să trunchieze o variabilă de tip `String`, deci trebuie să obțină o referință mutabilă la aceasta. Funcția `println!`, care urmează după apelul la `clear`, utilizează referința la variabila `word`. Deci, referința imutabilă utilizată de `println!` trebuie să fie încă activă la momentul acela. Cu toate acestea, limbajul Rust nu permite ca o referință mutabilă (utilizată în `clear`) și o referință imutabilă (utilizată în `word`) să existe simultan, fapt care conduce la eșecul compilării. Acesta este un exemplu de cum Rust nu doar că face API-ul nostru mai ușor de utilizat, dar elimină eficient și o întreagă clasă de erori chiar în timpul compilării!
 
 <!-- Old heading. Do not remove or links may break. -->
 <a id="string-literals-are-slices"></a>
 
-#### String Literals as Slices
+#### Literalii de string ca secțiuni
 
-Recall that we talked about string literals being stored inside the binary. Now
-that we know about slices, we can properly understand string literals:
+Vă reamintim că am discutat anterior despre modul în care literalii de tip string sunt stocați în interiorul codului binar. Acum, având cunoștințe despre secțiuni, putem înțelege într-un mod mai profund literalii de tip string:
 
 ```rust
-let s = "Hello, world!";
+let s = "Salut, lume!";
 ```
 
-The type of `s` here is `&str`: it’s a slice pointing to that specific point of
-the binary. This is also why string literals are immutable; `&str` is an
-immutable reference.
+Aici, tipul variabilei `s` este `&str`: reprezintă o secțiune care indică un anumit punct specific în codul binar. Acesta este, de asemenea, motivul pentru care literalii de tip string sunt imutabili; `&str` este o referință imutabilă.
 
-#### String Slices as Parameters
+#### Utilizarea secțiunilor de string ca parametri
 
-Knowing that you can take slices of literals and `String` values leads us to
-one more improvement on `first_word`, and that’s its signature:
+Înțelegând faptul că putem prelua secțiuni din literale și valori `String`, acest lucru ne permite să facem o îmbunătățire suplimentară a funcției `first_word`, însemnând în special modificarea modului în care aceasta este semnată:
 
 ```rust,ignore
 fn first_word(s: &String) -> &str {
 ```
 
-A more experienced Rustacean would write the signature shown in Listing 4-9
-instead because it allows us to use the same function on both `&String` values
-and `&str` values.
+Un programator Rust mai experimentat ar opta pentru semnătura de tip prezentată în Listarea 4-9, deoarece aceasta ne permite să utilizăm aceeași funcție atât pentru valorile `&String`, cât și pentru cele `&str`.
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch04-understanding-ownership/listing-04-09/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 4-9: Improving the `first_word` function by using
-a string slice for the type of the `s` parameter</span>
+<span class="caption">Listare 4-9: Optimizarea funcției `first_word` prin folosirea unei secțiuni de string ca tip pentru parametrul `s`</span>
 
-If we have a string slice, we can pass that directly. If we have a `String`, we
-can pass a slice of the `String` or a reference to the `String`. This
-flexibility takes advantage of *deref coercions*, a feature we will cover in the
-[“Implicit Deref Coercions with Functions and
-Methods”][deref-coercions]<!--ignore--> section of Chapter 15.
+Dacă dispunem de o secțiune de string, o putem transmite direct. Dacă avem un `String`, putem transmite fie o secțiune a `String`-ului, fie o referință la `String`. Această versatilitate profită de funcționalitatea *deref coercions*, un aspect pe care îl vom explora în secțiunea [„Coerciții Deref implicite cu funcții și metode”][deref-coercions] din Capitolul 15.
 
-Defining a function to take a string slice instead of a reference to a `String`
-makes our API more general and useful without losing any functionality:
+Definind o funcție care să preia o secțiune de string în locul unei referințe la un `String`, API-ul nostru devine mai general și util, fără a compromite orice altă funcționalitate:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/listing-04-09/src/main.rs:usage}}
 ```
 
-### Other Slices
+### Alte tipuri de secțiuni
 
-String slices, as you might imagine, are specific to strings. But there’s a
-more general slice type too. Consider this array:
+Secțiunile de string-uri, așa cum probabil ți-ai imaginat deja, sunt specifice pentru string-uri. Totuși, există și un tip de secțiune cu o aplicabilitate mai largă. Gândește-te la următorul array:
 
 ```rust
 let a = [1, 2, 3, 4, 5];
 ```
 
-Just as we might want to refer to part of a string, we might want to refer to
-part of an array. We’d do so like this:
+La fel cum am dori să facem referire la o anumită porțiune dintr-un string, ne-ar putea interesa să ne referim la o anumită parte a unui array. Am face-o astfel:
 
 ```rust
 let a = [1, 2, 3, 4, 5];
@@ -299,22 +214,14 @@ let slice = &a[1..3];
 assert_eq!(slice, &[2, 3]);
 ```
 
-This slice has the type `&[i32]`. It works the same way as string slices do, by
-storing a reference to the first element and a length. You’ll use this kind of
-slice for all sorts of other collections. We’ll discuss these collections in
-detail when we talk about vectors in Chapter 8.
 
-## Summary
+Această secțiune are tipul `&[i32]`. Funcționează exact la fel ca secțiunile de string-uri, prin stocarea unei referințe la primul element și a lungimii acestuia. Vei utiliza acest tip de secțiune pentru o multitudine de alte categorii de colecții. Vom adresa aceste colecții în mod detaliat când vom discuta despre vectori în Capitolul 8.
 
-The concepts of ownership, borrowing, and slices ensure memory safety in Rust
-programs at compile time. The Rust language gives you control over your memory
-usage in the same way as other systems programming languages, but having the
-owner of data automatically clean up that data when the owner goes out of scope
-means you don’t have to write and debug extra code to get this control.
+## Sumar
 
-Ownership affects how lots of other parts of Rust work, so we’ll talk about
-these concepts further throughout the rest of the book. Let’s move on to
-Chapter 5 and look at grouping pieces of data together in a `struct`.
+Conceptele de posesiune, împrumutare și utilizarea secțiunilor garantează siguranța memoriei în programele Rust la momentul compilării. Limbajul Rust îți oferă autonomie în gestionarea memoriei, asemenea altor limbaje de programare de sistem. Avantajul remarcabil al Rust constă în faptul că deținătorul datelor efectuează automat o curățenie a acestora atunci când iese din domeniul de vizibilitate. Astfel, nu este nevoie de scrierea și depanarea de cod adițional.
+
+Posesiunea influențează modul în care funcționează multe alte componente ale limbajului Rust; de aceea, ne vom aprofunda în discutarea acestor concepte pe tot parcursul cărții. Să mergem mai departe la Capitolul 5, unde vom examina gruparea datelor în cadrul unei `structuri`.
 
 [ch13]: ch13-02-iterators.html
 [ch6]: ch06-02-match.html#patterns-that-bind-to-values

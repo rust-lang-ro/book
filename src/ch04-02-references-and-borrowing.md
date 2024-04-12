@@ -1,108 +1,78 @@
-## References and Borrowing
+## Referințe și procesul de împrumutare
 
-The issue with the tuple code in Listing 4-5 is that we have to return the
-`String` to the calling function so we can still use the `String` after the
-call to `calculate_length`, because the `String` was moved into
-`calculate_length`. Instead, we can provide a reference to the `String` value.
-A *reference* is like a pointer in that it’s an address we can follow to access
-the data stored at that address; that data is owned by some other variable.
-Unlike a pointer, a reference is guaranteed to point to a valid value of a
-particular type for the life of that reference.
+Dificultatea pe care o întâmpinăm cu codul pentru tuplă, din Listarea 4-5, este că trebuie să returnăm `String`-ul către funcția apelantă pentru a putea utiliza în continuare `String`-ul după apelul funcției `calculate_length`. Aceasta se datorează faptului că `String`-ul a fost permutat în interiorul funcției `calculate_length`. O soluție alternativă ar fi să furnizăm o referință la valoarea `String`-ului. O *referință* funcționează similar unui pointer - ea reprezintă o adresă ce permite accesul la datele stocate la acea adresă; aceste date fiind deținute de o altă variabilă. Însă, spre deosebire de un pointer, o referință este garantată să indice o valoare validă a unui anumit tip, pe toată durata vieții acestei referințe.
 
-Here is how you would define and use a `calculate_length` function that has a
-reference to an object as a parameter instead of taking ownership of the value:
+Iată cum definim și utilizăm funcția `calculate_length` care are ca parametru o referință la un obiect, în loc să preia posesiunea valorii:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-07-reference/src/main.rs:all}}
 ```
 
-First, notice that all the tuple code in the variable declaration and the
-function return value is gone. Second, note that we pass `&s1` into
-`calculate_length` and, in its definition, we take `&String` rather than
-`String`. These ampersands represent *references*, and they allow you to refer
-to some value without taking ownership of it. Figure 4-5 depicts this concept.
+În primul rând, observăm că tot codul referitor la tuplă, din declarația variabilei și valoarea de return a funcției, a dispărut. În al doilea rând, remarcăm faptul că transmitem `&s1` către funcția `calculate_length` și că, în definiția sa, preluăm `&String` și nu `String`. Aceste semne de ampersand reprezintă *referințe* și permit să te referi la o anumită valoare fără a-i prelua posesiunea. Conceptul este reprezentat în Figura 4-5.
 
-<img alt="Three tables: the table for s contains only a pointer to the table
-for s1. The table for s1 contains the stack data for s1 and points to the
-string data on the heap." src="img/trpl04-05.svg" class="center" />
+<img alt="Trei tabele: tabelul destinat lui s conține doar un pointer către tabelul
+asociat lui s1. Tabelul pentru s1 include datele din stivă pentru s1 și direcționează
+spre datele de tip string stocate pe heap." src="img/trpl04-05.svg" class="center" />
 
-<span class="caption">Figure 4-5: A diagram of `&String s` pointing at `String
-s1`</span>
+<span class="caption">Figura 4-5: Diagrama ilustrând `&String s` care direcționează spre `String s1`</span>
 
-> Note: The opposite of referencing by using `&` is *dereferencing*, which is
-> accomplished with the dereference operator, `*`. We’ll see some uses of the
-> dereference operator in Chapter 8 and discuss details of dereferencing in
-> Chapter 15.
+> Notă: Procesul invers referențierii prin utilizarea `&` este
+> *dereferențierea*, realizată cu ajutorul operatorului de dereferențiere,
+> `*`. Vom explora câteva situații de utilizare a operatorului de
+> dereferențiere în Capitolul 8 și vom discuta în detaliu despre
+> dereferențiere în Capitolul 15.
 
-Let’s take a closer look at the function call here:
+Să examinăm mai în detaliu apelul funcției de aici:
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-07-reference/src/main.rs:here}}
 ```
 
-The `&s1` syntax lets us create a reference that *refers* to the value of `s1`
-but does not own it. Because it does not own it, the value it points to will
-not be dropped when the reference stops being used.
+Sintaxa `&s1` ne permite să creăm o referință care *indică* valoarea `s1` însă fără a o deține. Dat fiind faptul că nu o deține, valoarea la care face referire nu va fi abandonată (dropped) când referința nu mai este folosită.
 
-Likewise, the signature of the function uses `&` to indicate that the type of
-the parameter `s` is a reference. Let’s add some explanatory annotations:
+În mod similar, semnătura funcției folosește `&` pentru a indica faptul că tipul parametrului `s` este o referință. Să adăugăm câteva adnotări care să clarifice aceste aspecte:
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-08-reference-with-annotations/src/main.rs:here}}
 ```
 
-The scope in which the variable `s` is valid is the same as any function
-parameter’s scope, but the value pointed to by the reference is not dropped
-when `s` stops being used, because `s` doesn’t have ownership. When functions
-have references as parameters instead of the actual values, we won’t need to
-return the values in order to give back ownership, because we never had
-ownership.
+Domeniul în care este validă variabila `s` coincide cu cel al oricărui parametru de funcție. Cu toate acestea, valoarea către care se referă nu este eliminată când nu mai folosim `s`. Motivul este simplu: `s` nu are posesiunea acestei valori. Dacă funcțiile noastre folosesc referințe ca parametri, în locul valorilor propriu-zise, nu trebuie să returnăm valorile pentru a restitui posesiunea, deoarece, de fapt, nu am avut niciodată posesiunea acestora.
 
-We call the action of creating a reference *borrowing*. As in real life, if a
-person owns something, you can borrow it from them. When you’re done, you have
-to give it back. You don’t own it.
+Acest act de a crea o referință îl numim *împrumutare*. În mod similar cu viața de zi cu zi, dacă o persoană deține ceva, tu poți să îi împrumuți acel lucru. Odată ce ai terminat cu acel lucru, trebuie să îl restitui. Întrucât nu îți aparține.
 
-So, what happens if we try to modify something we’re borrowing? Try the code in
-Listing 4-6. Spoiler alert: it doesn’t work!
+Așadar, ce se întâmplă dacă încercăm să modificăm ceva ce doar împrumutăm? Încearcă codul din Listarea 4-6. Dar te previn: nu o să iasă exact cum te-ai așteptat!
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch04-understanding-ownership/listing-04-06/src/main.rs}}
 ```
 
-<span class="caption">Listing 4-6: Attempting to modify a borrowed value</span>
+<span class="caption">Listarea 4-6: Tentativa de a modifica o valoare împrumutată</span>
 
-Here’s the error:
+Aceasta este eroarea întâlnită:
 
 ```console
 {{#include ../listings/ch04-understanding-ownership/listing-04-06/output.txt}}
 ```
 
-Just as variables are immutable by default, so are references. We’re not
-allowed to modify something we have a reference to.
+Exact așa cum sunt imutabile variabilele, în mod implicit, la fel sunt și referințele. Nu ne este permisă modificarea unei valori la care deținem doar o referință.
 
-### Mutable References
+### Referințe mutabile
 
-We can fix the code from Listing 4-6 to allow us to modify a borrowed value
-with just a few small tweaks that use, instead, a *mutable reference*:
+Putem corecta codul din Listarea 4-6 pentru a ne oferi posibilitatea de a modifica o valoare împrumutată, prin câteva ajustări minore care implică utilizarea unei *referințe mutabile*:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-09-fixes-listing-04-06/src/main.rs}}
 ```
 
-First we change `s` to be `mut`. Then we create a mutable reference with `&mut
-s` where we call the `change` function, and update the function signature to
-accept a mutable reference with `some_string: &mut String`. This makes it very
-clear that the `change` function will mutate the value it borrows.
+În primul rând, modificăm `s` pentru a fi `mut`. Apoi, creăm o referință mutabilă cu `&mut s` în momentul în care invocăm funcția `change`, și actualizăm semnătura funcției pentru a accepta o referință mutabilă cu `some_string: &mut String`. Astfel, devine foarte clar că funcția `change` va modifica valoarea pe care o împrumută.
 
-Mutable references have one big restriction: if you have a mutable reference to
-a value, you can have no other references to that value. This code that
-attempts to create two mutable references to `s` will fail:
+Referințele mutabile vin însă cu o limitare importantă: dacă deții o referință mutabilă la o valoare, nu poți deține alte referințe către aceeași valoare. Acest cod, care încearcă să creeze două referințe mutabile la `s`, va da eroare:
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -110,144 +80,101 @@ attempts to create two mutable references to `s` will fail:
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-10-multiple-mut-not-allowed/src/main.rs:here}}
 ```
 
-Here’s the error:
+Și eroarea:
 
 ```console
 {{#include ../listings/ch04-understanding-ownership/no-listing-10-multiple-mut-not-allowed/output.txt}}
 ```
 
-This error says that this code is invalid because we cannot borrow `s` as
-mutable more than once at a time. The first mutable borrow is in `r1` and must
-last until it’s used in the `println!`, but between the creation of that
-mutable reference and its usage, we tried to create another mutable reference
-in `r2` that borrows the same data as `r1`.
+Această eroare ne informează că respectivul cod nu este valid, întrucât nu se poate împrumuta `s` în mod mutabil de mai multe ori concomitent. Primul împrumut mutabil se realizează în `r1` și trebuie să continue până când este folosit în instrucțiunea `println!`. Cu toate acestea, între momentul creării acestei referințe mutabile și momentul utilizării sale, am încercat să generăm o altă referință mutabilă în `r2`, care împrumută aceleași date ca și `r1`.
 
-The restriction preventing multiple mutable references to the same data at the
-same time allows for mutation but in a very controlled fashion. It’s something
-that new Rustaceans struggle with because most languages let you mutate
-whenever you’d like. The benefit of having this restriction is that Rust can
-prevent data races at compile time. A *data race* is similar to a race
-condition and happens when these three behaviors occur:
+Restricția care interzice mai multe referințe mutabile simultane la aceleași date ne permite să modificăm datele, dar într-un mod extrem de controlat. Aceasta este o provocare des întâlnită pentru cei nou-veniți în lumea Rust, deoarece majoritatea limbajelor de programare permit modificarea datelor oricând. Avantajul acestei restricții este faptul că Rust poate preveni apariția curselor de date în timpul compilării. O *cursă de date* este similară cu o condiție de cursă și se produce atunci când au loc următoarele trei evenimente:
 
-* Two or more pointers access the same data at the same time.
-* At least one of the pointers is being used to write to the data.
-* There’s no mechanism being used to synchronize access to the data.
+* Două sau mai multe pointere accesează simultan aceleași date.
+* Cel puțin un pointer este utilizat pentru a scrie date.
+* Nu există niciun mecanism în vigoare care să sincronizeze accesul la date.
 
-Data races cause undefined behavior and can be difficult to diagnose and fix
-when you’re trying to track them down at runtime; Rust prevents this problem by
-refusing to compile code with data races!
+Cursele de date creează un comportament nedefinit și pot fi dificile de diagnosticat și remediat atunci când încerci să le detectezi în timpul execuției; Rust preîntâmpină acest gen de problemă prin faptul că refuză să compileze codul în care apar curse de date!
 
-As always, we can use curly brackets to create a new scope, allowing for
-multiple mutable references, just not *simultaneous* ones:
+Ca de obicei, avem posibilitatea de a utiliza acolade pentru a iniția un nou domeniu de vizibilitate, astfel facilitând existența mai multor referințe mutabile; singura condiție este aceea de a nu fi simultane:
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-11-muts-in-separate-scopes/src/main.rs:here}}
 ```
 
-Rust enforces a similar rule for combining mutable and immutable references.
-This code results in an error:
+Rust impune o regulă similară pentru combinarea referințelor mutabile și imutabile. Acest cod generează o eroare:
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-12-immutable-and-mutable-not-allowed/src/main.rs:here}}
 ```
 
-Here’s the error:
+Eroarea:
 
 ```console
 {{#include ../listings/ch04-understanding-ownership/no-listing-12-immutable-and-mutable-not-allowed/output.txt}}
 ```
 
-Whew! We *also* cannot have a mutable reference while we have an immutable one
-to the same value.
+*De asemenea*, nu ne este permis să avem o referință mutabilă în același timp cu o referință imutabilă către aceeași valoare.
 
-Users of an immutable reference don’t expect the value to suddenly change out
-from under them! However, multiple immutable references are allowed because no
-one who is just reading the data has the ability to affect anyone else’s
-reading of the data.
+Cei ce folosesc o referință imutabilă nu se așteaptă ca valoarea să se schimbe brusc, fără un avertisment! Totuși, sunt permise multiple referințe imutabile, deoarece nicio persoană ce doar citește datele nu are abilitatea de a interfera cu lectura altcuiva a acelor date.
 
-Note that a reference’s scope starts from where it is introduced and continues
-through the last time that reference is used. For instance, this code will
-compile because the last usage of the immutable references, the `println!`,
-occurs before the mutable reference is introduced:
+Trebuie să reții că domeniul de vizibilitate al unei referințe începe de unde este aceasta introdusă și continuă până la ultima utilizare a respectivei referințe. De pildă, acest cod se va compila deoarece ultima folosire a referințelor imutabile, și anume `println!`, are loc înainte de a fi introdusă referința mutabilă:
 
 ```rust,edition2021
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-13-reference-scope-ends/src/main.rs:here}}
 ```
 
-The scopes of the immutable references `r1` and `r2` end after the `println!`
-where they are last used, which is before the mutable reference `r3` is
-created. These scopes don’t overlap, so this code is allowed: the compiler can
-tell that the reference is no longer being used at a point before the end of
-the scope.
+Domeniile de vizibilitate pentru referințele imutabile `r1` și `r2` se încheie imediat după ce au fost utilizate pentru ultima dată în `println!`. Asta se întâmplă înainte ca referința mutabilă `r3` să fie creată. Aceste domenii nu se intersectează, deci nu interferă unul cu celălalt, făcând acest cod valid. Compilatorul Rust este în stare să determine că referința nu mai este folosită înainte de sfârșitul domeniului de vizibilitate.
 
-Even though borrowing errors may be frustrating at times, remember that it’s
-the Rust compiler pointing out a potential bug early (at compile time rather
-than at runtime) and showing you exactly where the problem is. Then you don’t
-have to track down why your data isn’t what you thought it was.
+Știm că erorile legate de împrumutări pot fi frustrante uneori. Totuși, trebuie să înțelegem că acesta este un mecanism prin care compilatorul Rust ne avertizează asupra unui potențial bug în stadiul de compilare, nu în timpul rulării. În plus, ne indică exact locul unde apare problema. Aceasta îți va economisi timp deoarece nu va trebui să cauți motivul pentru care datele tale nu corespund cu ceea ce te așteptai.
 
-### Dangling References
+### Referințe fără destinație
 
-In languages with pointers, it’s easy to erroneously create a *dangling
-pointer*—a pointer that references a location in memory that may have been
-given to someone else—by freeing some memory while preserving a pointer to that
-memory. In Rust, by contrast, the compiler guarantees that references will
-never be dangling references: if you have a reference to some data, the
-compiler will ensure that the data will not go out of scope before the
-reference to the data does.
+În limbajele de programare ce utilizează pointeri, este foarte ușor să generăm, chiar și involuntar, un *pointer în aer* (dangling) - un pointer ce își pierde legătura cu o parte de memorie care poate fi atribuită altei operațiuni - prin simpla eliberare a unei părți din memoria alocate, în timp ce pointerul către acea memorie rămâne încă activ. În contrast, Rust, prin intermediul compilatorului, garantează că niciodată nu vor exista referințe fără destinație: dacă avem o referință la niște date, compilatorul se va asigura că acele date nu vor fi scoase din domeniul de vizibilitate înainte ca referința spre ele să o facă.
 
-Let’s try to create a dangling reference to see how Rust prevents them with a
-compile-time error:
+Acum, să încercăm să generăm o referință fără destinație, doar pentru a observa cum Rust previne acest lucru printr-o eroare la etapa de compilare:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-14-dangling-reference/src/main.rs}}
 ```
 
-Here’s the error:
+Vom primi eroarea:
 
 ```console
 {{#include ../listings/ch04-understanding-ownership/no-listing-14-dangling-reference/output.txt}}
 ```
 
-This error message refers to a feature we haven’t covered yet: lifetimes. We’ll
-discuss lifetimes in detail in Chapter 10. But, if you disregard the parts
-about lifetimes, the message does contain the key to why this code is a problem:
+Acest mesaj de eroare face referire la un concept pe care încă nu l-am abordat: durate de viață. Vom aprofunda această temă în Capitolul 10. Cu toate acestea, chiar dacă nu ținem cont de porțiunile ce se referă la durate de viață, mesajul (tradus) ne oferă o pistă esențială pentru a intelege de ce acest fragment de cod nu funcționează:
 
 ```text
-this function's return type contains a borrowed value, but there is no value
-for it to be borrowed from
+tipul de retur al acestei funcții conține o valoare împrumutată, dar nu există nicio valoare pentru a fi împrumutată
 ```
 
-Let’s take a closer look at exactly what’s happening at each stage of our
-`dangle` code:
+Să examinăm mai atent ce se petrece la fiecare pas în codul nostru `dangle`:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-15-dangling-reference-annotated/src/main.rs:here}}
 ```
 
-Because `s` is created inside `dangle`, when the code of `dangle` is finished,
-`s` will be deallocated. But we tried to return a reference to it. That means
-this reference would be pointing to an invalid `String`. That’s no good! Rust
-won’t let us do this.
+Dat fiind că `s` este generat în interiorul `dangle`, la finalizarea rulării codului din `dangle`, `s` va fi dezalocat. Cu toate acestea, noi am încercat să returnăm o referință către `s`. Aceasta presupune că referința noastră ar fi îndreptată către un `String` ce devine invalid. Situația nu este deloc favorabilă! Rust nu ne va permite să desfășurăm o astfel de acțiune.
 
-The solution here is to return the `String` directly:
+Soluția în acest caz constă în returnarea directă a `String`:
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-16-no-dangle/src/main.rs:here}}
 ```
 
-This works without any problems. Ownership is moved out, and nothing is
-deallocated.
+Aceasta funcționează fără nici o problemă. Posesiunea este permutată și nimic nu este dezalocat.
 
-### The Rules of References
+### Regulamentul referințelor
 
-Let’s recap what we’ve discussed about references:
+Să reamintim principiile pe care le-am discutat despre referințe:
 
-* At any given time, you can have *either* one mutable reference *or* any
-  number of immutable references.
-* References must always be valid.
+* În orice clipă, ai voie să deții *ori* o singură referință mutabilă *sau* o cantitate nelimitată de referințe imutabile.
+* Referințele trebuie să fie valide în permanență.
 
-Next, we’ll look at a different kind of reference: slices.
+Următoarea etapă va fi examinarea unui alt tip de referință: slice-urile.

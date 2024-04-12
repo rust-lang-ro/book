@@ -1,487 +1,336 @@
-## What Is Ownership?
+## Ce este posesiunea?
 
-*Ownership* is a set of rules that govern how a Rust program manages memory.
-All programs have to manage the way they use a computer’s memory while running.
-Some languages have garbage collection that regularly looks for no-longer-used
-memory as the program runs; in other languages, the programmer must explicitly
-allocate and free the memory. Rust uses a third approach: memory is managed
-through a system of ownership with a set of rules that the compiler checks. If
-any of the rules are violated, the program won’t compile. None of the features
-of ownership will slow down your program while it’s running.
+*Posesiunea* reprezintă un set de reguli care guvernează modul în care un program Rust gestionează memoria. Toate programele trebuie să gestioneze modul în care utilizează memoria unui calculator în timp ce rulează. Unele limbaje de programare dispun de colectare a gunoiului (garbage collector), care caută în mod regulat memoria care nu mai este utilizată pe măsură ce programul rulează; în alte limbaje de programare, programatorul trebuie să aloce și să elibereze explicit memoria. Rust folosește o a treia abordare: memoria este gestionată prin intermediul unui sistem de posesiune cu un set de reguli pe care compilatorul le verifică. Dacă oricare dintre reguli sunt încălcate, programul nu va fi compilat. Totuși nici o caracteristică a posesiunii nu va încetini viteza de rulare a programului.
 
-Because ownership is a new concept for many programmers, it does take some time
-to get used to. The good news is that the more experienced you become with Rust
-and the rules of the ownership system, the easier you’ll find it to naturally
-develop code that is safe and efficient. Keep at it!
+Deoarece posesiunea este un concept nou pentru mulți programatori, este nevoie de ceva timp pentru a te obișnui cu acesta. Vestea bună este că cu cât devii mai experimentat cu Rust și cu regulile sistemului de posesiune, cu atât îți va fi mai ușor să dezvolți în mod natural cod care este sigur și eficient. Continuă să o faci!
 
-When you understand ownership, you’ll have a solid foundation for understanding
-the features that make Rust unique. In this chapter, you’ll learn ownership by
-working through some examples that focus on a very common data structure:
-strings.
+Odată ce vei înțelege posesiunea, vei avea o bază solidă pentru înțelegerea caracteristicilor ce fac din Rust un limbaj unic. În acest capitol vei învăța despre posesiune prin câteva exemple care se concentrează asupra unei structuri de date foarte comune: string-urile.
 
-> ### The Stack and the Heap
+> ### Stiva și heap-ul
 >
-> Many programming languages don’t require you to think about the stack and the
-> heap very often. But in a systems programming language like Rust, whether a
-> value is on the stack or the heap affects how the language behaves and why
-> you have to make certain decisions. Parts of ownership will be described in
-> relation to the stack and the heap later in this chapter, so here is a brief
-> explanation in preparation.
+> Multe limbaje de programare nu cer să te gândești prea mult la stivă și heap.
+> Dar într-un limbaj de programare pentru sisteme ca Rust, în dependență dacă o
+> valoare se află pe stivă sau heap afectează modul în care limbajul se
+> comportă și necesită să iei anumite decizii. Părți din noțiunea de posesiune
+> în raport cu stiva și heap-ul vor fi descrise mai târziu în acest capitol,
+> așa că iată o scurtă explicație anticipată.
 >
-> Both the stack and the heap are parts of memory available to your code to use
-> at runtime, but they are structured in different ways. The stack stores
-> values in the order it gets them and removes the values in the opposite
-> order. This is referred to as *last in, first out*. Think of a stack of
-> plates: when you add more plates, you put them on top of the pile, and when
-> you need a plate, you take one off the top. Adding or removing plates from
-> the middle or bottom wouldn’t work as well! Adding data is called *pushing
-> onto the stack*, and removing data is called *popping off the stack*. All
-> data stored on the stack must have a known, fixed size. Data with an unknown
-> size at compile time or a size that might change must be stored on the heap
-> instead.
+> Atât stiva cât și heap-ul sunt părți ale memoriei disponibile codului tău
+> pentru a fi folosite la runtime, dar care sunt structurate în moduri
+> diferite. Stiva stochează valorile în ordinea în care le primește și elimină
+> valorile în ordinea inversă. Acest lucru este menționat ca
+> *ultimul intrat, primul ieșit*. Gândește-te la o stivă de farfurii: când
+> adaugi mai multe farfurii, le pui în vârful grămezii, și când ai nevoie de o
+> farfurie, o iei de pe vârful grămezii. Adăugarea sau eliminarea de farfurii
+> de la mijloc sau de jos nu ar funcționa la fel de bine! Adăugarea de date se
+> numește *împingerea pe stivă* și eliminarea de date se numește
+> *scoaterea de pe stivă*. Toate datele stocate pe stivă trebuie să aibă o
+> dimensiune cunoscută și fixă. Datele cu o dimensiune necunoscută în momentul
+> compilării sau o dimensiune care s-ar putea schimba trebuie să fie stocate pe
+> heap.
 >
-> The heap is less organized: when you put data on the heap, you request a
-> certain amount of space. The memory allocator finds an empty spot in the heap
-> that is big enough, marks it as being in use, and returns a *pointer*, which
-> is the address of that location. This process is called *allocating on the
-> heap* and is sometimes abbreviated as just *allocating* (pushing values onto
-> the stack is not considered allocating). Because the pointer to the heap is a
-> known, fixed size, you can store the pointer on the stack, but when you want
-> the actual data, you must follow the pointer. Think of being seated at a
-> restaurant. When you enter, you state the number of people in your group, and
-> the host finds an empty table that fits everyone and leads you there. If
-> someone in your group comes late, they can ask where you’ve been seated to
-> find you.
+> Heap-ul este mai puțin organizat: când pui date pe heap, ceri o anumită
+> cantitate de spațiu. Alocatorul de memorie găsește un loc liber în heap care
+> este suficient de mare, îl marchează ca fiind în uz și returnează un
+> *pointer*, care este adresa acelui loc. Acest proces se numește
+> *alocare pe heap* și este uneori abreviat drept doar *alocare* (împingerea
+> valorilor pe stivă nu este considerată alocare). Deoarece pointer-ul către
+> heap are o dimensiune cunoscută, fixă, poți stoca pointer-ul pe stivă, dar
+> când vrei datele efective, trebuie să urmezi pointer-ul. Gândește-te că te-ai
+> așezat la un restaurant. Când intri, precizezi numărul de persoane din grupul
+> tău, iar gazda găsește o masă liberă care se potrivește tuturor și te conduce
+> acolo. Dacă cineva din grupul tău vine târziu, poate întreba unde ai fost
+> așezat să te găsească.
 >
-> Pushing to the stack is faster than allocating on the heap because the
-> allocator never has to search for a place to store new data; that location is
-> always at the top of the stack. Comparatively, allocating space on the heap
-> requires more work because the allocator must first find a big enough space
-> to hold the data and then perform bookkeeping to prepare for the next
-> allocation.
+> Împingerea pe stivă este mai rapidă decât alocarea pe heap deoarece
+> alocatorul nu trebuie să caute niciodată un loc unde să stocheze date noi;
+> acel loc este întotdeauna în partea de sus a stivei. Comparativ, alocarea
+> spațiului pe heap necesită mai multă muncă deoarece alocatorul trebuie mai
+> întâi să găsească un spațiu suficient de mare pentru a susține datele și apoi
+> să efectueze o evidență a datelor acum alocate pentru a se pregăti pentru
+> următoarea alocare.
 >
-> Accessing data in the heap is slower than accessing data on the stack because
-> you have to follow a pointer to get there. Contemporary processors are faster
-> if they jump around less in memory. Continuing the analogy, consider a server
-> at a restaurant taking orders from many tables. It’s most efficient to get
-> all the orders at one table before moving on to the next table. Taking an
-> order from table A, then an order from table B, then one from A again, and
-> then one from B again would be a much slower process. By the same token, a
-> processor can do its job better if it works on data that’s close to other
-> data (as it is on the stack) rather than farther away (as it can be on the
+> Accesarea datelor în heap este mai lentă decât accesarea datelor pe stivă
+> deoarece trebuie să urmezi un pointer pentru a ajunge acolo. Procesoarele
+> contemporane sunt mai rapide dacă sar mai puțin prin memorie. Continuând
+> analogia, ia în considerare un chelner la un restaurant care ia comenzi de la
+> mai multe mese. Este mai eficient să obții toate comenzile de la o masă
+> înainte de a trece la următoarea. Luând o comandă de la masa A, apoi o
+> comandă de la masa B, apoi una de la A din nou, și apoi din nou una din B ar
+> fi un proces mult mai lent. Din același motiv, un procesor își poate face
+> treaba mai bine dacă lucrează pe date care sunt apropiate una de alta (așa
+> cum este pe stivă) și mai lent când sunt răzlețite (așa cum poate fi pe
 > heap).
 >
-> When your code calls a function, the values passed into the function
-> (including, potentially, pointers to data on the heap) and the function’s
-> local variables get pushed onto the stack. When the function is over, those
-> values get popped off the stack.
+> Când codul tău apelează o funcție, valorile transmise în funcție (inclusiv,
+> potențial, pointeri către date pe heap) și variabilele locale ale funcției
+> sunt introduse pe stivă. Când funcția se încheie, aceste valori sunt
+> eliminate de pe stivă.
 >
-> Keeping track of what parts of code are using what data on the heap,
-> minimizing the amount of duplicate data on the heap, and cleaning up unused
-> data on the heap so you don’t run out of space are all problems that ownership
-> addresses. Once you understand ownership, you won’t need to think about the
-> stack and the heap very often, but knowing that the main purpose of ownership
-> is to manage heap data can help explain why it works the way it does.
+> Urmărirea care părți ale codului folosesc ce date pe heap, minimizarea
+> cantității de date duplicate pe heap și eliberarea datelor neutilizate de pe
+> heap astfel încât să nu rămâi fără spațiu sunt toate probleme pe care
+> posesiunea le abordează. Odată ce înțelegi posesiunea, nu va trebui să te
+> gândești prea des la stivă și la heap, dar știind că scopul principal al
+> posesiunii este de a gestiona datele de pe heap poate ajuta la explicarea
+> modului în care aceasta funcționează.
 
-### Ownership Rules
+### Regulile posesiunii
 
-First, let’s take a look at the ownership rules. Keep these rules in mind as we
-work through the examples that illustrate them:
+În primul rând, să aruncăm o privire asupra regulilor posesiunii. Ține minte aceste reguli în timp ce lucrăm la exemplele care le ilustrează:
 
-* Each value in Rust has an *owner*.
-* There can only be one owner at a time.
-* When the owner goes out of scope, the value will be dropped.
+* Fiecare valoare în Rust are un *posesor*.
+* Poate exista doar un singur posesor la un moment dat.
+* Când posesorul iese din domeniul de vizibilitate (eng. out of scope), valoarea va fi eliminată.
 
-### Variable Scope
+### Domeniu de vizibilitate a variabilelor
 
-Now that we’re past basic Rust syntax, we won’t include all the `fn main() {`
-code in examples, so if you’re following along, make sure to put the following
-examples inside a `main` function manually. As a result, our examples will be a
-bit more concise, letting us focus on the actual details rather than
-boilerplate code.
+Acum că am trecut de baza sintaxei Rust, nu vom include în toate exemplele codul `fn main() {`, astfel că în continuare asigură-te că introduci manual exemplele ce vor urma într-o funcție `main`. Ca rezultat exemplele noastre vor fi ceva mai concise, permițându-ne să ne concentrăm pe detaliile esențiale, fără prea mult cod de umplutură.
 
-As a first example of ownership, we’ll look at the *scope* of some variables. A
-scope is the range within a program for which an item is valid. Take the
-following variable:
+Ca prim exemplu de posesiune vom analiza *domeniul de vizibilitate* al unor variabile. Un domeniu de vizibilitate este intervalul în cadrul unui program în care un element este valid. Să luăm în considerare următoarea variabilă:
 
 ```rust
 let s = "hello";
 ```
 
-The variable `s` refers to a string literal, where the value of the string is
-hardcoded into the text of our program. The variable is valid from the point at
-which it’s declared until the end of the current *scope*. Listing 4-1 shows a
-program with comments annotating where the variable `s` would be valid.
+Variabila `s` se referă la un string literal, unde valoarea string-ului este inclusă direct în textul programului nostru. Variabila este validă de la punctul în care este declarată până la sfârșitul domeniului de vizibilitate curent. Listarea 4-1 arată un program cu comentarii care anunță unde ar fi validă variabila `s`.
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/listing-04-01/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 4-1: A variable and the scope in which it is
-valid</span>
+<span class="caption">Listarea 4-1: O variabilă și domeniul de vizibilitate în care este
+validă</span>
 
-In other words, there are two important points in time here:
+Cu alte cuvinte, există două momente importante aici:
 
-* When `s` comes *into* scope, it is valid.
-* It remains valid until it goes *out of* scope.
+* Când `s` intră *în* domeniul de vizibilitate, este validă.
+* Rămâne validă până când iese *din* domeniul de vizibilitate.
 
-At this point, the relationship between scopes and when variables are valid is
-similar to that in other programming languages. Now we’ll build on top of this
-understanding by introducing the `String` type.
+La acest moment, relația dintre domeniile de vizibilitate și momentele în care variabilele sunt valide este similară cu cea din alte limbaje de programare. Acum să continuăm studierea relațiilor de posesiune în Rust cu introducerea tipului `String`.
 
-### The `String` Type
+### Tipul `String`
 
-To illustrate the rules of ownership, we need a data type that is more complex
-than those we covered in the [“Data Types”][data-types]<!-- ignore --> section
-of Chapter 3. The types covered previously are of a known size, can be stored
-on the stack and popped off the stack when their scope is over, and can be
-quickly and trivially copied to make a new, independent instance if another
-part of code needs to use the same value in a different scope. But we want to
-look at data that is stored on the heap and explore how Rust knows when to
-clean up that data, and the `String` type is a great example.
+Pentru a ilustra regulile de posesiune, avem nevoie de un tip de date mai complex decât cele pe care le-am descris în secțiunea [„Tipuri de date”][data-types] a Capitolului 3. Tipurile menționate anterior sunt de dimensiune cunoscută, deci pot fi stocate în stivă și eliminate din stivă când domeniul lor de vizibilitate se termină, și pot fi copiate rapid și trivial pentru a crea o nouă instanță independentă în cazul în care o altă parte a codului are nevoie să folosească aceeași valoare, dar într-un alt domeniu de vizibilitate. Însă noi vrem să accesăm datele care sunt stocate în heap și să explorăm cum anume Rust știe când să elibereze acele date, iar tipul `String` este un exemplu excelent.
 
-We’ll concentrate on the parts of `String` that relate to ownership. These
-aspects also apply to other complex data types, whether they are provided by
-the standard library or created by you. We’ll discuss `String` in more depth in
-[Chapter 8][ch8]<!-- ignore -->.
+Acum ne vom concentra doar asupra aspectelor tipului `String` care sunt relevante posesiunii. Aceste aspecte se aplică și altor tipuri de date complexe, fie că sunt furnizate de biblioteca standard sau create de tine. Mai pe larg vom discuta despre `String` în [Capitolul 8][ch8].
 
-We’ve already seen string literals, where a string value is hardcoded into our
-program. String literals are convenient, but they aren’t suitable for every
-situation in which we may want to use text. One reason is that they’re
-immutable. Another is that not every string value can be known when we write
-our code: for example, what if we want to take user input and store it? For
-these situations, Rust has a second string type, `String`. This type manages
-data allocated on the heap and as such is able to store an amount of text that
-is unknown to us at compile time. You can create a `String` from a string
-literal using the `from` function, like so:
+Am văzut deja literali ai tipului string, în care o valoare string este codificată direct în programul nostru. Literalii de string sunt convenabili, dar nu sunt potriviți pentru toate situațiile în care am dori să folosim text. Un motiv este că sunt imutabili. Altul este că nu fiecare valoare de string poate fi cunoscută din timp când scriem codul: de exemplu, ce se întâmplă dacă dorim să preluăm inputul de la utilizator și să îl stocăm? Pentru aceste situații Rust are un al doilea tip de string, `String`. Acest tip administrează date alocate în heap și astfel este capabil să stocheze un text care nu ne este cunoscut la momentul compilării. Poți crea un `String` dintr-un literal de string folosind funcția `from`, astfel:
 
 ```rust
 let s = String::from("hello");
 ```
 
-The double colon `::` operator allows us to namespace this particular `from`
-function under the `String` type rather than using some sort of name like
-`string_from`. We’ll discuss this syntax more in the [“Method
-Syntax”][method-syntax]<!-- ignore --> section of Chapter 5, and when we talk
-about namespacing with modules in [“Paths for Referring to an Item in the
-Module Tree”][paths-module-tree]<!-- ignore --> in Chapter 7.
+Operatorul cu dublu două puncte `::` ne permite să definim această funcție `from` în spațiul de nume al tipului `String` în loc să o numim cumva cum ar fi `string_from`. Vom discuta mai mult această sintaxă în secțiunea [„Sintaxa metodei”][method-syntax] din Capitolul 5, și când vorbim despre spațiul de nume cu module în [„Căi pentru referirea la un element în arborele modulelor”][paths-module-tree] din Capitolul 7.
 
-This kind of string *can* be mutated:
+Acest tip de string *poate* fi mutat:
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-01-can-mutate-string/src/main.rs:here}}
 ```
 
-So, what’s the difference here? Why can `String` be mutated but literals
-cannot? The difference is in how these two types deal with memory.
+Deci, care este diferența aici? De ce poate fi `String` mutat, dar literalii nu? Diferența o constituie felul în care aceste două tipuri sunt reprezentate în memorie.
 
-### Memory and Allocation
+### Memorie și alocare
 
-In the case of a string literal, we know the contents at compile time, so the
-text is hardcoded directly into the final executable. This is why string
-literals are fast and efficient. But these properties only come from the string
-literal’s immutability. Unfortunately, we can’t put a blob of memory into the
-binary for each piece of text whose size is unknown at compile time and whose
-size might change while running the program.
+În cazul unui literal de string, cunoaștem conținutul în timpul compilării, astfel încât textul este codificat direct în executabilul final. Din acest motiv, literalele de string sunt rapide și eficiente. Dar aceste proprietăți provin doar din imutabilitatea literalului de string. Din păcate, nu putem pune un bloc de memorie în binar pentru fiecare fragment de text a cărui dimensiune este necunoscută în timpul compilării și a cărui mărime s-ar putea schimba în timpul rulării programului.
 
-With the `String` type, in order to support a mutable, growable piece of text,
-we need to allocate an amount of memory on the heap, unknown at compile time,
-to hold the contents. This means:
+Cu tipul `String`, pentru a menține o bucată de text mutabilă, în creștere, trebuie să alocăm o cantitate de memorie pe heap, necunoscută în timpul compilării, pentru a deține conținutul. Aceasta înseamnă:
 
-* The memory must be requested from the memory allocator at runtime.
-* We need a way of returning this memory to the allocator when we’re done with
-  our `String`.
+* Memoria trebuie solicitată de la alocatorul de memorie la runtime.
+* Avem nevoie de o modalitate de a returna această memorie la alocator atunci când am terminat cu `String-ul` nostru.
 
-That first part is done by us: when we call `String::from`, its implementation
-requests the memory it needs. This is pretty much universal in programming
-languages.
+Prima parte este realizată de noi: când apelăm `String::from`, implementarea sa solicită memoria de care are nevoie. Aceasta parte este comună pentru mai toate limbajele de programare.
 
-However, the second part is different. In languages with a *garbage collector
-(GC)*, the GC keeps track of and cleans up memory that isn’t being used
-anymore, and we don’t need to think about it. In most languages without a GC,
-it’s our responsibility to identify when memory is no longer being used and to
-call code to explicitly free it, just as we did to request it. Doing this
-correctly has historically been a difficult programming problem. If we forget,
-we’ll waste memory. If we do it too early, we’ll have an invalid variable. If
-we do it twice, that’s a bug too. We need to pair exactly one `allocate` with
-exactly one `free`.
+Cu toate acestea, a doua parte este diferită. În limbajele cu un *colector de gunoi* (garbage collector (GC)), GC ține evidența și eliberează memoria care nu mai este folosită, programatorul nu mai având necesitatea de a se gândi la asta. Pe când în majoritatea limbajelor fără un GC e responsabilitatea noastră să identificăm când memoria nu mai este folosită și să apelăm codul pentru a o elibera explicit, la fel cum am solicitat-o. A face acest lucru corect este, de obicei, o problemă dificilă de programare. Dacă uităm, vom irosi memorie. Dacă o facem prea devreme, vom avea o variabilă nevalidă. Dacă o facem de două ori tot este o problemă. Trebuie să menținem perechi de exact o `alocare` cu exact o `dealocare`.
 
-Rust takes a different path: the memory is automatically returned once the
-variable that owns it goes out of scope. Here’s a version of our scope example
-from Listing 4-1 using a `String` instead of a string literal:
+Rust alege o cale diferită: memoria este returnată automat odată ce variabila care o deține iese din domeniu de vizibilitate. Iată o versiune a exemplului nostru despre domeniu de vizibilitate de la Listarea 4-1 folosind un `String` în loc de un literal de string:
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-02-string-scope/src/main.rs:here}}
 ```
 
-There is a natural point at which we can return the memory our `String` needs
-to the allocator: when `s` goes out of scope. When a variable goes out of
-scope, Rust calls a special function for us. This function is called
-[`drop`][drop]<!-- ignore -->, and it’s where the author of `String` can put
-the code to return the memory. Rust calls `drop` automatically at the closing
-curly bracket.
+Există un punct natural la care putem returna memoria ocupată de `String-ul` nostru la alocator: atunci când `s` iese din domeniu de vizibilitate. Când o variabilă iese din domeniu de vizibilitate, Rust apelează o funcție specială. Această funcție se numește [`drop`][drop]<!-- ignore -->, și este chiar locul unde autorul `String`-ului poate pune codul de returnare a memoriei. Rust apelează `drop` automat la închiderea acoladei.
 
-> Note: In C++, this pattern of deallocating resources at the end of an item’s
-> lifetime is sometimes called *Resource Acquisition Is Initialization (RAII)*.
-> The `drop` function in Rust will be familiar to you if you’ve used RAII
-> patterns.
+> Notă: În C++, acest model de dealocare a resurselor la sfârșitul duratei de
+> viață a unui element se numește uneori 
+> *Resource Acquisition Is Initialization (RAII)*. Funcția `drop` din Rust îți
+> va fi familiară dacă ai folosit modele RAII.
 
-This pattern has a profound impact on the way Rust code is written. It may seem
-simple right now, but the behavior of code can be unexpected in more
-complicated situations when we want to have multiple variables use the data
-we’ve allocated on the heap. Let’s explore some of those situations now.
+Felul acesta de operare a memoriei are un impact profund asupra modului în care este scris codul Rust. Poate părea simplu acum, dar comportamentul codului poate fi destul de neașteptat în situații mai complicate, atunci când avem mai multe variabile care utilizează datele pe care le-am alocat pe heap. Să explorăm acum unele așa situații.
 
-<!-- Old heading. Do not remove or links may break. -->
+<!-- Vechiul titlu. Nu îl eliminați sau link-urile s-ar putea strica. -->
 <a id="ways-variables-and-data-interact-move"></a>
 
-#### Variables and Data Interacting with Move
+#### Variabile și interacționarea cu date folosind permutarea
 
-Multiple variables can interact with the same data in different ways in Rust.
-Let’s look at an example using an integer in Listing 4-2.
+Variabilele pot interacționa cu aceleași date în diferite moduri în Rust. Să privim la un exemplu utilizând un întreg în Lista 4-2.
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/listing-04-02/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 4-2: Assigning the integer value of variable `x`
-to `y`</span>
+<span class="caption">Lista 4-2: Atribuirea valorii întregului de la variabila `x`
+la `y`</span>
 
-We can probably guess what this is doing: “bind the value `5` to `x`; then make
-a copy of the value in `x` and bind it to `y`.” We now have two variables, `x`
-and `y`, and both equal `5`. This is indeed what is happening, because integers
-are simple values with a known, fixed size, and these two `5` values are pushed
-onto the stack.
+Probabil putem ghici ce face acest cod: „atribuie valoarea `5` lui `x`; apoi face
+o copie a valorii din `x` și o atribuie lui `y`.” Acum avem două variabile, `x`
+și `y`, și ambele sunt egale cu `5`. Așa și este, deoarece întregii în Rust sunt valori simple cu o mărime cunoscută, fixă, și aceste două valori `5` sunt împinse pe stivă.
 
-Now let’s look at the `String` version:
+Acum să ne uităm la versiunea cu un `String`:
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-03-string-move/src/main.rs:here}}
 ```
 
-This looks very similar, so we might assume that the way it works would be the
-same: that is, the second line would make a copy of the value in `s1` and bind
-it to `s2`. But this isn’t quite what happens.
+Aceasta arată foarte asemănător, printr urmare s-ar putea presupune că modul în care funcționează ar fi la fel: adică, a doua linie ar face o copie a valorii din `s1` și o atribuie lui `s2`. Doar că de data aceasta nu e chiar așa.
 
-Take a look at Figure 4-1 to see what is happening to `String` under the
-covers. A `String` is made up of three parts, shown on the left: a pointer to
-the memory that holds the contents of the string, a length, and a capacity.
-This group of data is stored on the stack. On the right is the memory on the
-heap that holds the contents.
+Priviți la Figura 4-1 pentru a vedea ce se întâmplă cu `String` în fundal. Un `String` este format din trei părți, arătate în stânga: un pointer spre memoria care deține conținutul string-ului, o lungime și o capacitate. Acest grup de date este stocat pe stivă. Pe dreapta e reprezentată memoria de pe heap care deține conținutul.
 
-<img alt="Two tables: the first table contains the representation of s1 on the
-stack, consisting of its length (5), capacity (5), and a pointer to the first
-value in the second table. The second table contains the representation of the
-string data on the heap, byte by byte." src="img/trpl04-01.svg" class="center"
+<img alt="Două tabele: prima tabelă conține reprezentarea s1 pe stivă,
+constând din lungimea sa (5), capacitatea (5) și un pointer către prima
+valoare din cea de-a doua tabelă. Cea de-a doua tabelă conține reprezentarea
+datelor string-ului pe heap, byte cu byte." src="img/trpl04-01.svg" class="center"
 style="width: 50%;" />
 
-<span class="caption">Figure 4-1: Representation in memory of a `String`
-holding the value `"hello"` bound to `s1`</span>
+<span class="caption">Figura 4-1: Reprezentare în memorie a unui `String`
+care deține valoarea `"hello"` și este atribuită lui `s1`</span>
 
-The length is how much memory, in bytes, the contents of the `String` are
-currently using. The capacity is the total amount of memory, in bytes, that the
-`String` has received from the allocator. The difference between length and
-capacity matters, but not in this context, so for now, it’s fine to ignore the
-capacity.
+Lungimea reprezintă câtă memorie, în octeți, folosește în prezent conținutul `String`-ului. Capacitatea este cantitatea totală de memorie, în octeți, pe care `String`-ul a primit-o de la alocator. Diferența între lungime și capacitate contează, dar nu în acest context, deci, pentru moment ignorăm capacitatea.
 
-When we assign `s1` to `s2`, the `String` data is copied, meaning we copy the
-pointer, the length, and the capacity that are on the stack. We do not copy the
-data on the heap that the pointer refers to. In other words, the data
-representation in memory looks like Figure 4-2.
+Când atribuim `s1` la `s2`, datele din `String` sunt copiate, însemnând că noi copiem pointer-ul, lungimea și capacitatea care sunt pe stivă. Noi nu copiem
+datele de pe heap pe care pointer-ul le referă. Cu alte cuvinte, reprezentarea datelor în memorie arată ca Figura 4-2.
 
-<img alt="Three tables: tables s1 and s2 representing those strings on the
-stack, respectively, and both pointing to the same string data on the heap."
+<img alt="Trei tabele: tabelele s1 și s2 reprezentând acele string-uri pe stivă,
+respectiv, și amândouă adresând aceleași date din string de pe heap."
 src="img/trpl04-02.svg" class="center" style="width: 50%;" />
 
-<span class="caption">Figure 4-2: Representation in memory of the variable `s2`
-that has a copy of the pointer, length, and capacity of `s1`</span>
+<span class="caption">Figura 4-2: Reprezentare în memorie a variabilei `s2`
+care are o copie a pointer-ului, lungimii și capacității lui `s1`</span>
 
-The representation does *not* look like Figure 4-3, which is what memory would
-look like if Rust instead copied the heap data as well. If Rust did this, the
-operation `s2 = s1` could be very expensive in terms of runtime performance if
-the data on the heap were large.
+Reprezentarea *nu* e ca în figura 4-3, ea prezintă cum ar fi arătat memoria dacă Rust copia *și* datele din heap. Dacă Rust ar face acest lucru, operațiunea `s2 = s1` ar deveni foarte costisitoare în termeni de performanță la execuție, mai ales când datele de pe heap sunt  mari.
 
-<img alt="Four tables: two tables representing the stack data for s1 and s2,
-and each points to its own copy of string data on the heap."
+<img alt="Patru tabele: doua tabele reprezentând datele de pe stivă pentru s1 și s2,
+și fiecare punctează la propria copie a datelor de string de pe heap."
 src="img/trpl04-03.svg" class="center" style="width: 50%;" />
 
-<span class="caption">Figure 4-3: Another possibility for what `s2 = s1` might
-do if Rust copied the heap data as well</span>
+<span class="caption">Figura 4-3: O altă posibilitate pentru ce ar putea face `s2 = s1`
+dacă Rust ar copia de asemenea datele de pe heap</span>
 
-Earlier, we said that when a variable goes out of scope, Rust automatically
-calls the `drop` function and cleans up the heap memory for that variable. But
-Figure 4-2 shows both data pointers pointing to the same location. This is a
-problem: when `s2` and `s1` go out of scope, they will both try to free the
-same memory. This is known as a *double free* error and is one of the memory
-safety bugs we mentioned previously. Freeing memory twice can lead to memory
-corruption, which can potentially lead to security vulnerabilities.
+Mai devreme, am spus că atunci când o variabilă iese din domeniul de vizibilitate, Rust apelează automat funcția `drop` și curăță memoria heap pentru acea variabilă. Dar Figura 4-2 arată ambele pointer-e de date adresând aceeași locație. Ar fi o problemă: când `s2` și `s1` ies din domeniul de vizibilitate, vor încerca amândouă să elibereze aceeași memorie. Acest lucru este cunoscut ca eroarea de *eliberare dublă* (double free) și este una dintre erorile de securitate a memoriei pe care le-am menționat anterior. Eliberarea memoriei de două ori poate duce la coruperea memoriei, ceea ce potențial poate provoca vulnerabilități de securitate.
 
-To ensure memory safety, after the line `let s2 = s1;`, Rust considers `s1` as
-no longer valid. Therefore, Rust doesn’t need to free anything when `s1` goes
-out of scope. Check out what happens when you try to use `s1` after `s2` is
-created; it won’t work:
+Pentru a asigura securitatea memoriei, după linia `let s2 = s1;`, Rust consideră că `s1` nu mai este valid. Prin urmare, Rust nu trebuie să elibereze nimic atunci când `s1` iese din domeniul de vizibilitate. Să vedem ce se întâmplă când încercăm să folosim `s1` după ce `s2` este creat; nu va funcționa:
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-04-cant-use-after-move/src/main.rs:here}}
 ```
 
-You’ll get an error like this because Rust prevents you from using the
-invalidated reference:
+Vom primi o eroare similară, deoarece Rust ne împiedică să utilizăm referința invalidată:
 
 ```console
 {{#include ../listings/ch04-understanding-ownership/no-listing-04-cant-use-after-move/output.txt}}
 ```
 
-If you’ve heard the terms *shallow copy* and *deep copy* while working with
-other languages, the concept of copying the pointer, length, and capacity
-without copying the data probably sounds like making a shallow copy. But
-because Rust also invalidates the first variable, instead of being called a
-shallow copy, it’s known as a *move*. In this example, we would say that `s1`
-was *moved* into `s2`. So, what actually happens is shown in Figure 4-4.
+Dacă ai auzit termenii *copiere superficială* (shallow copy) și *copiere profundă* (deep copy) în timp ce lucrezi cu alte limbaje, conceptul de copiere a pointerului, lungimii și capacității fără a copia datele probabil sună ca făcând o copiere superficială. Dar deoarece Rust de asemenea invalidează prima variabilă, în loc să fie numită o copiere superficială, este cunoscută ca o *permutare*. În acest exemplu, am spune că `s1` a fost *permutată* în `s2`. Deci, ceea ce se întâmplă de fapt este ilustrat în Figura 4-4.
 
-<img alt="Three tables: tables s1 and s2 representing those strings on the
-stack, respectively, and both pointing to the same string data on the heap.
-Table s1 is grayed out be-cause s1 is no longer valid; only s2 can be used to
-access the heap data." src="img/trpl04-04.svg" class="center" style="width:
+<img alt="Trei tabele: tabelele s1 și s2 reprezentând acele string-uri pe stivă,
+respectiv, și ambele adresând aceleași date de string de pe heap.
+Tabelul s1 este umbrit deoarece s1 nu mai este valid; doar s2 poate fi folosit 
+pentru a accesa datele de pe heap." src="img/trpl04-04.svg" class="center" style="width:
 50%;" />
 
-<span class="caption">Figure 4-4: Representation in memory after `s1` has been
-invalidated</span>
+<span class="caption">Figura 4-4: Reprezentarea în memorie după ce `s1` a fost
+invalidat</span>
 
-That solves our problem! With only `s2` valid, when it goes out of scope it
-alone will free the memory, and we’re done.
+Aceasta rezolvă problema noastră! Cu doar `s2` validă, atunci când iese din domeniul de vizibilitate variabila va elibera singură memoria.
 
-In addition, there’s a design choice that’s implied by this: Rust will never
-automatically create “deep” copies of your data. Therefore, any *automatic*
-copying can be assumed to be inexpensive in terms of runtime performance.
+În plus, rezultă un fapt important pentru design-ul limbajului: Rust nu va crea niciodată automat o „copiere profundă” a datelor noastre. Prin urmare, orice *copiere automată* poate fi presupusă a fi ieftină în ceea ce privește performanța la runtime.
 
 <!-- Old heading. Do not remove or links may break. -->
 <a id="ways-variables-and-data-interact-clone"></a>
 
-#### Variables and Data Interacting with Clone
+#### Variabile și interacționarea cu date folosind clonarea
 
-If we *do* want to deeply copy the heap data of the `String`, not just the
-stack data, we can use a common method called `clone`. We’ll discuss method
-syntax in Chapter 5, but because methods are a common feature in many
-programming languages, you’ve probably seen them before.
+Dacă vrem să copiem *în profunzime* datele unui `String` din heap, nu doar datele din stivă, putem folosi o metodă des întâlnită, numită `clone`. Vom discuta sintaxa metodelor în Capitolul 5, însă deoarece metodele sunt o caracteristică comună în multe limbaje de programare, probabil le-ai întâlnit deja.
 
-Here’s an example of the `clone` method in action:
+Iată un exemplu al utilizării metodei `clone`:
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-05-clone/src/main.rs:here}}
 ```
 
-This works just fine and explicitly produces the behavior shown in Figure 4-3,
-where the heap data *does* get copied.
+Acest lucru funcționează foarte bine și produce în mod explicit comportamentul prezentat în Figura 4-3, unde datele din heap *sunt* copiate.
 
-When you see a call to `clone`, you know that some arbitrary code is being
-executed and that code may be expensive. It’s a visual indicator that something
-different is going on.
+Când vezi un apel către `clone`, știi că se execută un anumit cod arbitrar și că acest cod poate fi costisitor. Este un indicator vizual că se întâmplă ceva diferit.
 
-#### Stack-Only Data: Copy
+#### Date doar pe stivă: trăsătura Copy
 
-There’s another wrinkle we haven’t talked about yet. This code using
-integers—part of which was shown in Listing 4-2—works and is valid:
+Există o altă nuanță despre care nu am discutat încă. Acest cod care folosește numere întregi, o parte din el a fost arătată în Listarea 4-2, funcționează și este valid:
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/no-listing-06-copy/src/main.rs:here}}
 ```
 
-But this code seems to contradict what we just learned: we don’t have a call to
-`clone`, but `x` is still valid and wasn’t moved into `y`.
+Dar acest cod pare să contrazică ceea ce tocmai am învățat: nu avem un apel la `clone`, dar `x` este încă valid și nu a fost permutat în `y`.
 
-The reason is that types such as integers that have a known size at compile
-time are stored entirely on the stack, so copies of the actual values are quick
-to make. That means there’s no reason we would want to prevent `x` from being
-valid after we create the variable `y`. In other words, there’s no difference
-between deep and shallow copying here, so calling `clone` wouldn’t do anything
-different from the usual shallow copying, and we can leave it out.
+Motivul este că unele tipuri, cum ar fi numerele întregi care au o dimensiune cunoscută la compilare, sunt stocate în întregime pe stivă, astfel încât copierea valorilor lor este foarte rapidă. Astfel nu avem niciun motiv să vrem să prevenim `x` de a fi valid după ce am creat variabila `y`. Cu alte cuvinte, nu există nicio diferență între copierea profundă și cea superficială aici, deci apelarea la `clone` nu ar face nimic diferit de copierea superficială obișnuită, așa că o putem lăsa pentru alte cazuri.
 
-Rust has a special annotation called the `Copy` trait that we can place on
-types that are stored on the stack, as integers are (we’ll talk more about
-traits in [Chapter 10][traits]<!-- ignore -->). If a type implements the `Copy`
-trait, variables that use it do not move, but rather are trivially copied,
-making them still valid after assignment to another variable.
+Rust are o adnotare specială numită trăsătura `Copy` pe care o putem aplica la tipuri care sunt stocate pe stivă, la fel ca numerele întregi (vom vorbi mai multe despre trăsături în [Capitolul 10][traits]<!-- ignore -->). Dacă un tip implementează trăsătura `Copy`, variabilele care îl utilizează nu se permută, ci sunt copiate superficial, lucru care le păstrează valide după atribuirea lor altei variabile.
 
-Rust won’t let us annotate a type with `Copy` if the type, or any of its parts,
-has implemented the `Drop` trait. If the type needs something special to happen
-when the value goes out of scope and we add the `Copy` annotation to that type,
-we’ll get a compile-time error. To learn about how to add the `Copy` annotation
-to your type to implement the trait, see [“Derivable
-Traits”][derivable-traits]<!-- ignore --> in Appendix C.
+Rust nu ne va lăsa să adnotăm un tip cu `Copy` dacă tipul, sau oricare dintre părțile sale, a implementat trăsătura `Drop`. Dacă tipul are nevoie de ceva special să se întâmple când valoarea iese din domeniul de vizibilitate și adăugăm adnotarea `Copy` la acel tip, vom primi o eroare la compilare. Pentru a afla cum să adăugați adnotarea `Copy` la tipul tău pentru a implementa trăsătura, vedeți [“Trăsături derivate”][derivable-traits]<!-- ignore --> în Anexa C.
 
-So, what types implement the `Copy` trait? You can check the documentation for
-the given type to be sure, but as a general rule, any group of simple scalar
-values can implement `Copy`, and nothing that requires allocation or is some
-form of resource can implement `Copy`. Here are some of the types that
-implement `Copy`:
+Deci, ce tipuri implementează trăsătura `Copy`? Puteți verifica documentația pentru
+tipul dat pentru a fi sigur, dar ca o regulă generală, orice grup de valori scalare simple
+poate implementa `Copy`, și nimic care necesită alocare sau este o formă de resursă nu poate implementa `Copy`. Iată câteva tipuri care 
+implementează `Copy`:
 
-* All the integer types, such as `u32`.
-* The Boolean type, `bool`, with values `true` and `false`.
-* All the floating-point types, such as `f64`.
-* The character type, `char`.
-* Tuples, if they only contain types that also implement `Copy`. For example,
-  `(i32, i32)` implements `Copy`, but `(i32, String)` does not.
+* Toate tipurile de numere întregi, cum ar fi `u32`.
+* Tipul Boolean, `bool`, cu valorile `true` și `false`.
+* Toate tipurile de numere în virgulă mobilă, cum ar fi `f64`.
+* Tipul de caractere, `char`.
+* Tuple, dacă acestea conțin numai tipuri care de asemenea implementează `Copy`. De exemplu,  `(i32, i32)` implementează `Copy`, dar `(i32, String)` nu.
 
-### Ownership and Functions
+### Funcțiile și posesiunea
 
-The mechanics of passing a value to a function are similar to those when
-assigning a value to a variable. Passing a variable to a function will move or
-copy, just as assignment does. Listing 4-3 has an example with some annotations
-showing where variables go into and out of scope.
+Transmiterea unei valori către o funcție e similară cu atribuirea acelei valori unei variabile. A transmite o variabilă către o funcție implică fie permutarea, fie copierea acelei valori, exact așa cum se întâmplă și la atribuire. În Lista 4-3, am pregătit un exemplu cu adnotări pentru a ilustra când intră și ies variabilele din domeniul de vizibilitate.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/listing-04-03/src/main.rs}}
 ```
 
-<span class="caption">Listing 4-3: Functions with ownership and scope
-annotated</span>
+<span class="caption">Listarea 4-3: Funcții cu posesiunea și domeniul de vizibilitate adnotat</span>
 
-If we tried to use `s` after the call to `takes_ownership`, Rust would throw a
-compile-time error. These static checks protect us from mistakes. Try adding
-code to `main` that uses `s` and `x` to see where you can use them and where
-the ownership rules prevent you from doing so.
+Dacă am încercat să utilizăm `s` după apelul la `takes_ownership`, Rust ar genera o eroare la compilare. Aceste verificări statice ne protejează de greșeli. Încearcă să adaugi cod la `main` care folosește `s` și `x` pentru a vedea unde le poți folosi și unde regulile de posesiune te împiedică să faci asta.
 
-### Return Values and Scope
+### Valorile returnate și domeniul de vizibilitate
 
-Returning values can also transfer ownership. Listing 4-4 shows an example of a
-function that returns some value, with similar annotations as those in Listing
-4-3.
+Returul valorilor poate transmite, de asemenea, posesiunea. Listarea 4-4 ilustrează un exemplu de funcție care returnează o valoare, folosind adnotări similare cu cele din Listarea 4-3.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/listing-04-04/src/main.rs}}
 ```
 
-<span class="caption">Listing 4-4: Transferring ownership of return
-values</span>
+<span class="caption">Listarea 4-4: Transferul posesiunii prin valorile returnate</span>
 
-The ownership of a variable follows the same pattern every time: assigning a
-value to another variable moves it. When a variable that includes data on the
-heap goes out of scope, the value will be cleaned up by `drop` unless ownership
-of the data has been moved to another variable.
+Posesiunea unei variabile urmează același model de fiecare dată: atribuirea unei valori unei alte variabile determină permutarea acesteia. Când variabila, care include date pe heap, iese din domeniul de vizibilitate, valoarea este eliberată prin funcția `drop`, cu excepția situației în care posesiunea datelor a fost permutată către o altă variabilă.
 
-While this works, taking ownership and then returning ownership with every
-function is a bit tedious. What if we want to let a function use a value but
-not take ownership? It’s quite annoying that anything we pass in also needs to
-be passed back if we want to use it again, in addition to any data resulting
-from the body of the function that we might want to return as well.
+Această abordare este funcțională, dar preluarea posesiunii și ulterior returnarea acesteia cu fiecare funcție se poate dovedi a fi un proces anevoios. Ce facem dacă vrem ca o funcție să utilizeze o valoare, fără a-i lua posesiunea? Este laborios faptul că tot ce trimitem în interiorul unei funcții trebuie să fie returnat înapoi dacă dorim să-l utilizăm din nou, în plus față de orice rezultate obținute în corpul funcției pe care am dori să le returnăm.
 
-Rust does let us return multiple values using a tuple, as shown in Listing 4-5.
+Rust ne oferă posibilitatea de a returna mai multe valori prin utilizarea unei tuple, așa cum este ilustrat în Listarea 4-5.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch04-understanding-ownership/listing-04-05/src/main.rs}}
 ```
 
-<span class="caption">Listing 4-5: Returning ownership of parameters</span>
+<span class="caption">Listarea 4-5: Returnarea posesiunii parametrilor</span>
 
-But this is too much ceremony and a lot of work for a concept that should be
-common. Luckily for us, Rust has a feature for using a value without
-transferring ownership, called *references*.
+Însă acest proces este prea laborios și complex pentru un concept ce ar trebui să fie simplu. Din fericire pentru noi, Rust dispune de o funcționalitate ce ne permite să folosim o valoare fără a-i transfera posesiunea, funcționalitate cunoscută sub numele de *referințe*.
 
 [data-types]: ch03-02-data-types.html#data-types
 [ch8]: ch08-02-strings.html
