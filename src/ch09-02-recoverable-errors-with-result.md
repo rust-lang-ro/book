@@ -1,14 +1,8 @@
-## Recoverable Errors with `Result`
+## Gestionarea erorilor recuperabile cu `Result`
 
-Most errors aren’t serious enough to require the program to stop entirely.
-Sometimes, when a function fails, it’s for a reason that you can easily
-interpret and respond to. For example, if you try to open a file and that
-operation fails because the file doesn’t exist, you might want to create the
-file instead of terminating the process.
+Nu toate erorile sunt atât de grave încât să necesite oprirea completă a programului. Când o funcție eșuează, uneori motivul poate fi ușor de interpretat și de abordat. Spre exemplu, dacă încerci să deschizi un fișier iar operațiunea nu reușește pentru că fișierul lipsește, ai putea să optezi pentru crearea fișierului în loc să oprești programul.
 
-Recall from [“Handling Potential Failure with `Result`”][handle_failure]<!--
-ignore --> in Chapter 2 that the `Result` enum is defined as having two
-variants, `Ok` and `Err`, as follows:
+Reamintește-ți din Capitolul 2, secțiunea [„Gestionarea potențialelor eșecuri cu `Result`”][handle_failure] <!-- ignore -->. Am discutat atunci că enum-ul `Result` este definit cu două variante: `Ok` și `Err`.
 
 ```rust
 enum Result<T, E> {
@@ -17,88 +11,49 @@ enum Result<T, E> {
 }
 ```
 
-The `T` and `E` are generic type parameters: we’ll discuss generics in more
-detail in Chapter 10. What you need to know right now is that `T` represents
-the type of the value that will be returned in a success case within the `Ok`
-variant, and `E` represents the type of the error that will be returned in a
-failure case within the `Err` variant. Because `Result` has these generic type
-parameters, we can use the `Result` type and the functions defined on it in
-many different situations where the successful value and error value we want to
-return may differ.
+`T` și `E` sunt parametri de tip generic. Vom discuta despre generice mai pe larg în Capitolul 10. Important de știut acum este că `T` reprezintă tipul valorii returnate în caz de succes de varianta `Ok`, iar `E` tipul erorii returnate în caz de eșec de varianta `Err`. Cu acești parametri generici, tipul `Result` poate fi utilizat în multe contexte diferite, unde valorile succesului și ale erorii pot varia.
 
-Let’s call a function that returns a `Result` value because the function could
-fail. In Listing 9-3 we try to open a file.
+Imaginează-ți că apelăm o funcție care returnează o valoare `Result` pentru că funcția ar putea să nu reușească. În Listarea 9-3, încercăm să deschidem un fișier.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch09-error-handling/listing-09-03/src/main.rs}}
 ```
 
-<span class="caption">Listing 9-3: Opening a file</span>
+<span class="caption">Listarea 9-3: Deschiderea unui fișier</span>
 
-The return type of `File::open` is a `Result<T, E>`. The generic parameter `T`
-has been filled in by the implementation of `File::open` with the type of the
-success value, `std::fs::File`, which is a file handle. The type of `E` used in
-the error value is `std::io::Error`. This return type means the call to
-`File::open` might succeed and return a file handle that we can read from or
-write to. The function call also might fail: for example, the file might not
-exist, or we might not have permission to access the file. The `File::open`
-function needs to have a way to tell us whether it succeeded or failed and at
-the same time give us either the file handle or error information. This
-information is exactly what the `Result` enum conveys.
+Tipul returnat de `File::open` este `Result<T, E>`. În acest context, `T` este `std::fs::File`, adică un descriptor al fișierului, iar `E` este `std::io::Error`. Acest lucru înseamnă că apelul la `File::open` poate reuși sau eșua — fișierul să nu existe sau să nu avem permisiunea necesară. Funcția `File::open` trebuie astfel să ne poată informa despre reușită sau eșec și să ne furnizeze descriptorul fișierului sau date despre eroare. `Result` este exact mecanismul care transmite aceste informații.
 
-In the case where `File::open` succeeds, the value in the variable
-`greeting_file_result` will be an instance of `Ok` that contains a file handle.
-In the case where it fails, the value in `greeting_file_result` will be an
-instance of `Err` that contains more information about the kind of error that
-happened.
+Dacă `File::open` reușește, variabila `greeting_file_result` va conține o instanță `Ok` cu descriptorul fișierului. Dacă eșuează, va conține `Err` cu informații suplimentare privind eroarea survenită.
 
-We need to add to the code in Listing 9-3 to take different actions depending
-on the value `File::open` returns. Listing 9-4 shows one way to handle the
-`Result` using a basic tool, the `match` expression that we discussed in
-Chapter 6.
+Trebuie să extindem codul din Listarea 9-3 pentru a gestiona diferite rezultate ale funcției `File::open`. Listarea 9-4 prezintă cum putem folosi expresia `match` pentru aceasta, discutată în Capitolul 6.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,should_panic
 {{#rustdoc_include ../listings/ch09-error-handling/listing-09-04/src/main.rs}}
 ```
 
-<span class="caption">Listing 9-4: Using a `match` expression to handle the
-`Result` variants that might be returned</span>
+<span class="caption">Listarea 9-4: Utilizarea `match` pentru gestionarea variantelor `Result`</span>
 
-Note that, like the `Option` enum, the `Result` enum and its variants have been
-brought into scope by the prelude, so we don’t need to specify `Result::`
-before the `Ok` and `Err` variants in the `match` arms.
+La fel ca `Option`, și `Result` și variantele sale sunt importate automat, deci nu avem nevoie să precizăm `Result::` înainte de `Ok` și `Err` în ramurile `match`.
 
-When the result is `Ok`, this code will return the inner `file` value out of
-the `Ok` variant, and we then assign that file handle value to the variable
-`greeting_file`. After the `match`, we can use the file handle for reading or
-writing.
+Când rezultatul este `Ok`, codul extrage valoarea file din varianta `Ok` și o atribuie variabilei `greeting_file`. Ulterior, descriptorul fișierului poate fi folosit pentru citire sau scriere.
 
-The other arm of the `match` handles the case where we get an `Err` value from
-`File::open`. In this example, we’ve chosen to call the `panic!` macro. If
-there’s no file named *hello.txt* in our current directory and we run this
-code, we’ll see the following output from the `panic!` macro:
+Ramura pentru `Err` din `match` gestionează situația eșecului de la `File::open`. În acest exemplu, optăm pentru panică, prin `panic!`. Dacă nu există un fișier denumit *hello.txt* în directoriul nostru curent atunci când rulăm codul, `panic!` ne va arăta următoarea ieșire:
 
 ```console
 {{#include ../listings/ch09-error-handling/listing-09-04/output.txt}}
 ```
 
-As usual, this output tells us exactly what has gone wrong.
+Ca de obicei, această ieșire ne detaliază cu precizie problema întâmpinată.
 
-### Matching on Different Errors
+### Diferențiind reacția la erori
 
-The code in Listing 9-4 will `panic!` no matter why `File::open` failed.
-However, we want to take different actions for different failure reasons: if
-`File::open` failed because the file doesn’t exist, we want to create the file
-and return the handle to the new file. If `File::open` failed for any other
-reason—for example, because we didn’t have permission to open the file—we still
-want the code to `panic!` in the same way as it did in Listing 9-4. For this we
-add an inner `match` expression, shown in Listing 9-5.
+Codul prezentat în Listarea 9-4 va genera o panică (`panic!`) indiferent de cauza eșecului funcției `File::open`. Totuși, noi intenționăm să abordăm diferit motivele specifice ale eșecului: dacă `File::open` nu reușește datorită inexistenței fișierului, intenționăm să creăm fișierul și să returnăm un descriptor către acesta. În schimb, dacă `File::open` eșuează din alte motive - de exemplu, lipsa permisiunilor de acces - dorim să menținem reacția inițială de panică, așa cum este ilustrat în Listarea 9-4. Pentru a gestiona acest comportament, includem o expresie `match` suplimentară, ilustrată în Listarea 9-5.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 <!-- ignore this test because otherwise it creates hello.txt which causes other
 tests to fail lol -->
@@ -107,35 +62,22 @@ tests to fail lol -->
 {{#rustdoc_include ../listings/ch09-error-handling/listing-09-05/src/main.rs}}
 ```
 
-<span class="caption">Listing 9-5: Handling different kinds of errors in
-different ways</span>
+<span class="caption">Listarea 9-5: Abordări diferențiate ale gestionării erorilor</span>
 
-The type of the value that `File::open` returns inside the `Err` variant is
-`io::Error`, which is a struct provided by the standard library. This struct
-has a method `kind` that we can call to get an `io::ErrorKind` value. The enum
-`io::ErrorKind` is provided by the standard library and has variants
-representing the different kinds of errors that might result from an `io`
-operation. The variant we want to use is `ErrorKind::NotFound`, which indicates
-the file we’re trying to open doesn’t exist yet. So we match on
-`greeting_file_result`, but we also have an inner match on `error.kind()`.
+Tipul valorii returnate de `File::open` când întâlnește o eroare (`Err`) este `io::Error`, o structură definită în biblioteca standard. Această structură include metoda `kind`, prin care putem obține o valoare de tip `io::ErrorKind`. Enum-ul `io::ErrorKind`, de asemenea furnizat de biblioteca standard, categorizează potențialele erori ce pot apărea în timpul unei operațiuni `io`. Pentru cazul nostru, ne folosim de varianta `ErrorKind::NotFound`, care semnalizează că fișierul pe care dorim să-l deschidem nu există încă. Acest lucru ne conduce la aplicarea unui `match` pe variabila `greeting_file_result`, dar în interiorul acestuia aplicăm și un `match` pe rezultatul apelării `error.kind()`.
 
-The condition we want to check in the inner match is whether the value returned
-by `error.kind()` is the `NotFound` variant of the `ErrorKind` enum. If it is,
-we try to create the file with `File::create`. However, because `File::create`
-could also fail, we need a second arm in the inner `match` expression. When the
-file can’t be created, a different error message is printed. The second arm of
-the outer `match` stays the same, so the program panics on any error besides
-the missing file error.
+Ne interesează să verificăm, în cadrul `match`-ului intern, dacă valoarea întoarsă de `error.kind()` corespunde cu varianta `NotFound` a enum-ului `ErrorKind`. Dacă este așa, înaintăm cu încercarea de creare a fișierului folosind `File::create`. Însă, cum și această operațiune poate să eșueze, introducem un al doilea braț în expresia de `match` din interior. În situația în care crearea fișierului nu este posibilă, se va afișa un mesaj de eroare diferit. Cel de-al doilea braț al `match`-ului exterior rămâne neschimbat, astfel programul va genera o panică pentru orice alt tip de eroare, în afara erorii generată de absența fișierului.
 
-> ### Alternatives to Using `match` with `Result<T, E>`
+> ### Metode alternative la utilizarea `match` cu `Result<T, E>`
 >
-> That’s a lot of `match`! The `match` expression is very useful but also very
-> much a primitive. In Chapter 13, you’ll learn about closures, which are used
-> with many of the methods defined on `Result<T, E>`. These methods can be more
-> concise than using `match` when handling `Result<T, E>` values in your code.
+> Expresia `match` este extrem de utilă, însă poate deveni încărcată în
+> anumite contexte. În Capitolul 13, veți descoperi closures, care facilitează
+> lucrul cu diverse metode definite pentru `Result<T, E>`. Aceste metode oferă
+> abordări mai concise comparativ cu `match` pentru gestionarea valorilor
+> `Result<T, E>` în cod.
 >
-> For example, here’s another way to write the same logic as shown in Listing
-> 9-5, this time using closures and the `unwrap_or_else` method:
+> De pildă, vă prezentăm o altă cale de a implementa logica din Listarea 9-5,
+> utilizând de această dată closures și metoda `unwrap_or_else`:
 >
 > <!-- CAN'T EXTRACT SEE https://github.com/rust-lang/mdBook/issues/1127 -->
 >
@@ -156,30 +98,25 @@ the missing file error.
 > }
 > ```
 >
-> Although this code has the same behavior as Listing 9-5, it doesn’t contain
-> any `match` expressions and is cleaner to read. Come back to this example
-> after you’ve read Chapter 13, and look up the `unwrap_or_else` method in the
-> standard library documentation. Many more of these methods can clean up huge
-> nested `match` expressions when you’re dealing with errors.
+> Deși acest fragment de cod produce același efect ca Listarea 9-5, el nu
+> conține niciun `match`, ceea ce îl face mai curat și mai lizibil. Vă sugerăm
+> să reveniți la acest exemplu după parcurgerea Capitolului 13 și să
+> consultați documentația metodei `unwrap_or_else` din biblioteca standard a
+> Rust. Vei descoperi că există multe alte metode care pot simplifica expresii
+> complexe și îmbinate de `match`, mai ales atunci când tratați erori în codul
+> dvs.
 
-### Shortcuts for Panic on Error: `unwrap` and `expect`
+### Scurtături pentru panică la eroare: `unwrap` și `expect`
 
-Using `match` works well enough, but it can be a bit verbose and doesn’t always
-communicate intent well. The `Result<T, E>` type has many helper methods
-defined on it to do various, more specific tasks. The `unwrap` method is a
-shortcut method implemented just like the `match` expression we wrote in
-Listing 9-4. If the `Result` value is the `Ok` variant, `unwrap` will return
-the value inside the `Ok`. If the `Result` is the `Err` variant, `unwrap` will
-call the `panic!` macro for us. Here is an example of `unwrap` in action:
+Deși este destul de eficientă, utilizarea expresiei `match` poate deveni oneroasă și nu întotdeauna exprimă clar intenția programatorului. Tipul `Result<T, E>` dispune de numeroase metode auxiliare destinate efectuării de operații specifice. Una dintre aceste metode este `unwrap`, care funcționează similar cu expresia `match` pe care am detaliat-o în Listarea 9-4. Dacă `Result` este varianta `Ok`, `unwrap` extrage și returnează valoarea conținută. În schimb, dacă `Result` este varianta `Err`, `unwrap` va apela macro-ul `panic!`. Iată `unwrap` în aplicare:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,should_panic
 {{#rustdoc_include ../listings/ch09-error-handling/no-listing-04-unwrap/src/main.rs}}
 ```
 
-If we run this code without a *hello.txt* file, we’ll see an error message from
-the `panic!` call that the `unwrap` method makes:
+Dacă executăm acest cod fără a avea fișierul *hello.txt*, vom întâlni un mesaj de eroare generat de apelul `panic!` pe care îl face metoda `unwrap`:
 
 <!-- manual-regeneration
 cd listings/ch09-error-handling/no-listing-04-unwrap
@@ -188,25 +125,20 @@ copy and paste relevant text
 -->
 
 ```text
-thread 'main' panicked at src/main.rs:4:49:
-called `Result::unwrap()` on an `Err` value: Os { code: 2, kind: NotFound, message: "No such file or directory" }
+thread 'main' panicked at 'called `Result::unwrap()` on an `Err` value: Os {
+code: 2, kind: NotFound, message: "No such file or directory" }',
+src/main.rs:4:49
 ```
 
-Similarly, the `expect` method lets us also choose the `panic!` error message.
-Using `expect` instead of `unwrap` and providing good error messages can convey
-your intent and make tracking down the source of a panic easier. The syntax of
-`expect` looks like this:
+Metoda `expect` ne oferă posibilitatea de a alege mesajul de eroare pentru `panic!`. Prin folosirea lui `expect` în locul lui `unwrap` și prin oferirea de mesaje explicite de eroare, îți poți clarifica intenția și facilita identificarea sursei unei erori fatale. Sintaxa metodei `expect` este următoarea:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,should_panic
 {{#rustdoc_include ../listings/ch09-error-handling/no-listing-05-expect/src/main.rs}}
 ```
 
-We use `expect` in the same way as `unwrap`: to return the file handle or call
-the `panic!` macro. The error message used by `expect` in its call to `panic!`
-will be the parameter that we pass to `expect`, rather than the default
-`panic!` message that `unwrap` uses. Here’s what it looks like:
+`Expect` se utilizează la fel cum procedăm cu `unwrap`: intenționăm să extragem descriptorul fișierului sau să declanșăm macro-ul `panic!`. Cu toate acestea, mesajul de eroare dat de `expect` când apelează `panic!` va fi textul specific pe care îl pasăm către `expect`, spre deosebire de mesajul prestabilit al lui `unwrap`. Iată cum arată în practică:
 
 <!-- manual-regeneration
 cd listings/ch09-error-handling/no-listing-05-expect
@@ -215,29 +147,20 @@ copy and paste relevant text
 -->
 
 ```text
-thread 'main' panicked at src/main.rs:5:10:
-hello.txt should be included in this project: Os { code: 2, kind: NotFound, message: "No such file or directory" }
+thread 'main' panicked at 'hello.txt should be included in this project: Os {
+code: 2, kind: NotFound, message: "No such file or directory" }',
+src/main.rs:5:10
 ```
 
-In production-quality code, most Rustaceans choose `expect` rather than
-`unwrap` and give more context about why the operation is expected to always
-succeed. That way, if your assumptions are ever proven wrong, you have more
-information to use in debugging.
+În codul destinat producției, Rustaceanii aleg de obicei `expect` în loc de `unwrap`, furnizând mai multe detalii legate de motivul pentru care operațiunea ar trebui să reușească întotdeauna. În acest fel, dacă ipotezele tale se dovedesc a fi incorecte, vei dispune de mai multe informații utile pentru depanare.
 
-### Propagating Errors
+### Propagarea erorilor
 
-When a function’s implementation calls something that might fail, instead of
-handling the error within the function itself, you can return the error to the
-calling code so that it can decide what to do. This is known as *propagating*
-the error and gives more control to the calling code, where there might be more
-information or logic that dictates how the error should be handled than what
-you have available in the context of your code.
+Când o funcție se confruntă cu posibilitatea unui eșec în timpul executării, poți alege să nu soluționezi eroarea în interiorul acelei funcții. În schimb, poți redirecționa eroarea către codul care a inițiat apelul funcției, permițându-i să decidă cum să procedeze. Această abordare se numește *propagarea* erorii și conferă un grad mai mare de control codului apelant, care ar putea deține informații suplimentare sau o logică specifică pentru tratamentul erorii, comparativ cu ce este disponibil în contextul funcției tale.
 
-For example, Listing 9-6 shows a function that reads a username from a file. If
-the file doesn’t exist or can’t be read, this function will return those errors
-to the code that called the function.
+De exemplu, în Listarea 9-6 este prezentată o funcție ce încearcă să citească numele de utilizator dintr-un fișier. Dacă fișierul nu există sau nu poate fi accesat, această funcție va returna erorile întâmpinate direct codului ce a solicitat funcția.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 <!-- Deliberately not using rustdoc_include here; the `main` function in the
 file panics. We do want to include it for reader experimentation purposes, but
@@ -247,67 +170,25 @@ don't want to include it for rustdoc testing purposes. -->
 {{#include ../listings/ch09-error-handling/listing-09-06/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 9-6: A function that returns errors to the
-calling code using `match`</span>
+<span class="caption">Listarea 9-6: Funcție care gestionează erorile prin `match`</span>
 
-This function can be written in a much shorter way, but we’re going to start by
-doing a lot of it manually in order to explore error handling; at the end,
-we’ll show the shorter way. Let’s look at the return type of the function
-first: `Result<String, io::Error>`. This means the function is returning a
-value of the type `Result<T, E>` where the generic parameter `T` has been
-filled in with the concrete type `String`, and the generic type `E` has been
-filled in with the concrete type `io::Error`.
+Funcția prezentată poate fi scrisă într-o formă mult mai concisă. Totuși, pentru a înțelege mai bine gestionarea erorilor, vom începe cu o abordare manuală, pas cu pas. La final, vom prezenta și versiunea simplificată. Mai întâi, să ne concentrăm asupra tipului de retur: `Result<String, io::Error>`. Acesta indică faptul că funcția returnează `Result<T, E>`, unde parametrul generic `T` este specificat ca `String`, iar `E` ca `io::Error`.
 
-If this function succeeds without any problems, the code that calls this
-function will receive an `Ok` value that holds a `String`—the username that
-this function read from the file. If this function encounters any problems, the
-calling code will receive an `Err` value that holds an instance of `io::Error`
-that contains more information about what the problems were. We chose
-`io::Error` as the return type of this function because that happens to be the
-type of the error value returned from both of the operations we’re calling in
-this function’s body that might fail: the `File::open` function and the
-`read_to_string` method.
+Dacă funcția se execută corect, rezultatul va fi un `Ok` conținând un `String`—numele de utilizator citit din fișier. În cazul apariției unei erori, se va returna `Err` cu un `io::Error`, detaliind problema survenită. Alegem să folosim `io::Error` ca tip de eroare pentru că acesta este returnat atunci când operațiunile `File::open` sau `read_to_string` eșuează, acestea fiind funcțiile utilizate în cadrul funcției noastre.
 
-The body of the function starts by calling the `File::open` function. Then we
-handle the `Result` value with a `match` similar to the `match` in Listing 9-4.
-If `File::open` succeeds, the file handle in the pattern variable `file`
-becomes the value in the mutable variable `username_file` and the function
-continues. In the `Err` case, instead of calling `panic!`, we use the `return`
-keyword to return early out of the function entirely and pass the error value
-from `File::open`, now in the pattern variable `e`, back to the calling code as
-this function’s error value.
+Începem corpul funcției apelând funcția `File::open`. Gestionăm rezultatul `Result` printr-un `match` asemănător celui din Listarea 9-4. Dacă `File::open` reușește, variabila de tip șablon `file`, care acum stochează descriptorul fișierului, este asignată variabilei mutabile `username_file`, iar execuția funcției continuă. În caz de eroare `Err`, în loc să utilizăm macro-ul `panic!`, preferăm să ieșim din funcție folosind cuvântul cheie `return`, returnând direct eroarea primită de la `File::open`, acum stocată în variabila șablon `e`.
 
-So if we have a file handle in `username_file`, the function then creates a new
-`String` in variable `username` and calls the `read_to_string` method on
-the file handle in `username_file` to read the contents of the file into
-`username`. The `read_to_string` method also returns a `Result` because it
-might fail, even though `File::open` succeeded. So we need another `match` to
-handle that `Result`: if `read_to_string` succeeds, then our function has
-succeeded, and we return the username from the file that’s now in `username`
-wrapped in an `Ok`. If `read_to_string` fails, we return the error value in the
-same way that we returned the error value in the `match` that handled the
-return value of `File::open`. However, we don’t need to explicitly say
-`return`, because this is the last expression in the function.
+Dacă avem un descriptor de fișier valid în `username_file`, funcția trece la crearea unui nou `String` în variabila `username`. Apoi invocăm metoda `read_to_string` pe descriptorul din `username_file` pentru a citi conținutul fișierului în `username`. Metoda `read_to_string` returnează și ea un `Result`, deoarece poate eșua, chiar și când `File::open` a avut succes. Prin urmare, aplicăm un nou `match` pentru acest `Result`. Dacă `read_to_string` se finalizează cu succes, funcția noastră este și ea un succes și returnăm numele de utilizator din fișier, acum aflat în `username`, încapsulat într-un `Ok`. Dacă `read_to_string` dă greș, tratăm eroarea în mod similar cu cel din `match`-ul precedent, dar fără a mai folosi explicit cuvântul `return`, fiindcă aceasta este ultima expresie din funcție, iar valorile erorilor sunt întoarse implicit.
 
-The code that calls this code will then handle getting either an `Ok` value
-that contains a username or an `Err` value that contains an `io::Error`. It’s
-up to the calling code to decide what to do with those values. If the calling
-code gets an `Err` value, it could call `panic!` and crash the program, use a
-default username, or look up the username from somewhere other than a file, for
-example. We don’t have enough information on what the calling code is actually
-trying to do, so we propagate all the success or error information upward for
-it to handle appropriately.
+Codul care cheamă funcția noastră va trebui să gestioneze rezultatul: fie o valoare `Ok` ce conține un nume de utilizator, fie o valoare `Err` ce include o eroare `io::Error`. Depinde de codul apelant să decidă cum va proceda cu aceste rezultate. În cazul unei valori `Err`, codul respectiv poate alege să genereze panică folosind `panic!` și astfel să oprească execuția programului, să utilizeze un nume de utilizator prestabilit sau să caute numele de utilizator prin alte metode, care nu implică accesul la un fișier. Noi nu cunoaștem intențiile specifice ale codului apelant, prin urmare, transmitem informațiile despre succes sau eroare mai departe pentru ca acesta să le gestioneze în cel mai potrivit mod.
 
-This pattern of propagating errors is so common in Rust that Rust provides the
-question mark operator `?` to make this easier.
+Această metodă de a transmite erorile este atât de răspândită în Rust, încât limbajul include operatorul `?` pentru a simplifica acest proces.
 
-#### A Shortcut for Propagating Errors: the `?` Operator
+#### Propagarea erorilor cu operatorul `?`
 
-Listing 9-7 shows an implementation of `read_username_from_file` that has the
-same functionality as in Listing 9-6, but this implementation uses the
-`?` operator.
+Listarea 9-7 ne prezintă cum să folosim funcția `read_username_from_file` pentru a obține aceleași rezultate ca și în Listarea 9-6, dar de această dată folosind operatorul `?`.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 <!-- Deliberately not using rustdoc_include here; the `main` function in the
 file panics. We do want to include it for reader experimentation purposes, but
@@ -317,45 +198,19 @@ don't want to include it for rustdoc testing purposes. -->
 {{#include ../listings/ch09-error-handling/listing-09-07/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 9-7: A function that returns errors to the
-calling code using the `?` operator</span>
+<span class="caption">Listarea 9-7: O funcție care returnează erori către codul apelant folosind operatorul `?`</span>
 
-The `?` placed after a `Result` value is defined to work in almost the same way
-as the `match` expressions we defined to handle the `Result` values in Listing
-9-6. If the value of the `Result` is an `Ok`, the value inside the `Ok` will
-get returned from this expression, and the program will continue. If the value
-is an `Err`, the `Err` will be returned from the whole function as if we had
-used the `return` keyword so the error value gets propagated to the calling
-code.
+Atunci când se pune operatorul `?` după o valoare de tip `Result`, acesta funcționează similar cu expresiile `match` pe care le-am utilizat anterior pentru a gestiona valorile `Result` în Listarea 9-6. Dacă rezultatul de tip `Result` este `Ok`, conținutul lui `Ok` este returnat și execuția programului continuă. Dacă rezultatul este `Err`, atunci `Err` este returnat de întreaga funcție, ca și cum am folosi cuvântul cheie `return`, astfel propagând eroarea către codul care a invocat funcția.
 
-There is a difference between what the `match` expression from Listing 9-6 does
-and what the `?` operator does: error values that have the `?` operator called
-on them go through the `from` function, defined in the `From` trait in the
-standard library, which is used to convert values from one type into another.
-When the `?` operator calls the `from` function, the error type received is
-converted into the error type defined in the return type of the current
-function. This is useful when a function returns one error type to represent
-all the ways a function might fail, even if parts might fail for many different
-reasons.
+Însă, există o diferență între expresiile `match` din Listarea 9-6 și operatorul `?`: erorile asupra cărora este aplicat operatorul `?` sunt trecute prin funcția `from`, definită de trăsătura `From` din biblioteca standard. Funcția `from` transformă valorile dintr-un tip în altul. Când operatorul `?` invocă `from`, tipul erorii revine convertit la tipul de eroare specificat în semnătura funcției curente. Acest aspect se dovedește a fi util atunci când o funcție trebuie să returneze un singur tip de eroare pentru a reprezenta diferitele cauze care pot conduce la eșecul acesteia. 
 
-For example, we could change the `read_username_from_file` function in Listing
-9-7 to return a custom error type named `OurError` that we define. If we also
-define `impl From<io::Error> for OurError` to construct an instance of
-`OurError` from an `io::Error`, then the `?` operator calls in the body of
-`read_username_from_file` will call `from` and convert the error types without
-needing to add any more code to the function.
+De exemplu, putem modifica funcția `read_username_from_file` prezentată în Listarea 9-7 astfel încât să returneze un tip propriu de eroare, denumit `OurError`, pe care îl definim noi. De asemenea, dacă implementăm `impl From<io::Error> pentru OurError` pentru a crea o instanță `OurError` dintr-un `io::Error`, apelurile operatorului `?` din funcția `read_username_from_file` vor utiliza automat `from` pentru a converti erorile, fără să mai adăugăm cod suplimentar.
 
-In the context of Listing 9-7, the `?` at the end of the `File::open` call will
-return the value inside an `Ok` to the variable `username_file`. If an error
-occurs, the `?` operator will return early out of the whole function and give
-any `Err` value to the calling code. The same thing applies to the `?` at the
-end of the `read_to_string` call.
+În cazul prezentat în Listarea 9-7, semnul `?` de la sfârșitul apelului `File::open` va extrage valoarea dintr-un rezultat `Ok` și o va asigna variabilei `username_file`. Dacă întâmpinăm o eroare, operatorul `?` va opri execuția funcției imediat și va transmite valoarea `Err` codului care a făcut apelul. Același principiu se aplică și pentru `?` de la sfârșitul apelului `read_to_string`.
 
-The `?` operator eliminates a lot of boilerplate and makes this function’s
-implementation simpler. We could even shorten this code further by chaining
-method calls immediately after the `?`, as shown in Listing 9-8.
+Operatorul `?` reduce semnificativ redundanța codului și facilitează simplificarea implementării funcției. Mai mult, prin înlănțuirea directă a apelurilor de metode după `?`, putem condensa codul și mai mult, aspect ilustrat în Listarea 9-8.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 <!-- Deliberately not using rustdoc_include here; the `main` function in the
 file panics. We do want to include it for reader experimentation purposes, but
@@ -365,19 +220,11 @@ don't want to include it for rustdoc testing purposes. -->
 {{#include ../listings/ch09-error-handling/listing-09-08/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 9-8: Chaining method calls after the `?`
-operator</span>
+<span class="caption">Listarea 9-8: Lănțuirea metodelor după operatorul `?`</span>
 
-We’ve moved the creation of the new `String` in `username` to the beginning of
-the function; that part hasn’t changed. Instead of creating a variable
-`username_file`, we’ve chained the call to `read_to_string` directly onto the
-result of `File::open("hello.txt")?`. We still have a `?` at the end of the
-`read_to_string` call, and we still return an `Ok` value containing `username`
-when both `File::open` and `read_to_string` succeed rather than returning
-errors. The functionality is again the same as in Listing 9-6 and Listing 9-7;
-this is just a different, more ergonomic way to write it.
+Am inițializat noul string `username` la începutul funcției, ca și înainte. În loc să declarăm o variabilă `username_file`, acum apelăm metoda `read_to_string` imediat după `File::open("hello.txt")?`. Continuăm să folosim `?` la sfârșitul lui `read_to_string` și returnăm un `Ok` care conține `username` dacă atât `File::open`, cât și `read_to_string` reușesc, evitând returnarea de erori. Practic, obținem aceeași funcționalitate ca în Listarea 9-6 și Listarea 9-7, dar printr-o scriere mai compactă și ergonomică.
 
-Listing 9-9 shows a way to make this even shorter using `fs::read_to_string`.
+Listarea 9-9 va prezenta cum să simplificăm și mai mult codul, utilizând `fs::read_to_string`.
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -389,146 +236,65 @@ don't want to include it for rustdoc testing purposes. -->
 {{#include ../listings/ch09-error-handling/listing-09-09/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 9-9: Using `fs::read_to_string` instead of
-opening and then reading the file</span>
+<span class="caption">Listarea 9-9: Folosirea funcției `fs::read_to_string` pentru a evita deschiderea și citirea explicită a fișierului</span>
 
-Reading a file into a string is a fairly common operation, so the standard
-library provides the convenient `fs::read_to_string` function that opens the
-file, creates a new `String`, reads the contents of the file, puts the contents
-into that `String`, and returns it. Of course, using `fs::read_to_string`
-doesn’t give us the opportunity to explain all the error handling, so we did it
-the longer way first.
+Citirea conținutului unui fișier într-un string este o operaţie frecventă, iar biblioteca standard facilitează această operație prin funcția practică `fs::read_to_string`. Această funcție deschide fișierul, inițializează un nou `String`, citește conținutul fișierului, îl stochează în acel `String` și apoi îl returnează. Desigur, prin utilizarea `fs::read_to_string` nu putem ilustra în detaliu gestionarea erorilor, motiv pentru care am ales inițial metoda mai elaborată.
 
-#### Where The `?` Operator Can Be Used
+#### Unde poate fi folosit operatorul `?`
 
-The `?` operator can only be used in functions whose return type is compatible
-with the value the `?` is used on. This is because the `?` operator is defined
-to perform an early return of a value out of the function, in the same manner
-as the `match` expression we defined in Listing 9-6. In Listing 9-6, the
-`match` was using a `Result` value, and the early return arm returned an
-`Err(e)` value. The return type of the function has to be a `Result` so that
-it’s compatible with this `return`.
+Operatorul `?` poate fi utilizat numai în funcții a căror valoare de retur este compatibilă cu tipul de valoare asupra căruia se aplică `?`. Acest lucru se datorează faptului că operatorul `?` este conceput pentru a efectua un retur prematur din funcție, similar cu expresia `match` pe care am descris-o în Listarea 9-6. În cazul Listării 9-6, `match` opera cu o valoare de tip `Result`, iar ramura de retur prematur returna o valoare `Err(e)`. Funcția trebuie să aibă ca tip de retur un `Result` pentru a fi compatibil cu acțiunea de `return`.
 
-In Listing 9-10, let’s look at the error we’ll get if we use the `?` operator
-in a `main` function with a return type incompatible with the type of the value
-we use `?` on:
+În Listarea 9-10 vom vedea ce eroare apare atunci când utilizăm operatorul `?` într-o funcție `main` care are un tip de retur incompatibil cu tipul valorii pentru care aplicăm `?`:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch09-error-handling/listing-09-10/src/main.rs}}
 ```
 
-<span class="caption">Listing 9-10: Attempting to use the `?` in the `main`
-function that returns `()` won’t compile</span>
+<span class="caption">Listarea 9-10: Tentativa de a folosi `?` în funcția `main` care returnează `()` nu va funcționa</span>
 
-This code opens a file, which might fail. The `?` operator follows the `Result`
-value returned by `File::open`, but this `main` function has the return type of
-`()`, not `Result`. When we compile this code, we get the following error
-message:
+Acest cod încearcă să deschidă un fișier, operațiune care poate să eșueze. Operatorul `?` este aplicat valorii `Result` returnate de `File::open`, însă funcția `main` are definit ca tip de retur `()`, nu `Result`. Când încercăm să compilăm acest cod, ne întâmpină următorul mesaj de eroare:
 
 ```console
 {{#include ../listings/ch09-error-handling/listing-09-10/output.txt}}
 ```
 
-This error points out that we’re only allowed to use the `?` operator in a
-function that returns `Result`, `Option`, or another type that implements
-`FromResidual`.
+Această eroare semnalează faptul că putem utiliza operatorul `?` exclusiv în cadrul funcțiilor care returnează `Result`, `Option`, sau alte tipuri ce implementează `FromResidual`.
 
-To fix the error, you have two choices. One choice is to change the return type
-of your function to be compatible with the value you’re using the `?` operator
-on as long as you have no restrictions preventing that. The other technique is
-to use a `match` or one of the `Result<T, E>` methods to handle the `Result<T,
-E>` in whatever way is appropriate.
+Pentru a corecta eroarea, ai două opțiuni. Prima este să modifici tipul de retur al funcției tale astfel încât să corespundă cu tipul valorii peste care aplici operatorul `?`, cu condiția să nu existe restricții care te împiedică. Alternativa este folosirea unei structuri `match` sau a metodelor disponibile pentru `Result<T, E>` pentru a gestiona rezultatul `Result<T, E>` în modul cel mai potrivit pentru contextul tău.
 
-The error message also mentioned that `?` can be used with `Option<T>` values
-as well. As with using `?` on `Result`, you can only use `?` on `Option` in a
-function that returns an `Option`. The behavior of the `?` operator when called
-on an `Option<T>` is similar to its behavior when called on a `Result<T, E>`:
-if the value is `None`, the `None` will be returned early from the function at
-that point. If the value is `Some`, the value inside the `Some` is the
-resulting value of the expression and the function continues. Listing 9-11 has
-an example of a function that finds the last character of the first line in the
-given text:
+Mesajul de eroare a subliniat, de asemenea, că operatorul `?` poate fi aplicat pe valori de tip `Option<T>`. Asemenea utilizării `?` pe `Result`, acesta poate fi folosit pe `Option` numai într-o funcție care returnează un `Option`. Atunci când `?` este utilizat pe un `Option<T>`, comportamentul său este asemănător: dacă valoarea este `None`, atunci `None` se returnează imediat, întrerupând execuția funcției. Dacă valoarea este de tip `Some`, conținutul lui `Some` devine valoarea expresiei, iar execuția funcției continuă. Următoarea listare, 9-11, conține un exemplu de funcție care identifică ultimul caracter din prima linie a unui text furnizat:
 
 ```rust
 {{#rustdoc_include ../listings/ch09-error-handling/listing-09-11/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 9-11: Using the `?` operator on an `Option<T>`
-value</span>
+<span class="caption">Listarea 9-11: Utilizarea operatorului `?` pentru o valoare `Option<T>`</span>
 
-This function returns `Option<char>` because it’s possible that there is a
-character there, but it’s also possible that there isn’t. This code takes the
-`text` string slice argument and calls the `lines` method on it, which returns
-an iterator over the lines in the string. Because this function wants to
-examine the first line, it calls `next` on the iterator to get the first value
-from the iterator. If `text` is the empty string, this call to `next` will
-return `None`, in which case we use `?` to stop and return `None` from
-`last_char_of_first_line`. If `text` is not the empty string, `next` will
-return a `Some` value containing a string slice of the first line in `text`.
+Funcția aceasta returnează `Option<char>` deoarece există posibilitatea ca un caracter să fie prezent, dar de asemenea e posibil ca acesta să lipsească. Codul ia secțiunea de string `text` ca argument și îi aplică metoda `lines`, care oferă un iterator pentru liniile din string. Pentru a examina prima linie, folosim metoda `next` pe iterator, pentru a extrage prima valoare. Dacă `text` este un string gol, `next` va returna `None`; în acest caz, operatorul `?` intervine pentru a opri execuția și a returna `None` din `last_char_of_first_line`. Dacă în schimb `text` nu este gol, `next` va returna un `Some` ce conține slice-ul primei linii din `text`.
 
-The `?` extracts the string slice, and we can call `chars` on that string slice
-to get an iterator of its characters. We’re interested in the last character in
-this first line, so we call `last` to return the last item in the iterator.
-This is an `Option` because it’s possible that the first line is the empty
-string, for example if `text` starts with a blank line but has characters on
-other lines, as in `"\nhi"`. However, if there is a last character on the first
-line, it will be returned in the `Some` variant. The `?` operator in the middle
-gives us a concise way to express this logic, allowing us to implement the
-function in one line. If we couldn’t use the `?` operator on `Option`, we’d
-have to implement this logic using more method calls or a `match` expression.
+Operatorul `?` extrage acea secțiune, permițându-ne apoi să apelăm metoda `chars` pentru a obține un iterator al caracterelor sale. Ne interesează ultimul caracter din prima linie, deci apelăm `last` pentru a obține ultimul element al iteratorului, care este tot un `Option`. Este posibil ca prima linie să fie și ea un string gol – de exemplu, dacă `text` începe cu o linie goală, urmată de alte linii cu caractere, cum ar fi `"\nhi"`. În cazul în care există un caracter final în prima linie, acesta va fi returnat într-o valoare `Some`. Folosind operatorul `?`, putem exprima această verificare concis, permițând implementarea funcției într-o singură linie. Altfel, fără operatorul `?` aplicabil pe `Option`, am fi nevoiți să reconstruim această logică prin mai multe apeluri de metode sau printr-o expresie `match`.
 
-Note that you can use the `?` operator on a `Result` in a function that returns
-`Result`, and you can use the `?` operator on an `Option` in a function that
-returns `Option`, but you can’t mix and match. The `?` operator won’t
-automatically convert a `Result` to an `Option` or vice versa; in those cases,
-you can use methods like the `ok` method on `Result` or the `ok_or` method on
-`Option` to do the conversion explicitly.
+Trebuie să reții că operatorul `?` poate fi utilizat pentru a propaga erorile într-o funcție care returnează un `Result` atunci când lucrezi cu un `Result`, iar în cazul în care lucrezi cu un `Option`, poți utiliza operatorul `?` într-o funcție care returnează un `Option`. Însă nu este posibilă utilizarea mixtă a ambelor. Cu alte cuvinte, operatorul `?` nu realizează automat conversia între `Result` și `Option` sau invers; în acele situații, trebuie să apelezi metode specifice, cum ar fi `ok` pentru `Result` sau `ok_or` pentru `Option`, pentru a efectua conversia în mod explicit.
 
-So far, all the `main` functions we’ve used return `()`. The `main` function is
-special because it’s the entry and exit point of executable programs, and there
-are restrictions on what its return type can be for the programs to behave as
-expected.
+Până în prezent, toate funcțiile `main` pe care le-am utilizat returnau `()`. Merită să subliniem că funcția `main` este unică, fiind punctul de start și de terminare al programelor executabile. Există restricții specifice legate de tipul de retur pe care îl poate avea, astfel încât programul să funcționeze corespunzător.
 
-Luckily, `main` can also return a `Result<(), E>`. Listing 9-12 has the
-code from Listing 9-10 but we’ve changed the return type of `main` to be
-`Result<(), Box<dyn Error>>` and added a return value `Ok(())` to the end. This
-code will now compile:
+Noutatea bună e că `main` poate de asemenea să returneze `Result<(), E>`. În Listarea 9-12, prezentăm codul din Listarea 9-10, dar cu tipul de retur al funcției `main` modificat în `Result<(), Box<dyn Error>>` și adăugăm la final valoarea de retur `Ok(())`. Cu aceste modificări, codul este gata de compilat:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch09-error-handling/listing-09-12/src/main.rs}}
 ```
 
-<span class="caption">Listing 9-12: Changing `main` to return `Result<(), E>`
-allows the use of the `?` operator on `Result` values</span>
+<span class="caption">Listarea 9-12: Modificând funcția `main` pentru a returna `Result<(), E>`, permitem folosirea operatorului `?` pe valorile `Result`</span>
 
-The `Box<dyn Error>` type is a *trait object*, which we’ll talk about in the
-[“Using Trait Objects that Allow for Values of Different
-Types”][trait-objects]<!-- ignore --> section in Chapter 17. For now, you can
-read `Box<dyn Error>` to mean “any kind of error.” Using `?` on a `Result`
-value in a `main` function with the error type `Box<dyn Error>` is allowed,
-because it allows any `Err` value to be returned early. Even though the body of
-this `main` function will only ever return errors of type `std::io::Error`, by
-specifying `Box<dyn Error>`, this signature will continue to be correct even if
-more code that returns other errors is added to the body of `main`.
+Tipul `Box<dyn Error>` este un *obiect trăsătură*, concept pe care îl vom aborda mai detaliat în secțiunea [„Utilizarea obiectelor trăsături care permit valori de diferite tipuri”][trait-objects]<!-- ignore --> din Capitolul 17. Până atunci, poți gândi la `Box<dyn Error>` ca o modalitate de a desemna „orice fel de eroare”. Utilizarea operatorului `?` pe o valoare de tip `Result` în funcția `main` este posibilă atunci când tipul erorii este `Box<dyn Error>`, pentru că aceasta acceptă returnarea anticipată a oricărei valori de eroare `Err`. Deși corpul funcției `main` va genera, în mod normal, doar erori de tip `std::io::Error`, prin definirea tipului de eroare ca fiind `Box<dyn Error>`, semnătura acestuia rămâne validă chiar și atunci când adăugăm mai mult cod care generează alte tipuri de erori în `main`.
 
-When a `main` function returns a `Result<(), E>`, the executable will
-exit with a value of `0` if `main` returns `Ok(())` and will exit with a
-nonzero value if `main` returns an `Err` value. Executables written in C return
-integers when they exit: programs that exit successfully return the integer
-`0`, and programs that error return some integer other than `0`. Rust also
-returns integers from executables to be compatible with this convention.
+Când funcția `main` returnează un `Result<(), E>`, aplicația va termina execuția cu valoarea `0` dacă `main` returnează `Ok(())` și va închide cu o valoare diferită de zero dacă `main` generează o eroare `Err`. Executabilele în limbajul C returnează valori întregi când se încheie execuția: programele care se termină corect returnează întregul `0`, în timp ce programele care se închid cu o eroare returnează un întreg diferit de `0`. Rust adoptă această convenție, returnând întregi de la executabile pentru compatibilitate.
 
-The `main` function may return any types that implement [the
-`std::process::Termination` trait][termination]<!-- ignore -->, which contains
-a function `report` that returns an `ExitCode`. Consult the standard library
-documentation for more information on implementing the `Termination` trait for
-your own types.
+Funcția `main` poate returna orice tip de date care implementează [trăsătura `std::process::Termination`][termination], care include funcția `report` rezultând într-un `ExitCode`. Consultă documentația bibliotecii standard Rust pentru mai multe detalii despre cum să implementezi trăsătura `Termination` pentru tipurile tale.
 
-Now that we’ve discussed the details of calling `panic!` or returning `Result`,
-let’s return to the topic of how to decide which is appropriate to use in which
-cases.
+După ce am clarificat modul în care apelăm `panic!` sau returnăm `Result`, să discutăm cum alegem între aceste opțiuni în funcție de situație.
 
 [handle_failure]: ch02-00-guessing-game-tutorial.html#handling-potential-failure-with-result
 [trait-objects]: ch17-02-trait-objects.html#using-trait-objects-that-allow-for-values-of-different-types

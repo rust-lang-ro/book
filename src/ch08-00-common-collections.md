@@ -1,25 +1,13 @@
-# Common Collections
+# Colecțiile comune în Rust
 
-Rust’s standard library includes a number of very useful data structures called
-*collections*. Most other data types represent one specific value, but
-collections can contain multiple values. Unlike the built-in array and tuple
-types, the data these collections point to is stored on the heap, which means
-the amount of data does not need to be known at compile time and can grow or
-shrink as the program runs. Each kind of collection has different capabilities
-and costs, and choosing an appropriate one for your current situation is a
-skill you’ll develop over time. In this chapter, we’ll discuss three
-collections that are used very often in Rust programs:
+Biblioteca standard Rust ne pune la dispoziție o serie de structuri de date foarte utile, denumite generic *colecții*. Spre deosebire de celelalte tipuri de date care reprezintă o singură valoare, colecțiile pot stoca multiple valori. În plus, nu ca tipurile native array și tuplă, datele la care se referă aceste colecții sunt stocate în heap, deci volumul acestora nu trebuie să fie cunoscut în momentul compilării și poate varia pe parcursul execuției programului. Fiecare tip de colecție vine cu propriile sale capabilități și costuri asociate, așadar selectarea celei potrivite pentru situația curentă este o abilitate care se dezvoltă în timp. În acest capitol ne vom concentra pe trei colecții foarte utilizate în programele Rust:
 
-* A *vector* allows you to store a variable number of values next to each other.
-* A *string* is a collection of characters. We’ve mentioned the `String` type
-  previously, but in this chapter we’ll talk about it in depth.
-* A *hash map* allows you to associate a value with a particular key. It’s a
-  particular implementation of the more general data structure called a *map*.
+* Vectorul ne permite stocarea unui număr variabil de valori alături.
+* String-ul reprezintă o colecție de caractere. Deși am menționat anterior tipul `String`, în acest capitol îl vom aborda în profunzime.
+* O hartă hash ne dă posibilitatea de a asocia o valoare cu o cheie specifică, fiind un caz particular de implementare a structurii de date denumite *map*.
 
-To learn about the other kinds of collections provided by the standard library,
-see [the documentation][collections].
+Consultează [documentația][collections] pentru a afla despre celelalte tipuri de colecții disponibile în biblioteca standard.
 
-We’ll discuss how to create and update vectors, strings, and hash maps, as well
-as what makes each special.
+Vom discuta despre cum putem crea și actualiza vectori, string-uri și hărți hash, precum și despre ce caracteristici unice are fiecare.
 
 [collections]: ../std/collections/index.html

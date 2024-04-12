@@ -1,42 +1,25 @@
-## Cargo Workspaces
+## Spațiile de lucru Cargo
 
-In Chapter 12, we built a package that included a binary crate and a library
-crate. As your project develops, you might find that the library crate
-continues to get bigger and you want to split your package further into
-multiple library crates. Cargo offers a feature called *workspaces* that can
-help manage multiple related packages that are developed in tandem.
+În Capitolul 12, am creat un pachet care conținea atât un crate binar, cât și unul de bibliotecă. Conform evoluției proiectului tău, este posibil să observi că mărimea crate-ului de bibliotecă se mărește și ai dori să împarți pachetul în mai multe crate-uri de bibliotecă. Cargo pune la dispoziție o caracteristică denumită *workspaces* (spații de lucru), care facilitează gestionarea unui set de pachete conexe ce sunt dezvoltate simultan.
 
-### Creating a Workspace
+### Crearea unui spațiu de lucru
 
-A *workspace* is a set of packages that share the same *Cargo.lock* and output
-directory. Let’s make a project using a workspace—we’ll use trivial code so we
-can concentrate on the structure of the workspace. There are multiple ways to
-structure a workspace, so we'll just show one common way. We’ll have a
-workspace containing a binary and two libraries. The binary, which will provide
-the main functionality, will depend on the two libraries. One library will
-provide an `add_one` function, and a second library an `add_two` function.
-These three crates will be part of the same workspace. We’ll start by creating
-a new directory for the workspace:
+Un *workspace* este un set de pachete care partajează același *Cargo.lock* și directoriu de păstrare a rezultatelor compilării. Să creăm un proiect folosind un workspace, unde vom utiliza cod simplu pentru a ne focaliza pe structura spațiului de lucru. Există diverse moduri de structurare a unui spațiu de lucru, însă vom prezenta doar o metodă frecvent utilizată. Vom avea un spațiu de lucru ce va conține un binar și două biblioteci. Binarul, care va fi responsabil de funcționalitatea principală, va depinde de cele două biblioteci. Prima bibliotecă va oferi funcția `add_one`, iar cea de-a doua funcția `add_two`. Aceste trei crate-uri vor forma unul și același workspace. Începem prin crearea unui nou directoriu pentru workspace:
 
 ```console
 $ mkdir add
 $ cd add
 ```
 
-Next, in the *add* directory, we create the *Cargo.toml* file that will
-configure the entire workspace. This file won’t have a `[package]` section.
-Instead, it will start with a `[workspace]` section that will allow us to add
-members to the workspace by specifying the path to the package with our binary
-crate; in this case, that path is *adder*:
+Ulterior, în directoriul *add*, vom crea fișierul *Cargo.toml*, care va stabili configurația întregului spațiu de lucru. Acest fișier nu va avea secțiunea `[package]`. În loc de aceasta, va începe cu secțiunea `[workspace]`, permițându-ne să adăugăm module la spațiul nostru de lucru prin specificarea căii pachetului ce conține binarul nostru crate. În cazul de față, acea cale este *adder*:
 
-<span class="filename">Filename: Cargo.toml</span>
+<span class="filename">Numele fișierului: Cargo.toml</span>
 
 ```toml
 {{#include ../listings/ch14-more-about-cargo/no-listing-01-workspace-with-adder-crate/add/Cargo.toml}}
 ```
 
-Next, we’ll create the `adder` binary crate by running `cargo new` within the
-*add* directory:
+În pasul următor, vom crea crate-ul binar `adder`, executând `cargo new` în directoriul *add*:
 
 <!-- manual-regeneration
 cd listings/ch14-more-about-cargo/output-only-01-adder-crate/add
@@ -50,8 +33,7 @@ $ cargo new adder
      Created binary (application) `adder` package
 ```
 
-At this point, we can build the workspace by running `cargo build`. The files
-in your *add* directory should look like this:
+Acum putem construi workspace-ul executând `cargo build`. Fișierele din directoriul *add* ar trebui să aibă următoarea structură:
 
 ```text
 ├── Cargo.lock
@@ -63,30 +45,19 @@ in your *add* directory should look like this:
 └── target
 ```
 
-The workspace has one *target* directory at the top level that the compiled
-artifacts will be placed into; the `adder` package doesn’t have its own
-*target* directory. Even if we were to run `cargo build` from inside the
-*adder* directory, the compiled artifacts would still end up in *add/target*
-rather than *add/adder/target*. Cargo structures the *target* directory in a
-workspace like this because the crates in a workspace are meant to depend on
-each other. If each crate had its own *target* directory, each crate would have
-to recompile each of the other crates in the workspace to place the artifacts
-in its own *target* directory. By sharing one *target* directory, the crates
-can avoid unnecessary rebuilding.
+Zona de lucru dispune de un singur directoriu *target* la nivelul superior, locul unde se vor așeza artifactele compilate; pachetul `adder` nu deține un directoriu *target* separat. Chiar dacă am executa `cargo build` din interiorul directoriului *adder*, artifactele compilate tot în *add/target* ar ajunge, nu în *add/adder/target*. Cargo organizează directoriul *target* într-un spațiu de lucru în acest mod deoarece crate-urile din cadrul unui workspace sunt concepute să colaboreze între ele. Dacă fiecare crate ar avea propriul directoriu *target*, atunci fiecare din ele ar fi nevoit să recompileze toate celelalte crate pentru a plasa artifactele în directoriul sau *target*. Astfel, partajând un directoriu *target* comun, crate-urile evită recompilări inutile.
 
-### Creating the Second Package in the Workspace
+### Crearea celui de-al doilea crate în spațiul de lucru
 
-Next, let’s create another member package in the workspace and call it
-`add_one`. Change the top-level *Cargo.toml* to specify the *add_one* path in
-the `members` list:
+În continuare, să creăm un alt crate membru în zona de lucru și să-l numim `add_one`. Modificăm *Cargo.toml* de nivel superior pentru a specifica calea *add_one* în lista `members`:
 
-<span class="filename">Filename: Cargo.toml</span>
+<span class="filename">Numele fișierului: Cargo.toml</span>
 
 ```toml
 {{#include ../listings/ch14-more-about-cargo/no-listing-02-workspace-with-two-crates/add/Cargo.toml}}
 ```
 
-Then generate a new library crate named `add_one`:
+Apoi generăm un nou crate de tip bibliotecă denumit `add_one`:
 
 <!-- manual-regeneration
 cd listings/ch14-more-about-cargo/output-only-02-add-one/add
@@ -100,7 +71,7 @@ $ cargo new add_one --lib
      Created library `add_one` package
 ```
 
-Your *add* directory should now have these directories and files:
+Directorul nostru *add* ar trebui acum să conțină aceste directoare și fișiere:
 
 ```text
 ├── Cargo.lock
@@ -116,43 +87,35 @@ Your *add* directory should now have these directories and files:
 └── target
 ```
 
-In the *add_one/src/lib.rs* file, let’s add an `add_one` function:
+În fișierul *add_one/src/lib.rs*, să adăugăm o funcție `add_one`:
 
-<span class="filename">Filename: add_one/src/lib.rs</span>
+<span class="filename">Numele fișierului: add_one/src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch14-more-about-cargo/no-listing-02-workspace-with-two-crates/add/add_one/src/lib.rs}}
 ```
 
-Now we can have the `adder` package with our binary depend on the `add_one`
-package that has our library. First, we’ll need to add a path dependency on
-`add_one` to *adder/Cargo.toml*.
+Acum pachetul `adder`, care conține binarul nostru, poate depinde de crate-ul `add_one` cu biblioteca noastră. Pentru început, trebuie să adăugăm o dependență de cale pentru `add_one` în *adder/Cargo.toml*.
 
-<span class="filename">Filename: adder/Cargo.toml</span>
+<span class="filename">Numele fișierului: adder/Cargo.toml</span>
 
 ```toml
 {{#include ../listings/ch14-more-about-cargo/no-listing-02-workspace-with-two-crates/add/adder/Cargo.toml:6:7}}
 ```
 
-Cargo doesn’t assume that crates in a workspace will depend on each other, so
-we need to be explicit about the dependency relationships.
+Cargo nu presupune implicit că crate-urile dintr-un spațiu de lucru vor depinde unele de altele, deci trebuie să specificăm în mod explicit relațiile de dependență.
 
-Next, let’s use the `add_one` function (from the `add_one` crate) in the
-`adder` crate. Open the *adder/src/main.rs* file and add a `use` line at the
-top to bring the new `add_one` library crate into scope. Then change the `main`
-function to call the `add_one` function, as in Listing 14-7.
+Acum, să utilizăm funcția `add_one` (din crate-ul `add_one`) în crate-ul `adder`. Deschideți fișierul *adder/src/main.rs* și inserați o linie `use` la început pentru a aduce crate-ul bibliotecă `add_one` în domeniul de vizibilitate. Modificați apoi funcția `main` pentru a chema funcția `add_one`, așa cum e ilustrat în Listarea 14-7.
 
-<span class="filename">Filename: adder/src/main.rs</span>
+<span class="filename">Numele fișierului: adder/src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch14-more-about-cargo/listing-14-07/add/adder/src/main.rs}}
 ```
 
-<span class="caption">Listing 14-7: Using the `add_one` library crate from the
- `adder` crate</span>
+<span class="caption">Listarea 14-7: Utilizarea crate-ului bibliotecă `add_one` din crate-ul `adder`</span>
 
-Let’s build the workspace by running `cargo build` in the top-level *add*
-directory!
+Construim spațiul de lucru executând `cargo build` în directorul superior *add*!
 
 <!-- manual-regeneration
 cd listings/ch14-more-about-cargo/listing-14-07/add
@@ -167,9 +130,7 @@ $ cargo build
     Finished dev [unoptimized + debuginfo] target(s) in 0.68s
 ```
 
-To run the binary crate from the *add* directory, we can specify which
-package in the workspace we want to run by using the `-p` argument and the
-package name with `cargo run`:
+Pentru a executa crate-ul binar din directorul *add*, putem preciza pachetul din zona de lucru pe care dorim să îl rulăm folosind argumentul `-p` și numele pachetului împreună cu `cargo run`:
 
 <!-- manual-regeneration
 cd listings/ch14-more-about-cargo/listing-14-07/add
@@ -184,19 +145,11 @@ $ cargo run -p adder
 Hello, world! 10 plus one is 11!
 ```
 
-This runs the code in *adder/src/main.rs*, which depends on the `add_one` crate.
+Această comandă rulează codul din *adder/src/main.rs*, care depinde de crate-ul `add_one`.
 
-#### Depending on an External Package in a Workspace
+#### Utilizarea unei dependente externe într-un workspace
 
-Notice that the workspace has only one *Cargo.lock* file at the top level,
-rather than having a *Cargo.lock* in each crate’s directory. This ensures that
-all crates are using the same version of all dependencies. If we add the `rand`
-package to the *adder/Cargo.toml* and *add_one/Cargo.toml* files, Cargo will
-resolve both of those to one version of `rand` and record that in the one
-*Cargo.lock*. Making all crates in the workspace use the same dependencies
-means the crates will always be compatible with each other. Let’s add the
-`rand` crate to the `[dependencies]` section in the *add_one/Cargo.toml* file
-so we can use the `rand` crate in the `add_one` crate:
+Observăm că există un singur fișier *Cargo.lock* situat la nivelul de sus al spaíului nostru de lucru, și nu un *Cargo.lock* în directoriul fiecărui crate individual. Acest aranjament garantează că toate crate-urile folosesc aceleași versiuni ale dependențelor. Dacă includem pachetul `rand` în fișierele *adder/Cargo.toml* și *add_one/Cargo.toml*, Cargo va coordona cele două referințe pentru a utiliza o singură versiune a lui `rand`, pe care o va înregistra în fișierul *Cargo.lock* comun. Utilizarea aceleiași versiuni a dependențelor de către toate crate-urile din zona de lucru asigură că acestea vor fi întotdeauna interoperabile. Să adăugăm crate-ul `rand` în secțiunea `[dependencies]` a fișierului *add_one/Cargo.toml*, pentru a-l putea utiliza în crate-ul `add_one`:
 
 <!-- When updating the version of `rand` used, also update the version of
 `rand` used in these files so they all match:
@@ -210,10 +163,7 @@ so we can use the `rand` crate in the `add_one` crate:
 {{#include ../listings/ch14-more-about-cargo/no-listing-03-workspace-with-external-dependency/add/add_one/Cargo.toml:6:7}}
 ```
 
-We can now add `use rand;` to the *add_one/src/lib.rs* file, and building the
-whole workspace by running `cargo build` in the *add* directory will bring in
-and compile the `rand` crate. We will get one warning because we aren’t
-referring to the `rand` we brought into scope:
+Acum, putem scrie `use rand;` în fișierul *add_one/src/lib.rs*, și dacă executăm `cargo build` din directoriul *add*, acesta va descărca și compila crate-ul `rand`. O să primim un avertisment deoarece nu folosim `rand` după ce l-am introdus în domeniul de vizibilitate:
 
 <!-- manual-regeneration
 cd listings/ch14-more-about-cargo/no-listing-03-workspace-with-external-dependency/add
@@ -241,11 +191,7 @@ warning: `add_one` (lib) generated 1 warning
     Finished dev [unoptimized + debuginfo] target(s) in 10.18s
 ```
 
-The top-level *Cargo.lock* now contains information about the dependency of
-`add_one` on `rand`. However, even though `rand` is used somewhere in the
-workspace, we can’t use it in other crates in the workspace unless we add
-`rand` to their *Cargo.toml* files as well. For example, if we add `use rand;`
-to the *adder/src/main.rs* file for the `adder` package, we’ll get an error:
+Fișierul *Cargo.lock* de la nivelul cel mai de sus conține acum informații despre faptul că `add_one` depinde de `rand`. Totuși, chiar dacă `rand` este folosit în unele părți ale workspace-ului, nu va putea fi utilizat în alte crate-uri decât dacă adăugăm `rand` și în fișierele lor *Cargo.toml*. De exemplu, introducerea `use rand;` în fișierul *adder/src/main.rs* al pachetului `adder` va conduce la o eroare:
 
 <!-- manual-regeneration
 cd listings/ch14-more-about-cargo/output-only-03-use-rand/add
@@ -264,28 +210,19 @@ error[E0432]: unresolved import `rand`
   |     ^^^^ no external crate `rand`
 ```
 
-To fix this, edit the *Cargo.toml* file for the `adder` package and indicate
-that `rand` is a dependency for it as well. Building the `adder` package will
-add `rand` to the list of dependencies for `adder` in *Cargo.lock*, but no
-additional copies of `rand` will be downloaded. Cargo has ensured that every
-crate in every package in the workspace using the `rand` package will be using
-the same version, saving us space and ensuring that the crates in the workspace
-will be compatible with each other.
+Pentru a remedierea acestei probleme, actualizează fișierul *Cargo.toml* aferent pachetului `adder` indicând faptul că `rand` constituie de asemenea o dependență pentru el. Compilarea pachetului `adder` va adăuga `rand` în lista de dependențe pentru `adder` în fișierul *Cargo.lock*, dar nu vor fi descărcate versiuni suplimentare ale `rand`. Cargo a garantat că toate crate-urile din toate pachetele spaíului de lucru care folosesc pachetul `rand` se vor baza pe aceeași versiune, ajutându-ne să economisim spațiu și asigurând compatibilitatea între crate-urile din zona noastră de lucru.
 
-#### Adding a Test to a Workspace
+#### Adăugarea unui test într-un workspace
 
-For another enhancement, let’s add a test of the `add_one::add_one` function
-within the `add_one` crate:
+Pentru o nouă îmbunătățire, să adăugăm un test pentru funcția `add_one::add_one` din crate-ul `add_one`:
 
-<span class="filename">Filename: add_one/src/lib.rs</span>
+<span class="filename">Numele fișierului: add_one/src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch14-more-about-cargo/no-listing-04-workspace-with-tests/add/add_one/src/lib.rs}}
 ```
 
-Now run `cargo test` in the top-level *add* directory. Running `cargo test` in
-a workspace structured like this one will run the tests for all the crates in
-the workspace:
+Acum rulează `cargo test` în directoriul top-level *add*. Executând `cargo test` într-un spațiu de lucru configurat în acest mod, vor fi rulate testele pentru toate crate-urile din workspace:
 
 <!-- manual-regeneration
 cd listings/ch14-more-about-cargo/no-listing-04-workspace-with-tests/add
@@ -319,14 +256,9 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 ```
 
-The first section of the output shows that the `it_works` test in the `add_one`
-crate passed. The next section shows that zero tests were found in the `adder`
-crate, and then the last section shows zero documentation tests were found in
-the `add_one` crate.
+Prima parte a ieșierei indică faptul că testul `it_works` din crate-ul `add_one` a fost validat cu succes. Următoarea secțiune arată că nu au fost descoperite teste în crate-ul `adder`, iar ultima parte a output-ului revelează că nu au fost găsite teste de documentație pentru crate-ul `add_one`.
 
-We can also run tests for one particular crate in a workspace from the
-top-level directory by using the `-p` flag and specifying the name of the crate
-we want to test:
+Putem, de asemenea, să rulăm teste doar pentru un singur crate din spațiul de lucur, făcând asta din directoriul top-level, folosind opțiunea `-p` și specificând numele crate-ului pe care îl testăm:
 
 <!-- manual-regeneration
 cd listings/ch14-more-about-cargo/no-listing-04-workspace-with-tests/add
@@ -351,18 +283,10 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 ```
 
-This output shows `cargo test` only ran the tests for the `add_one` crate and
-didn’t run the `adder` crate tests.
+Această parte a afișajului confirmă că `cargo test` a executat numai testele pentru crate-ul `add_one`, fără a include testele pentru crate-ul `adder`.
 
-If you publish the crates in the workspace to [crates.io](https://crates.io/),
-each crate in the workspace will need to be published separately. Like `cargo
-test`, we can publish a particular crate in our workspace by using the `-p`
-flag and specifying the name of the crate we want to publish.
+Dacă ai intenția de a publica crate-urile din spațiul de lucru pe [crates.io](https://crates.io/), fiecare crate trebuie publicat separat. Similar cu `cargo test`, putem publica un anumit crate din zona de lucru folosind opțiunea `-p` și precizând numele acestuia.
 
-For additional practice, add an `add_two` crate to this workspace in a similar
-way as the `add_one` crate!
+Ca exercițiu adițional, încearcă să adaugi un crate `add_two` în acest spațiu de lucru, într-o manieră asemănătoare cu `add_one`!
 
-As your project grows, consider using a workspace: it’s easier to understand
-smaller, individual components than one big blob of code. Furthermore, keeping
-the crates in a workspace can make coordination between crates easier if they
-are often changed at the same time.
+Pe măsură ce proiectul tău evoluează, iată de ce ar fi benefică folosirea zonelor de lucru: este mai ușor de înțeles componente individuale și mai mici decât un monolit de cod. În plus, menținerea crate-urilor într-un spațiu de lucru poate facilita coordonarea între ele, în special când sunt modificate simultan.

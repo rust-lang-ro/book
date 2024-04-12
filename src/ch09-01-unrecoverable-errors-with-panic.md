@@ -1,112 +1,68 @@
-## Unrecoverable Errors with `panic!`
+## Gestionarea erorilor irecuperabile cu `panic!`
 
-Sometimes, bad things happen in your code, and there’s nothing you can do about
-it. In these cases, Rust has the `panic!` macro. There are two ways to cause a
-panic in practice: by taking an action that causes our code to panic (such as
-accessing an array past the end) or by explicitly calling the `panic!` macro.
-In both cases, we cause a panic in our program. By default, these panics will
-print a failure message, unwind, clean up the stack, and quit. Via an
-environment variable, you can also have Rust display the call stack when a
-panic occurs to make it easier to track down the source of the panic.
+În codul tău pot apărea situații neașteptate și iremediabile. Pentru aceste cazuri, Rust oferă macro-ul `panic!`. Poți declanșa o panică în două moduri: fie realizând o acțiune care duce la panică în codul nostru - de exemplu, accesând un array dincolo de capacitatea sa, fie apelând direct macro-ul `panic!`. Ambele variante vor provoca o panică în programul nostru care, implicit, va afișa un mesaj de eroare, va desface stiva, va efectua curățarea acesteia și va încheia execuția programului. Prin setarea unei variabile de mediu, poți de asemenea instrui Rust să afișeze stiva de apeluri în momentul unei panici, facilitând astfel identificarea cauzei problemei.
 
-> ### Unwinding the Stack or Aborting in Response to a Panic
+> ### Gestionarea panicii: Dezactivarea stivei sau abandonarea programului 
 >
-> By default, when a panic occurs, the program starts *unwinding*, which
-> means Rust walks back up the stack and cleans up the data from each function
-> it encounters. However, this walking back and cleanup is a lot of work. Rust,
-> therefore, allows you to choose the alternative of immediately *aborting*,
-> which ends the program without cleaning up.
->
-> Memory that the program was using will then need to be cleaned
-> up by the operating system. If in your project you need to make the resulting
-> binary as small as possible, you can switch from unwinding to aborting upon a
-> panic by adding `panic = 'abort'` to the appropriate `[profile]` sections in
-> your *Cargo.toml* file. For example, if you want to abort on panic in release
-> mode, add this:
+> Implicit, când se declanșează o panică, programul începe procesul de
+> *dezactivare a stivei* (unwinding): Rust urcă stiva invers și eliberează
+> memoria ocupată de datele din fiecare funcție întâlnită. Totuși, acest
+> procedeu este destul de laborios. De aceea, Rust îți oferă opțiunea de
+> *abandonare*, care oprește programul direct, fără a elibera resursele
+> utilizate.
+> În acest caz, sistemul de operare va trebui să curețe memoria folosită de
+> program. Dacă ai nevoie să minimizezi dimensiunea executabilului în
+> proiectul tău, poți opta pentru încheierea abruptă a programului în caz de
+> panică prin adăugarea liniei `panic = 'abort'` în secțiunile `[profile]`
+> relevante din fișierul *Cargo.toml*. De exemplu, pentru a seta această
+> opțiune în modul Release, inserează:
 >
 > ```toml
 > [profile.release]
 > panic = 'abort'
 > ```
 
-Let’s try calling `panic!` in a simple program:
+Să folosim `panic!` într-un program simplu:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,should_panic,panics
 {{#rustdoc_include ../listings/ch09-error-handling/no-listing-01-panic/src/main.rs}}
 ```
 
-When you run the program, you’ll see something like this:
+Când executăm programul, vom observa un mesaj similar cu acesta:
 
 ```console
 {{#include ../listings/ch09-error-handling/no-listing-01-panic/output.txt}}
 ```
 
-The call to `panic!` causes the error message contained in the last two lines.
-The first line shows our panic message and the place in our source code where
-the panic occurred: *src/main.rs:2:5* indicates that it’s the second line,
-fifth character of our *src/main.rs* file.
+Utilizarea `panic!` generează mesajul de eroare afișat în ultimele două rânduri. Primul rând îți prezintă mesajul nostru de panică, precum și locul din sursa noastră unde panica a avut loc: *src/main.rs:2:5* ne indică faptul că problema se află la linia a doua, caracterul cinci din fișierul nostru *src/main.rs*.
 
-In this case, the line indicated is part of our code, and if we go to that
-line, we see the `panic!` macro call. In other cases, the `panic!` call might
-be in code that our code calls, and the filename and line number reported by
-the error message will be someone else’s code where the `panic!` macro is
-called, not the line of our code that eventually led to the `panic!` call. We
-can use the backtrace of the functions the `panic!` call came from to figure
-out the part of our code that is causing the problem. We’ll discuss backtraces
-in more detail next.
+În exemplul nostru, linia indicată ne duce direct la codul scris de noi, unde găsim apelul macro-ului `panic!`. Cu toate acestea, uneori apelul `panic!` s-ar putea să fie în cod la care codul nostru face referire și atunci, numele fișierului și numărul liniei raportate de mesajul de eroare vor semnala locația din codul altei persoane unde a fost invocat `panic!`, nu punctul din codul nostru care a cauzat în ultimă instanță invocarea `panic!`. Putem să folosim backtrace-ul pentru a urmări din ce funcții vine apelul `panic!` și să identificăm astfel partea din codul nostru responsabilă pentru eroare. Vom discuta backtrace-urile mai în detaliu în curând.
 
-### Using a `panic!` Backtrace
+### Urmărirea stivei cu `panic!`
 
-Let’s look at another example to see what it’s like when a `panic!` call comes
-from a library because of a bug in our code instead of from our code calling
-the macro directly. Listing 9-1 has some code that attempts to access an
-index in a vector beyond the range of valid indexes.
+Să analizăm un exemplu în care `panic!` este declanșat de o bibliotecă din pricina unei greșeli în codul nostru, în loc de a proveni direct din codul care invocă macrocomanda. Listarea 9-1 prezintă cod care încearcă să acceseze un index inexistent într-un vector, dincolo de limita indexurilor valide.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,should_panic,panics
 {{#rustdoc_include ../listings/ch09-error-handling/listing-09-01/src/main.rs}}
 ```
 
-<span class="caption">Listing 9-1: Attempting to access an element beyond the
-end of a vector, which will cause a call to `panic!`</span>
+<span class="caption">Listarea 9-1: Tentativa de accesare a unui element în afara limitelor unui vector, ce va declanșa un apel la `panic!`</span>
 
-Here, we’re attempting to access the 100th element of our vector (which is at
-index 99 because indexing starts at zero), but the vector has only 3 elements.
-In this situation, Rust will panic. Using `[]` is supposed to return an
-element, but if you pass an invalid index, there’s no element that Rust could
-return here that would be correct.
+În acest caz, încercăm să accesăm elementul cu indexul 100 din vectorul nostru (care ar fi de fapt la indexul 99, deoarece numerotarea începe de la zero), însă vectorul nostru conține doar 3 elemente. In această situație, Rust va apela panica. Folosirea operatorului `[]` presupune a extrage un element, dar când indexul este incorect, Rust nu poate furniza un răspuns adecvat.
 
-In C, attempting to read beyond the end of a data structure is undefined
-behavior. You might get whatever is at the location in memory that would
-correspond to that element in the data structure, even though the memory
-doesn’t belong to that structure. This is called a *buffer overread* and can
-lead to security vulnerabilities if an attacker is able to manipulate the index
-in such a way as to read data they shouldn’t be allowed to that is stored after
-the data structure.
+În limbajul C, citirea datelor dincolo de capătul unei structuri de date este un comportament nedefinit. S-ar putea să primești date aleatoare din memoria ce corespunde acelui index în structura de date, chiar dacă acea porțiune de memorie nu face parte din structură. Acest fenomen, cunoscut sub numele de *supracitire a buffer-ului*, poate crea vulnerabilități de securitate dacă un atacator reușește să modifice indexul în așa fel încât să citească date neautorizate, plasate în memorie după structura de date.
 
-To protect your program from this sort of vulnerability, if you try to read an
-element at an index that doesn’t exist, Rust will stop execution and refuse to
-continue. Let’s try it and see:
+Pentru a proteja programul tău de vulnerabilități, Rust va opri execuția dacă încerci să accesezi un element la un index inexistent, refuzând astfel să continue. Să vedem cum se întâmplă asta:
 
 ```console
 {{#include ../listings/ch09-error-handling/listing-09-01/output.txt}}
 ```
 
-This error points at line 4 of our `main.rs` where we attempt to access index
-99. The next note line tells us that we can set the `RUST_BACKTRACE`
-environment variable to get a backtrace of exactly what happened to cause the
-error. A *backtrace* is a list of all the functions that have been called to
-get to this point. Backtraces in Rust work as they do in other languages: the
-key to reading the backtrace is to start from the top and read until you see
-files you wrote. That’s the spot where the problem originated. The lines above
-that spot are code that your code has called; the lines below are code that
-called your code. These before-and-after lines might include core Rust code,
-standard library code, or crates that you’re using. Let’s try getting a
-backtrace by setting the `RUST_BACKTRACE` environment variable to any value
-except 0. Listing 9-2 shows output similar to what you’ll see.
+Mesajul de eroare arată că greșeala se află la linia 4 din fișierul nostru `main.rs`, unde am încercat să accesăm elementul cu indexul 99. Nota atașată ne spune că putem seta variabila de mediu `RUST_BACKTRACE` pentru a primi un backtrace detaliat, care să ne arate exact ce a cauzat eroarea. Un backtrace reprezintă o listă cu toate funcțiile invocate până în punctul erorii. Interpretarea unui backtrace în Rust se face la fel ca în alte limbaje: pornește de la începutul listei și continuă să citești până când recunoști fișiere pe care le-ai scris tu. Acolo se găsește originea problemei. Liniile care preced această marcă sunt codul apelat de codul tău; cele care urmează sunt cele care l-au apelat pe al tău. Aceasta implică posibil codul fundamental Rust, librăriile standard sau crate-urile utilizate. Să obținem un backtrace setând variabila de mediu `RUST_BACKTRACE` la orice altceva decât 0. În Listarea 9-2 vei găsi un exemplu de afișaj similar cu cel pe care îl vei întâlni.
 
 <!-- manual-regeneration
 cd listings/ch09-error-handling/listing-09-01
@@ -117,50 +73,33 @@ check the backtrace number mentioned in the text below the listing
 
 ```console
 $ RUST_BACKTRACE=1 cargo run
-thread 'main' panicked at src/main.rs:4:6:
-index out of bounds: the len is 3 but the index is 99
+thread 'main' panicked at 'index out of bounds: the len is 3 but the index is 99', src/main.rs:4:5
 stack backtrace:
    0: rust_begin_unwind
-             at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/std/src/panicking.rs:645:5
+             at /rustc/e092d0b6b43f2de967af0887873151bb1c0b18d3/library/std/src/panicking.rs:584:5
    1: core::panicking::panic_fmt
-             at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/core/src/panicking.rs:72:14
+             at /rustc/e092d0b6b43f2de967af0887873151bb1c0b18d3/library/core/src/panicking.rs:142:14
    2: core::panicking::panic_bounds_check
-             at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/core/src/panicking.rs:208:5
+             at /rustc/e092d0b6b43f2de967af0887873151bb1c0b18d3/library/core/src/panicking.rs:84:5
    3: <usize as core::slice::index::SliceIndex<[T]>>::index
-             at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/core/src/slice/index.rs:255:10
+             at /rustc/e092d0b6b43f2de967af0887873151bb1c0b18d3/library/core/src/slice/index.rs:242:10
    4: core::slice::index::<impl core::ops::index::Index<I> for [T]>::index
-             at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/core/src/slice/index.rs:18:9
+             at /rustc/e092d0b6b43f2de967af0887873151bb1c0b18d3/library/core/src/slice/index.rs:18:9
    5: <alloc::vec::Vec<T,A> as core::ops::index::Index<I>>::index
-             at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/alloc/src/vec/mod.rs:2770:9
+             at /rustc/e092d0b6b43f2de967af0887873151bb1c0b18d3/library/alloc/src/vec/mod.rs:2591:9
    6: panic::main
-             at ./src/main.rs:4:6
+             at ./src/main.rs:4:5
    7: core::ops::function::FnOnce::call_once
-             at /rustc/07dca489ac2d933c78d3c5158e3f43beefeb02ce/library/core/src/ops/function.rs:250:5
+             at /rustc/e092d0b6b43f2de967af0887873151bb1c0b18d3/library/core/src/ops/function.rs:248:5
 note: Some details are omitted, run with `RUST_BACKTRACE=full` for a verbose backtrace.
 ```
 
-<span class="caption">Listing 9-2: The backtrace generated by a call to
-`panic!` displayed when the environment variable `RUST_BACKTRACE` is set</span>
+<span class="caption">Listarea 9-2: Backtrace generat de `panic!`, vizibil când variabila de mediu `RUST_BACKTRACE` este activă</span>
 
-That’s a lot of output! The exact output you see might be different depending
-on your operating system and Rust version. In order to get backtraces with this
-information, debug symbols must be enabled. Debug symbols are enabled by
-default when using `cargo build` or `cargo run` without the `--release` flag,
-as we have here.
+Este o mulțime de informație afișată! Afișajul pe care îl vei vedea poate varia în funcție de sistemul de operare și versiunea de Rust utilizată. Pentru a obține backtrace-uri detaliate ca acestea, este necesar ca simbolurile de depanare să fie activate. Aceste simboluri sunt activate automat când folosești `cargo build` sau `cargo run` fară opțiunea `--release`, cum este cazul aici.
 
-In the output in Listing 9-2, line 6 of the backtrace points to the line in our
-project that’s causing the problem: line 4 of *src/main.rs*. If we don’t want
-our program to panic, we should start our investigation at the location pointed
-to by the first line mentioning a file we wrote. In Listing 9-1, where we
-deliberately wrote code that would panic, the way to fix the panic is to not
-request an element beyond the range of the vector indexes. When your code
-panics in the future, you’ll need to figure out what action the code is taking
-with what values to cause the panic and what the code should do instead.
+În afișajul din Listarea 9-2, linia 6 din backtrace ne conduce direct la linia din proiectul nostru care generează problema: linia 4 din *src/main.rs*. Dacă dorim să evităm panica în program, ar trebui să începem analiza acolo unde prima linie indică un fișier creat de noi. De exemplu, în Listarea 9-1, unde codul a fost scris intenționat pentru a genera o panică, soluția pentru a evita aceasta este să nu accesăm un element dintr-un vector ce depășește limitele indicilor acestuia. Când codul tău generează o panică în viitor, va trebui să identifici care acțiune și valori conduc la acea panică și ce ar trebui de fapt să facă codul tău.
 
-We’ll come back to `panic!` and when we should and should not use `panic!` to
-handle error conditions in the [“To `panic!` or Not to
-`panic!`”][to-panic-or-not-to-panic]<!-- ignore --> section later in this
-chapter. Next, we’ll look at how to recover from an error using `Result`.
+Vom reveni la discuția despre `panic!`, când ar trebui și când nu ar trebui să folosim `panic!` pentru a trata erorile, în secțiunea [„Când să folosim `panic!` și când nu”][to-panic-or-not-to-panic] mai târziu în acest capitol. În continuare, vom explora cum să gestionăm recuperarea dintr-o eroare folosind `Result`.
 
-[to-panic-or-not-to-panic]:
-ch09-03-to-panic-or-not-to-panic.html#to-panic-or-not-to-panic
+[to-panic-or-not-to-panic]: ch09-03-to-panic-or-not-to-panic.html#to-panic-or-not-to-panic

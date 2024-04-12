@@ -1,17 +1,7 @@
-## Extending Cargo with Custom Commands
+## Extinderea Cargo cu Comenzi Personalizate
 
-Cargo is designed so you can extend it with new subcommands without having to
-modify Cargo. If a binary in your `$PATH` is named `cargo-something`, you can
-run it as if it was a Cargo subcommand by running `cargo something`. Custom
-commands like this are also listed when you run `cargo --list`. Being able to
-use `cargo install` to install extensions and then run them just like the
-built-in Cargo tools is a super convenient benefit of Cargo’s design!
+Cargo este proiectat pentru a permite adăugarea de subcomenzi noi fără a schimba Cargo. Dacă există un executabil în `$PATH` cu numele `cargo-something`, îl poți rula ca și cum ar fi o subcomandă Cargo prin comanda `cargo something`. Comenzi personalizate de acest fel sunt listate de asemenea atunci când rulezi `cargo --list`. Posibilitatea de a utiliza `cargo install` pentru instalarea extensiilor și apoi de a le executa la fel ca instrumentele predefinite Cargo reprezintă o facilitate deosebit de convenabilă a designului Cargo!
 
-## Summary
+## Sumar
 
-Sharing code with Cargo and [crates.io](https://crates.io/)<!-- ignore --> is
-part of what makes the Rust ecosystem useful for many different tasks. Rust’s
-standard library is small and stable, but crates are easy to share, use, and
-improve on a timeline different from that of the language. Don’t be shy about
-sharing code that’s useful to you on [crates.io](https://crates.io/)<!-- ignore
--->; it’s likely that it will be useful to someone else as well!
+Partajarea codului prin Cargo și [crates.io](https://crates.io/) contribuie la utilitatea ecosistemului Rust pentru diverse sarcini. Biblioteca standard a Rust este mică și stabilă, însă crate-urile sunt ușor de împărtășit, folosit și îmbunătățit pe un parcurs diferit de cel al limbajului în sine. Nu ezita să partajezi codul care îți este util pe [crates.io](https://crates.io/); există mari șanse ca acesta să fie benefic și pentru alte persoane!

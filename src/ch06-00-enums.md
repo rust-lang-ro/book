@@ -1,11 +1,3 @@
-# Enums and Pattern Matching
+# Enumerări și potrivirea modelelor
 
-In this chapter, we’ll look at *enumerations*, also referred to as *enums*.
-Enums allow you to define a type by enumerating its possible *variants*. First
-we’ll define and use an enum to show how an enum can encode meaning along with
-data. Next, we’ll explore a particularly useful enum, called `Option`, which
-expresses that a value can be either something or nothing. Then we’ll look at
-how pattern matching in the `match` expression makes it easy to run different
-code for different values of an enum. Finally, we’ll cover how the `if let`
-construct is another convenient and concise idiom available to handle enums in
-your code.
+În cadrul acestui capitol, ne vom concentra asupra *enumerărilor*, sau cum sunt ele numite în mod obișnuit, *enum*. Enum-urile ne oferă posibilitatea de a defini un tip prin enumerarea variantelor sale posibile. Vom începe prin a defini și utiliza un enum pentru a ilustra cum putem încorpora atât sens, cât și date în cadrul unui enum. Ulterior, vom explora un exemplu specific de enum, numit `Option`, care exprimă ideea că o valoare poate reprezenta fie ceva, fie nimic. În continuare, vom analiza cum potrivirea modelelor în cadrul expresiei `match` ne facilitează posibilitatea de a executa diferite bucăți de cod, în funcție de valorile diferite pe care le poate lua un enum. În final, vom discuta despre cum construcția `if let` reprezintă un alt instrument convenabil și concis pe care îl avem la dispoziție pentru a manipula enum-urile în codul nostru.

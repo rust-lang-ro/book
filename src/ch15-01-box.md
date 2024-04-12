@@ -1,255 +1,139 @@
-## Using `Box<T>` to Point to Data on the Heap
+## Utilizarea `Box<T>` pentru a arăta spre date situate pe heap
 
-The most straightforward smart pointer is a *box*, whose type is written
-`Box<T>`. Boxes allow you to store data on the heap rather than the stack. What
-remains on the stack is the pointer to the heap data. Refer to Chapter 4 to
-review the difference between the stack and the heap.
+Cel mai simplu smart pointer este *boxa*, ale cărei tip este notat ca `Box<T>`. Boxele permit stocarea datelor pe heap în loc de pe stivă. Ce rămâne pe stivă este pointerul către datele de pe heap. Pentru a revizui diferența dintre stivă și heap, putem reveni la Capitolul 4.
 
-Boxes don’t have performance overhead, other than storing their data on the
-heap instead of on the stack. But they don’t have many extra capabilities
-either. You’ll use them most often in these situations:
+Boxele nu aduc un supra-cost de performanță decât în ceea ce privește stocarea datelor pe heap în locul stivei. Dar, ele nu oferă nici multe funcționalități extra. Vom utiliza boxele cel mai frecvent în următoarele situații:
 
-* When you have a type whose size can’t be known at compile time and you want
-  to use a value of that type in a context that requires an exact size
-* When you have a large amount of data and you want to transfer ownership but
-  ensure the data won’t be copied when you do so
-* When you want to own a value and you care only that it’s a type that
-  implements a particular trait rather than being of a specific type
+* Atunci când deținem un tip a cărui dimensiune nu poate fi stabilită în timpul compilării și dorim să utilizăm o valoare de acest tip într-un context care necesită o dimensiune exactă
+* Atunci când avem o cantitate mare de date și dorim să transferăm posesiunea, dar să ne asigurăm că datele nu vor fi copiate în acest proces
+* Atunci când dorim să deținem o valoare și ne interesează doar ca aceasta să implementeze o anumită trăsătură, mai degrabă decât să fie de un tip anume
 
-We’ll demonstrate the first situation in the [“Enabling Recursive Types with
-Boxes”](#enabling-recursive-types-with-boxes)<!-- ignore --> section. In the
-second case, transferring ownership of a large amount of data can take a long
-time because the data is copied around on the stack. To improve performance in
-this situation, we can store the large amount of data on the heap in a box.
-Then, only the small amount of pointer data is copied around on the stack,
-while the data it references stays in one place on the heap. The third case is
-known as a *trait object*, and Chapter 17 devotes an entire section, [“Using
-Trait Objects That Allow for Values of Different Types,”][trait-objects]<!--
-ignore --> just to that topic. So what you learn here you’ll apply again in
-Chapter 17!
+Primul caz va fi demonstrat în secțiunea [“Activarea Tipurilor Recursive folosind Boxe”](#enabling-recursive-types-with-boxes)<!-- ignore -->. În al doilea caz, transferul posesiunii asupra unei cantități mari de date poate dura mult deoarece datele sunt copiate pe stivă. Pentru îmbunătățirea performanței în această situație, putem stoca acele date pe heap într-o boxă. Astfel, doar o mică parte din datele pointerului sunt copiate pe stivă, pe când datele la care se referă rămân într-un singur loc pe heap. Al treilea caz este cunoscut sub numele de *obiect-trăsătură*, iar Capitolul 17 consacră o întreagă secțiune, [“Utilizarea obiectelor-trăsătură ce permit valori de tipuri diverse,”][trait-objects]<!-- ignore --> exclusiv acestui subiect. Deci, tot ce învățăm aici va fi aplicat din nou în Capitolul 17!
 
-### Using a `Box<T>` to Store Data on the Heap
+### Utilizarea unei `Box<T>` pentru a stoca date pe heap
 
-Before we discuss the heap storage use case for `Box<T>`, we’ll cover the
-syntax and how to interact with values stored within a `Box<T>`.
+Înainte de a discuta cazul de utilizare a `Box<T>` pentru stocare pe heap, vom revizui sintaxa și cum interacționăm cu valorile închise într-o `Box<T>`.
 
-Listing 15-1 shows how to use a box to store an `i32` value on the heap:
+Listarea 15-1 ilustrează cum să folosești o boxă pentru a păstra o valoare `i32` pe heap:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch15-smart-pointers/listing-15-01/src/main.rs}}
 ```
 
-<span class="caption">Listing 15-1: Storing an `i32` value on the heap using a
-box</span>
+<span class="caption">Listarea 15-1: Stocarea unei valori `i32` pe heap utilizând o boxă</span>
 
-We define the variable `b` to have the value of a `Box` that points to the
-value `5`, which is allocated on the heap. This program will print `b = 5`; in
-this case, we can access the data in the box similar to how we would if this
-data were on the stack. Just like any owned value, when a box goes out of
-scope, as `b` does at the end of `main`, it will be deallocated. The
-deallocation happens both for the box (stored on the stack) and the data it
-points to (stored on the heap).
+Definim variabila `b` cu valoarea unui `Box` care indică spre valoarea `5`, alocată pe heap. Acest program va afișa `b = 5`; în acest context, putem accesa datele din boxă într-un mod asemănător cu cel în care am accesa datele dacă ar fi pe stivă. Așa cum se întâmplă cu orice valoare deținută, când un `Box` iese din domeniul de vizibilitate, cum se întâmplă pentru `b` la finalul `main` function, se va proceda la dealocarea acestuia. Dealocarea are loc atât pentru boxă (pe stivă), cât și pentru datele la care face referire (pe heap).
 
-Putting a single value on the heap isn’t very useful, so you won’t use boxes by
-themselves in this way very often. Having values like a single `i32` on the
-stack, where they’re stored by default, is more appropriate in the majority of
-situations. Let’s look at a case where boxes allow us to define types that we
-wouldn’t be allowed to if we didn’t have boxes.
+A așeza o singură valoare pe heap nu este frecvent utilă, prin urmare utilizarea în izolare a boxelor în acest mod nu este des întâlnită. În majoritatea situațiilor, este mai potrivit să avem valori precum o instanță `i32` pe stivă, unde în mod implicit sunt stocate. Să examinăm acum o situație în care boxele ne permit să definim tipuri care în alt mod n-ar fi posibile fără existența boxelor.
 
-### Enabling Recursive Types with Boxes
+### Permiterea tipurilor recursive cu boxe
 
-A value of *recursive type* can have another value of the same type as part of
-itself. Recursive types pose an issue because at compile time Rust needs to
-know how much space a type takes up. However, the nesting of values of
-recursive types could theoretically continue infinitely, so Rust can’t know how
-much space the value needs. Because boxes have a known size, we can enable
-recursive types by inserting a box in the recursive type definition.
+O valoare de tip recursiv poate include în ea însăși o altă valoare de același tip. Tipurile recursive creează o problemă în Rust deoarece, la momentul compilării, este necesar să se știe cât spațiu ocupă fiecare tip. Însă, întrepătrunderea valorilor de tipuri recursive teoretic nu are sfârșit, astfel Rust nu poate deduce cât spațiu va fi necesar. Utilizarea boxelor, care au o dimensiune fixă cunoscută, ne permite să activăm tipurile recursive prin introducerea unei boxe în definiția tipului recursiv.
 
-As an example of a recursive type, let’s explore the *cons list*. This is a data
-type commonly found in functional programming languages. The cons list type
-we’ll define is straightforward except for the recursion; therefore, the
-concepts in the example we’ll work with will be useful any time you get into
-more complex situations involving recursive types.
+Drept exemplu de tip recursiv, să analizăm *lista cons*. Aceasta este un tip de date des întâlnit în limbajele de programare funcțională. Tipul listei cons pe care îl vom defini este simplu, mai puțin partea recursivă; deci, conceptele din exemplul cu care vom lucra ne vor fi de folos în orice moment când ne confruntăm cu situații mai complexe ce implică tipuri recursive.
 
-#### More Information About the Cons List
+#### Mai multe informații despre lista cons
 
-A *cons list* is a data structure that comes from the Lisp programming language
-and its dialects and is made up of nested pairs, and is the Lisp version of a
-linked list. Its name comes from the `cons` function (short for “construct
-function”) in Lisp that constructs a new pair from its two arguments. By
-calling `cons` on a pair consisting of a value and another pair, we can
-construct cons lists made up of recursive pairs.
-
-For example, here’s a pseudocode representation of a cons list containing the
-list 1, 2, 3 with each pair in parentheses:
-
+O *cons list* (listă cons) este o structură de date originară din limbajul de programare Lisp și din dialectele acestuia, alcătuită din perechi încapsulate și reprezintă versiunea în Lisp a unei liste înlănțuite. Numele provine de la funcția `cons` (prescurtarea pentru “construct function”) din Lisp, care construiește o nouă pereche pe baza celor doi parametri. Prin apelarea recursivă a funcției `cons` pe o pereche formată dintr-o valoare și o altă pereche, putem crea liste cons alcătuite din perechi recursive.
+  Iată un exemplu de reprezentare în pseudocod a unei liste cons care include secvența 1, 2, 3; fiecare pereche fiind închisă în paranteze:
+ 
 ```text
 (1, (2, (3, Nil)))
 ```
+  Fiecare element al unei liste cons cuprinde două componente: valoarea actuală și următorul element din listă. Ultimul element conține numai o valoare numită `Nil`, fără un succesor. O listă cons este generată prin apeluri recursive ale funcției `cons`. Termenul recunoscut universal pentru a desemna situația inițială a recursivității este `Nil`. Este important de subliniat că acesta nu coincide cu noțiunea de „null” sau „nil” menționată în Capitolul 6, ce se referă la o valoare nevalidă sau lipsă.
 
-Each item in a cons list contains two elements: the value of the current item
-and the next item. The last item in the list contains only a value called `Nil`
-without a next item. A cons list is produced by recursively calling the `cons`
-function. The canonical name to denote the base case of the recursion is `Nil`.
-Note that this is not the same as the “null” or “nil” concept in Chapter 6,
-which is an invalid or absent value.
+Lista cons nu este o structură de date des întâlnită în Rust. Majoritatea timpului, când avem de-a face cu o listă de elemente în Rust, opțiunea `Vec<T>` se dovedește a fi mai practică. Alte structuri de date recursive mai complexe *sunt* utile în situații variate, dar introducerea noțiunii de listă cons în acest capitol ne permite să explorăm cum boxele ne ajută să definim un tip de date recursiv, fără alte distrageri.
 
-The cons list isn’t a commonly used data structure in Rust. Most of the time
-when you have a list of items in Rust, `Vec<T>` is a better choice to use.
-Other, more complex recursive data types *are* useful in various situations,
-but by starting with the cons list in this chapter, we can explore how boxes
-let us define a recursive data type without much distraction.
+Listarea 15-2 conține definiția unui enum pentru o listă de tip cons. Observăm că acest cod nu o să se compileze încă, pentru că tipul `List` nu are o mărime cunoscută, lucru pe care îl vom demonstra.
 
-Listing 15-2 contains an enum definition for a cons list. Note that this code
-won’t compile yet because the `List` type doesn’t have a known size, which
-we’ll demonstrate.
-
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch15-smart-pointers/listing-15-02/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 15-2: The first attempt at defining an enum to
-represent a cons list data structure of `i32` values</span>
+<span class="caption">Listarea 15-2: Prima încercare de definire a unui enum pentru a reprezenta o structură de date listă cons de valori `i32`</span>
 
-> Note: We’re implementing a cons list that holds only `i32` values for the
-> purposes of this example. We could have implemented it using generics, as we
-> discussed in Chapter 10, to define a cons list type that could store values of
-> any type.
+> Notă: Implementăm o listă cons care conține numai valori `i32` pentru acest
+> exemplu. Am fi putut să utilizăm generici, așa cum am discutat în Capitolul
+> 10, pentru a defini un tip de listă cons capabil să stocheze valori de orice
+> tip.
 
-Using the `List` type to store the list `1, 2, 3` would look like the code in
-Listing 15-3:
+Utilizând tipul `List` pentru a stoca lista `1, 2, 3` arată ca și codul din Listarea 15-3:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch15-smart-pointers/listing-15-03/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 15-3: Using the `List` enum to store the list `1,
-2, 3`</span>
+<span class="caption">Listarea 15-3: Folosind enum-ul `List` pentru a stoca lista `1, 2, 3`</span>
 
-The first `Cons` value holds `1` and another `List` value. This `List` value is
-another `Cons` value that holds `2` and another `List` value. This `List` value
-is one more `Cons` value that holds `3` and a `List` value, which is finally
-`Nil`, the non-recursive variant that signals the end of the list.
+Prima valoare `Cons` păstrează `1` și încă o valoare `List`. Această valoare `List` este alte o valoare `Cons` care păstrează `2` și încă o valoare `List`. Ultima valoare `List` este încă o valoare `Cons` care păstrează `3` și o valoare `List`, care până la urmă este `Nil`, varianta non-recursivă ce semnalează finalul listei.
 
-If we try to compile the code in Listing 15-3, we get the error shown in
-Listing 15-4:
+Dacă încercăm să compilăm codul din Listarea 15-3, vom întâmpina eroarea afișată în Listarea 15-4:
 
 ```console
 {{#include ../listings/ch15-smart-pointers/listing-15-03/output.txt}}
 ```
 
-<span class="caption">Listing 15-4: The error we get when attempting to define
-a recursive enum</span>
+<span class="caption">Listarea 15-4: Eroarea întâlnită când încercăm să definim un enum recursiv</span>
 
-The error shows this type “has infinite size.” The reason is that we’ve defined
-`List` with a variant that is recursive: it holds another value of itself
-directly. As a result, Rust can’t figure out how much space it needs to store a
-`List` value. Let’s break down why we get this error. First, we’ll look at how
-Rust decides how much space it needs to store a value of a non-recursive type.
+Eroarea indică că acest tip "are dimensiune infinită". Acest lucru se întâmplă deoarece am definit `List` cu o variantă care este recursivă, aceasta conținând direct altă valoare de tipul său. Drept rezultat, Rust nu poate stabili cât spațiu e necesar pentru a stoca o valoare de tip `List`. Să analizăm de ce apare această eroare. În primul rând, să vedem cum Rust decide cât spațiu e necesar pentru a stoca o valoare de tip non-recursiv.
 
-#### Computing the Size of a Non-Recursive Type
+#### Calcularea dimensiunii unui tip non-recursiv
 
-Recall the `Message` enum we defined in Listing 6-2 when we discussed enum
-definitions in Chapter 6:
+Reamintim enum-ul `Message` definit în Listarea 6-2, unde am analizat definițiile enum-urilor în Capitolul 6:
 
 ```rust
 {{#rustdoc_include ../listings/ch06-enums-and-pattern-matching/listing-06-02/src/main.rs:here}}
 ```
 
-To determine how much space to allocate for a `Message` value, Rust goes
-through each of the variants to see which variant needs the most space. Rust
-sees that `Message::Quit` doesn’t need any space, `Message::Move` needs enough
-space to store two `i32` values, and so forth. Because only one variant will be
-used, the most space a `Message` value will need is the space it would take to
-store the largest of its variants.
+Pentru a calcula cât spațiu este necesar pentru o valoare de tip `Message`, Rust inspectează fiecare variantă pentru a determina care variază cel mai mult în dimensiune. Rust observă că `Message::Quit` nu ocupă spațiu, `Message::Move` necesită destul spațiu pentru două valori `i32`, etc. Cum doar una dintre variante va fi utilizată, cantitatea maximă de spațiu pe care o valoare `Message` o poate ocupa este dată de dimensiunea celei mai mari variante.
 
-Contrast this with what happens when Rust tries to determine how much space a
-recursive type like the `List` enum in Listing 15-2 needs. The compiler starts
-by looking at the `Cons` variant, which holds a value of type `i32` and a value
-of type `List`. Therefore, `Cons` needs an amount of space equal to the size of
-an `i32` plus the size of a `List`. To figure out how much memory the `List`
-type needs, the compiler looks at the variants, starting with the `Cons`
-variant. The `Cons` variant holds a value of type `i32` and a value of type
-`List`, and this process continues infinitely, as shown in Figure 15-1.
+Prin contrast, observăm ce se întâmplă când Rust încearcă să determine cât spațiu este necesar pentru un tip recursiv, cum ar fi enum-ul `List` din Listarea 15-2. Compilatorul începe analiza cu varianta `Cons`, care include o valoare `i32` și una de tip `List`. Astfel, `Cons` necesită un spațiu egal cu dimensiunea unui `i32` adăugată la dimensiunea unui `List`. Pentru a deduce cât spațiu îi trebuie tipului `List`, compilatorul se uită la variante, pornind de la `Cons`. Aceasta conține o valoare `i32` și una `List`, iar această recursivitate continuă ad infinitum, așa cum e prezentat în Figura 15-1.
 
-<img alt="An infinite Cons list" src="img/trpl15-01.svg" class="center" style="width: 50%;" />
+<span class="caption">Figura 15-1: O listă `List` infinită compusă din variante `Cons` la infinit</span>
 
-<span class="caption">Figure 15-1: An infinite `List` consisting of infinite
-`Cons` variants</span>
+#### Folosirea lui `Box<T>` pentru a realiza un tip recursiv cu dimensiunea cunoscută
 
-#### Using `Box<T>` to Get a Recursive Type with a Known Size
-
-Because Rust can’t figure out how much space to allocate for recursively
-defined types, the compiler gives an error with this helpful suggestion:
+Pentru că Rust nu este capabil să calculeze automat cât spațiu de memorie trebuie alocat pentru tipurile definite recursiv, compilatorul va arăta o eroare cu următoarea sugestie utilă:
 
 <!-- manual-regeneration
 after doing automatic regeneration, look at listings/ch15-smart-pointers/listing-15-03/output.txt and copy the relevant line
 -->
 
 ```text
-help: insert some indirection (e.g., a `Box`, `Rc`, or `&`) to break the cycle
+help: insert some indirection (e.g., a `Box`, `Rc`, or `&`) to make `List` representable
   |
 2 |     Cons(i32, Box<List>),
   |               ++++    +
 ```
 
-In this suggestion, “indirection” means that instead of storing a value
-directly, we should change the data structure to store the value indirectly by
-storing a pointer to the value instead.
+Aici, „un nivel de indirecție” sugerează că în loc să stocăm direct o valoare, ar trebui să modificăm structura de date astfel încât valoarea să fie stocată în mod indirect, prin intermediul unui pointer care să indice către acea valoare.
 
-Because a `Box<T>` is a pointer, Rust always knows how much space a `Box<T>`
-needs: a pointer’s size doesn’t change based on the amount of data it’s
-pointing to. This means we can put a `Box<T>` inside the `Cons` variant instead
-of another `List` value directly. The `Box<T>` will point to the next `List`
-value that will be on the heap rather than inside the `Cons` variant.
-Conceptually, we still have a list, created with lists holding other lists, but
-this implementation is now more like placing the items next to one another
-rather than inside one another.
+Din moment ce un `Box<T>` este un pointer, Rust întotdeauna va ști cât spațiu necesită un `Box<T>`: mărimea unui pointer rămâne constantă, indiferent de volumul de date la care face referire. Asta înseamnă că putem utiliza o boxă `Box<T>` în varianta `Cons` pe locul unei valori `List` directe. `Box<T>` va referi la următoarea intrare `List`, care va fi amplasată în heap și nu direct în varianta `Cons`. În esență, avem în continuare o listă, alcătuită din liste care conțin alte liste, însă această implementare este acum mai aproape de ideea de a așeza elementele unul lângă celălalt decât unul în altul.
 
-We can change the definition of the `List` enum in Listing 15-2 and the usage
-of the `List` in Listing 15-3 to the code in Listing 15-5, which will compile:
+Putem modifica definiția enum-ului `List` din Listarea 15-2 și utilizarea `List` din Listarea 15-3 cu codul din Listarea 15-5, care se va compila:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch15-smart-pointers/listing-15-05/src/main.rs}}
 ```
 
-<span class="caption">Listing 15-5: Definition of `List` that uses `Box<T>` in
-order to have a known size</span>
+<span class="caption">Listarea 15-5: Definiția lui `List` care folosește `Box<T>` pentru a asigura o dimensiune cunoscută</span>
 
-The `Cons` variant needs the size of an `i32` plus the space to store the
-box’s pointer data. The `Nil` variant stores no values, so it needs less space
-than the `Cons` variant. We now know that any `List` value will take up the
-size of an `i32` plus the size of a box’s pointer data. By using a box, we’ve
-broken the infinite, recursive chain, so the compiler can figure out the size
-it needs to store a `List` value. Figure 15-2 shows what the `Cons` variant
-looks like now.
+Varianta `Cons` necesită dimensiunea unui `i32` plus spațiul necesar pentru a stoca datele pointer-ului boxei. Varianta `Nil` nu stochează nicio valoare, deci ocupă mai puțin spațiu decât varianta `Cons`. Acum știm că orice valoare de tip `List` va ocupa dimensiunea unui `i32` plus dimensiunea datelor pointer-ului unei boxe. Folosind o boxe am întrerupt lanțul infinit, recursiv, permițând astfel compilatorului să calculeze dimensiunea de care are nevoie pentru a stoca o valoare `List`. Figura 15-2 ilustrează aspectul curent al variantei `Cons`.
 
-<img alt="A finite Cons list" src="img/trpl15-02.svg" class="center" />
+<img alt="O listă cons finită" src="img/trpl15-02.svg" class="center" />
 
-<span class="caption">Figure 15-2: A `List` that is not infinitely sized
-because `Cons` holds a `Box`</span>
+<span class="caption">Figura 15-2: O listă `List` care nu este de dimensiuni infinite deoarece `Cons` conține un tip `Box`</span>
 
-Boxes provide only the indirection and heap allocation; they don’t have any
-other special capabilities, like those we’ll see with the other smart pointer
-types. They also don’t have the performance overhead that these special
-capabilities incur, so they can be useful in cases like the cons list where the
-indirection is the only feature we need. We’ll look at more use cases for boxes
-in Chapter 17, too.
+Boxele oferă doar indirectare și alocarea memoriei pe heap; ele nu dispun de alte capabilități speciale, asemenea celor pe care le vom examina la alte categorii de pointeri inteligenți. Totodată, ele nu implică o supraplată de performanță asociată acestor capabilități speciale, fiind astfel folositoare în situații precum lista cons, unde indirectarea este singurul atribut necesar. Vom analiza mai multe întrebuințări pentru boxe și în Capitolul 17.
 
-The `Box<T>` type is a smart pointer because it implements the `Deref` trait,
-which allows `Box<T>` values to be treated like references. When a `Box<T>`
-value goes out of scope, the heap data that the box is pointing to is cleaned
-up as well because of the `Drop` trait implementation. These two traits will be
-even more important to the functionality provided by the other smart pointer
-types we’ll discuss in the rest of this chapter. Let’s explore these two traits
-in more detail.
+Tipul `Box<T>` este considerat un pointer inteligent deoarece implementează trăsătura `Deref`, ceea ce îi permite lui `Box<T>` să fie tratat ca o referință. Când o valoare de tip `Box<T>` iese din domeniul de vizibilitate, datele de pe heap la care indică boxa sunt și ele eliberate, datorită implementării trăsăturii `Drop`. Aceste două trăsături sunt și mai importante pentru funcționalitățile oferite de celelalte tipuri de pointeri inteligenți pe care le vom discuta în restul capitolului. Să ne aprofundăm cunoștințele despre aceste două trăsături.
 
 [trait-objects]: ch17-02-trait-objects.html#using-trait-objects-that-allow-for-values-of-different-types

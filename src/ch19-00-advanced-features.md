@@ -1,22 +1,13 @@
-# Advanced Features
+# Caracteristici avansate
 
-By now, you’ve learned the most commonly used parts of the Rust programming
-language. Before we do one more project in Chapter 20, we’ll look at a few
-aspects of the language you might run into every once in a while, but may not
-use every day. You can use this chapter as a reference for when you encounter
-any unknowns. The features covered here are useful in very specific situations.
-Although you might not reach for them often, we want to make sure you have a
-grasp of all the features Rust has to offer.
+Până la acest moment, ai învățat secțiunile cel mai des utilizate ale limbajului de programare Rust. Înainte de a începe un nou proiect în Capitolul 20, ne vom familiariza cu unele concepte ale limbajului pe care s-ar putea să le întâlnești ocazional, dar care nu sunt de uz cotidian. Acest capitol poate fi utilizat ca o referință atunci când întâmpini elemente necunoscute. Funcționalitățile descrise sunt deosebit de utile în situații specifice. Chiar dacă s-ar putea să nu le folosești frecvent, este esențial să ai cunoștințe despre întreaga paletă de capabilități pe care Rust le pune la dispoziție.
 
-In this chapter, we’ll cover:
+În acest capitol, ne concentrăm asupra:
 
-* Unsafe Rust: how to opt out of some of Rust’s guarantees and take
-  responsibility for manually upholding those guarantees
-* Advanced traits: associated types, default type parameters, fully qualified
-  syntax, supertraits, and the newtype pattern in relation to traits
-* Advanced types: more about the newtype pattern, type aliases, the never type,
-  and dynamically sized types
-* Advanced functions and closures: function pointers and returning closures
-* Macros: ways to define code that defines more code at compile time
+* Unsafe Rust: cum poți opta pentru a nu beneficia de anumite garanții Rust și cum să preiei manual asigurarea acestor garanții
+* Trăsături avansate: tipuri asociate, parametri definiți implicit de tip, sintaxă calificată complet, super-trăsături și utilizarea pattern-ului newtype în contextul trăsăturilor
+* Tipuri avansate: mai multe detalii despre pattern-ul newtype, pseudonime pentru tipuri, tipul never și tipurile cu dimensiuni dinamice
+* Funcții și închideri avansate: pointeri funcționali și cum să returnezi închideri
+* Macrouri: strategii pentru a crea cod care generează mai mult cod în timpul compilării
 
-It’s a panoply of Rust features with something for everyone! Let’s dive in!
+Acest capitol oferă un arsenal complet de funcționalități Rust, garantând că există ceva interesant pentru tine! Să explorăm împreună aceste concepte!

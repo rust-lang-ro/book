@@ -1,13 +1,3 @@
-# Object-Oriented Programming Features of Rust
+# Caracteristicile programării orientate pe obiecte în Rust
 
-Object-oriented programming (OOP) is a way of modeling programs. Objects as a
-programmatic concept were introduced in the programming language Simula in the
-1960s. Those objects influenced Alan Kay’s programming architecture in which
-objects pass messages to each other. To describe this architecture, he coined
-the term *object-oriented programming* in 1967. Many competing definitions
-describe what OOP is, and by some of these definitions Rust is object-oriented,
-but by others it is not. In this chapter, we’ll explore certain characteristics
-that are commonly considered object-oriented and how those characteristics
-translate to idiomatic Rust. We’ll then show you how to implement an
-object-oriented design pattern in Rust and discuss the trade-offs of doing so
-versus implementing a solution using some of Rust’s strengths instead.
+Programarea orientată pe obiecte (OOP) reprezintă o metodologie de structurare a programelor. Conceptul de obiect în programare a fost inițiat de limbajul de programare Simula în anii '60. Aceste obiecte l-au influențat pe Alan Kay în dezvoltarea unei arhitecturi de programare în care obiectele comunica între ele prin mesaje. Pentru a descrie această arhitectură, el a formulat termenul *programare orientată pe obiecte* în 1967. Există mai multe definiții care concurează în a defini OOP, și după unele dintre ele Rust este considerat un limbaj orientat pe obiecte, iar după altele nu este. În acest capitol, vom examina anumite caracteristici care sunt în mod comun asociate cu programarea orientată pe obiecte și cum acestea se aplică în Rust idiomatic. Apoi, vom demonstra cum să implementezi un pattern de design orientat pe obiecte în Rust și vom dezbate compromisurile dintre alegerea acestei abordări și utilizarea unor atuuri specifice Rust.

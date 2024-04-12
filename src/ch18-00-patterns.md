@@ -1,29 +1,15 @@
-# Patterns and Matching
+# Pattern-urile și potrivirea
 
-*Patterns* are a special syntax in Rust for matching against the structure of
-types, both complex and simple. Using patterns in conjunction with `match`
-expressions and other constructs gives you more control over a program’s
-control flow. A pattern consists of some combination of the following:
+*Pattern-urile* (a nu se confunda cu pattern-urile de design) reprezintă o sintaxă specială în Rust dedicată potrivirii cu structura tipurilor, fie ele complexe sau simple. Folosirea pattern-urilor în conjuncție cu expresiile `match` și alte construcții îți oferă mai mult control asupra fluxului de execuție al programului. Un pattern este alcătuit dintr-o combinație a următoarelor elemente:
 
-* Literals
-* Destructured arrays, enums, structs, or tuples
-* Variables
-* Wildcards
-* Placeholders
+* Literali
+* Array-uri, enumerări, struct-uri sau tuple-uri destructurate
+* Variabile
+* Wildcard-uri
+* Placeholder-uri
 
-Some example patterns include `x`, `(a, 3)`, and `Some(Color::Red)`. In the
-contexts in which patterns are valid, these components describe the shape of
-data. Our program then matches values against the patterns to determine whether
-it has the correct shape of data to continue running a particular piece of code.
+Printre exemple de pattern-uri se numără `x`, `(a, 3)` și `Some(Color::Red)`. În contextele unde pattern-urile sunt aplicabile, aceste componente descriu structura datelor. Programul nostru corelează apoi valorile împotriva pattern-urilor pentru a determina dacă acestea corespund cu structura de date necesară pentru a executa o porțiune de cod.
 
-To use a pattern, we compare it to some value. If the pattern matches the
-value, we use the value parts in our code. Recall the `match` expressions in
-Chapter 6 that used patterns, such as the coin-sorting machine example. If the
-value fits the shape of the pattern, we can use the named pieces. If it
-doesn’t, the code associated with the pattern won’t run.
+Pentru a folosi un pattern, îl comparăm cu o valoare. Dacă pattern-ul se potrivește cu valoarea, folosim acele părți ale valorii în codul nostru. Amintește-ți de expresiile `match` din Capitolul 6 care au utilizat pattern-uri, precum exemplul cu mașina de sortat monede. Dacă valoarea se încadrează în structura pattern-ului, putem folosi piesele cu denumiri specifice. În caz contrar, secțiunea de cod asociată cu acel pattern nu va fi executată.
 
-This chapter is a reference on all things related to patterns. We’ll cover the
-valid places to use patterns, the difference between refutable and irrefutable
-patterns, and the different kinds of pattern syntax that you might see. By the
-end of the chapter, you’ll know how to use patterns to express many concepts in
-a clear way.
+Acest capitol este un ghid complet despre tot ce este legat de pattern-uri. Vom explora contextele adecvate pentru utilizarea pattern-urilor, diferența între pattern-urile contestabile și incontestabile, precum și diferitele tipuri de sintaxă pattern pe care le vei întâlni. Până la finalul capitolului, vei învăța cum să folosești pattern-urile pentru exprimarea clară a multor concepte.

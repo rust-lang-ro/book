@@ -1,70 +1,20 @@
-## Using Trait Objects That Allow for Values of Different Types
+## Utilizarea obiectelor-trăsătură pentru valori de diferite tipuri
 
-In Chapter 8, we mentioned that one limitation of vectors is that they can
-store elements of only one type. We created a workaround in Listing 8-9 where
-we defined a `SpreadsheetCell` enum that had variants to hold integers, floats,
-and text. This meant we could store different types of data in each cell and
-still have a vector that represented a row of cells. This is a perfectly good
-solution when our interchangeable items are a fixed set of types that we know
-when our code is compiled.
+Am discutat în Capitolul 8 faptul că vectorii au limitarea de a putea stoca elemente de un singur tip. O soluție de compromis a fost prezentată în Listarea 8-9, unde am definit o enumerare `SpreadsheetCell` cu variante pentru a suporta întregi, numere în virgulă mobilă și text. Acest lucru ne permitea să depozităm date de diverse tipuri în fiecare celulă, păstrând în același timp un vector ce reprezenta un rând de celule. Această modalitate este ideală când elementele interschimbabile din setul nostru sunt de tipuri fixe ce sunt cunoscute la momentul compilării codului.
 
-However, sometimes we want our library user to be able to extend the set of
-types that are valid in a particular situation. To show how we might achieve
-this, we’ll create an example graphical user interface (GUI) tool that iterates
-through a list of items, calling a `draw` method on each one to draw it to the
-screen—a common technique for GUI tools. We’ll create a library crate called
-`gui` that contains the structure of a GUI library. This crate might include
-some types for people to use, such as `Button` or `TextField`. In addition,
-`gui` users will want to create their own types that can be drawn: for
-instance, one programmer might add an `Image` and another might add a
-`SelectBox`.
+Totuși, în anumite cazuri dorim ca utilizatorii bibliotecii noastre să aibă posibilitatea de a extinde setul de tipuri permise într-un context dat. Pentru a exemplifica cum s-ar realiza asta, vom construi un exemplu de unealtă GUI (interfață grafică cu utilizatorul) care parcurge o listă de elemente, invocând metoda `draw` pe fiecare pentru a le reda pe ecran, o abordare obișnuită în cadrul uneltelor GUI. Vom constitui un crate de tip bibliotecă denumit `gui`, care va conține structura de bază a unei astfel de biblioteci. Acest crate ar include tipuri de bază pentru folosire, precum `Button` sau `TextField`. În plus, utilizatorii `gui` vor dori să introducă tipuri proprii ce pot fi redate: de pildă, un programator poate adăuga o `Image`, iar altul un `SelectBox`.
 
-We won’t implement a fully fledged GUI library for this example but will show
-how the pieces would fit together. At the time of writing the library, we can’t
-know and define all the types other programmers might want to create. But we do
-know that `gui` needs to keep track of many values of different types, and it
-needs to call a `draw` method on each of these differently typed values. It
-doesn’t need to know exactly what will happen when we call the `draw` method,
-just that the value will have that method available for us to call.
+Deși nu vom dezvolta o bibliotecă GUI completă în acest exemplu, vom ilustra modul în care componentele ar interacționa. La momentul creării bibliotecii, nu putem anticipa toate tipurile pe care alți programatori le-ar putea defini. Ceea ce știm este că `gui` trebuie să gestioneze diverse valori de tipuri diferite și să invoce metoda `draw` pentru fiecare dintre acestea. Nu trebuie să cunoaștem detaliile specifice ale acțiunii metodei `draw`, ci doar sa fim siguri că această metodă va fi disponibilă pentru a fi apelată.
 
-To do this in a language with inheritance, we might define a class named
-`Component` that has a method named `draw` on it. The other classes, such as
-`Button`, `Image`, and `SelectBox`, would inherit from `Component` and thus
-inherit the `draw` method. They could each override the `draw` method to define
-their custom behavior, but the framework could treat all of the types as if
-they were `Component` instances and call `draw` on them. But because Rust
-doesn’t have inheritance, we need another way to structure the `gui` library to
-allow users to extend it with new types.
+Pentru a realiza aceasta într-un limbaj cu moștenire, am defini o clasă denumită `Component` care ar include o metodă numită `draw`. Alte clase, cum ar fi `Button`, `Image` și `SelectBox`, ar moșteni din `Component` și, astfel, ar moșteni metoda `draw`. Ele ar putea să realizeze o supraîncărcare a metodei `draw` pentru a defini comportamentul lor specific, dar biblioteca noastră ar putea considera toate aceste instanțe ca fiind de tip `Component` și ar putea apela `draw`. Cu toate acestea, fiindcă Rust nu suportă moștenirea, avem nevoie de o altă metodă de structurare a bibliotecii `gui` astfel încât utilizatorii să poată să o extindă cu noi tipuri.
 
-### Defining a Trait for Common Behavior
+### Definirea unei trăsături pentru comportament comun
 
-To implement the behavior we want `gui` to have, we’ll define a trait named
-`Draw` that will have one method named `draw`. Then we can define a vector that
-takes a *trait object*. A trait object points to both an instance of a type
-implementing our specified trait and a table used to look up trait methods on
-that type at runtime. We create a trait object by specifying some sort of
-pointer, such as a `&` reference or a `Box<T>` smart pointer, then the `dyn`
-keyword, and then specifying the relevant trait. (We’ll talk about the reason
-trait objects must use a pointer in Chapter 19 in the section [“Dynamically
-Sized Types and the `Sized` Trait.”][dynamically-sized]<!-- ignore -->) We can
-use trait objects in place of a generic or concrete type. Wherever we use a
-trait object, Rust’s type system will ensure at compile time that any value
-used in that context will implement the trait object’s trait. Consequently, we
-don’t need to know all the possible types at compile time.
+Pentru a implementa comportamentul dorit pentru `gui`, definim o trăsătură denumită `Draw` ce conține o metodă numită `draw`. Vom putea apoi defini un vector care primește un *obiect-trăsătură*. Un astfel de obiect-trăsătură se referă la o instanță a unui tip care implementează o trăsătură specificată și la un tabel folosit pentru a identifica metodele trăsăturii pe respectivul tip în timpul rulării. Creăm un obiect-trăsătură prin indicarea unui tip de pointer - de exemplu, o referență `&` sau un pointer inteligent `Box<T>` - urmat de cuvântul cheie `dyn`, și apoi trăsătura relevantă. (Cauza pentru care obiectele-trăsătură necesită un pointer este discutată în Capitolul 19, în secțiunea [„Tipuri cu dimensiune dinamică și trăsătura `Sized`.”][dynamically-sized]<!-- ignore -->) Obiectele-trăsătură pot fi folosite în loc de tipuri generice sau concrete. Oriunde sunt utilizate, sistemul de tipuri din Rust garantează la momentul compilării că orice valoare din acel context va implementa trăsătura specificată de obiectul-trăsătură. Astfel, nu este nevoie să cunoaștem toate tipurile posibile la momentul compilării.
 
-We’ve mentioned that, in Rust, we refrain from calling structs and enums
-“objects” to distinguish them from other languages’ objects. In a struct or
-enum, the data in the struct fields and the behavior in `impl` blocks are
-separated, whereas in other languages, the data and behavior combined into one
-concept is often labeled an object. However, trait objects *are* more like
-objects in other languages in the sense that they combine data and behavior.
-But trait objects differ from traditional objects in that we can’t add data to
-a trait object. Trait objects aren’t as generally useful as objects in other
-languages: their specific purpose is to allow abstraction across common
-behavior.
+Am menționat anterior că, în Rust, evităm să numim structurile și enumerările "obiecte" pentru a sublinia diferența față de conceptul de obiect din alte limbaje de programare. Diferența constă în faptul că, în Rust, datele din câmpurile structurii și comportamentul definit în blocurile `impl` sunt separate, în timp ce în alte limbaje combinația de date și comportament formează adesea ceea ce se numește obiect. Cu toate acestea, obiectele-trăsătură *sunt* asemănătoare cu obiectele din alte limbaje prin fuziunea dintre date și comportament. Totuși, ele se disting de obiectele tradiționale prin faptul că nu permit adăugarea de date suplimentare la un obiect-trăsătură. Obiectele-trăsătură nu prezintă aceeași utilitate generală ca obiectele din alte limbaje, fiind special concepute pentru abstractizarea unui comportament comun.
 
-Listing 17-3 shows how to define a trait named `Draw` with one method named
-`draw`:
+Listarea 17-3 ilustrează modul de definire a unei trăsături numite `Draw` cu o metodă `draw`:
 
 <span class="filename">Filename: src/lib.rs</span>
 
@@ -72,107 +22,67 @@ Listing 17-3 shows how to define a trait named `Draw` with one method named
 {{#rustdoc_include ../listings/ch17-oop/listing-17-03/src/lib.rs}}
 ```
 
-<span class="caption">Listing 17-3: Definition of the `Draw` trait</span>
+<span class="caption">Listarea 17-3: Definiția trăsăturii `Draw`</span>
 
-This syntax should look familiar from our discussions on how to define traits
-in Chapter 10. Next comes some new syntax: Listing 17-4 defines a struct named
-`Screen` that holds a vector named `components`. This vector is of type
-`Box<dyn Draw>`, which is a trait object; it’s a stand-in for any type inside
-a `Box` that implements the `Draw` trait.
+Această sintaxă ar trebui să fie deja cunoscută datorită explicațiilor noastre din Capitolul 10 despre cum se definesc trăsăturile. Acum urmează o nouă sintaxă: Listarea 17-4 introduce o structură numită `Screen` care posedă un vector denumit `components`. Acest vector este de tip `Box<dyn Draw>`, fiind un obiect-trăsătură; serving ca substitut pentru orice tip dintr-un `Box` ce implementează trăsătura `Draw`.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch17-oop/listing-17-04/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 17-4: Definition of the `Screen` struct with a
-`components` field holding a vector of trait objects that implement the `Draw`
-trait</span>
+<span class="caption">Listarea 17-4: Definirea structurii `Screen` cu un câmp `components` ce deține un vector de obiecte-trăsătură implementând trăsătura `Draw`</span>
 
-On the `Screen` struct, we’ll define a method named `run` that will call the
-`draw` method on each of its `components`, as shown in Listing 17-5:
+În structura `Screen`, vom defini o metodă numită `run` care va invoca metoda `draw` pentru fiecare dintre componente, așa cum este demonstrat în Listarea 17-5:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch17-oop/listing-17-05/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 17-5: A `run` method on `Screen` that calls the
-`draw` method on each component</span>
+<span class="caption">Listarea 17-5: Metoda `run` pentru `Screen` ce apelează metoda `draw` pe fiecare component în parte</span>
 
-This works differently from defining a struct that uses a generic type
-parameter with trait bounds. A generic type parameter can only be substituted
-with one concrete type at a time, whereas trait objects allow for multiple
-concrete types to fill in for the trait object at runtime. For example, we
-could have defined the `Screen` struct using a generic type and a trait bound
-as in Listing 17-6:
+Aceasta metodă se comportă diferit de cazul în care am defini o structură care utilizează un parametru de tip generic cu delimitări de trăsătură. Un parametru de tip generic poate fi înlocuit numai cu un singur tip concret o singură dată, în timp ce obiectele-trăsătură permit folosirea mai multor tipuri concrete ca substituenți pentru obiectul-trăsătură în timpul execuției. Spre exemplu, am fi putut defini structura `Screen` utilizând un tip generic și o delimitare de trăsătură, după cum se vede în Listarea 17-6:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch17-oop/listing-17-06/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 17-6: An alternate implementation of the `Screen`
-struct and its `run` method using generics and trait bounds</span>
+<span class="caption">Listarea 17-6: O versiune alternativă de implementare a structurii `Screen` și a metodei sale `run` folosind generici și delimitări de trăsături</span>
 
-This restricts us to a `Screen` instance that has a list of components all of
-type `Button` or all of type `TextField`. If you’ll only ever have homogeneous
-collections, using generics and trait bounds is preferable because the
-definitions will be monomorphized at compile time to use the concrete types.
+Acest lucru ne limitează la o instanță `Screen` care ar deține o listă de componente de același tip, fie ele `Button` sau `TextField`. Dacă vei avea mereu colecții omogene, utilizarea tipurilor generice și a delimitărilor de trăsături este mai avantajoasă deoarece definițiile sunt monomorfizate în timpul compilării pentru a utiliza tipurile concrete.
 
-On the other hand, with the method using trait objects, one `Screen` instance
-can hold a `Vec<T>` that contains a `Box<Button>` as well as a
-`Box<TextField>`. Let’s look at how this works, and then we’ll talk about the
-runtime performance implications.
+Pe de altă parte, utilizând metoda cu obiectele-trăsătură, o instanță `Screen` poate conține un `Vec<T>` care include atât `Box<Button>` cât și `Box<TextField>`. Să analizăm cum funcționează acest mecanism și apoi vom discuta despre performanța lui în timpul execuției.
 
-### Implementing the Trait
+### Implementarea trăsăturii
 
-Now we’ll add some types that implement the `Draw` trait. We’ll provide the
-`Button` type. Again, actually implementing a GUI library is beyond the scope
-of this book, so the `draw` method won’t have any useful implementation in its
-body. To imagine what the implementation might look like, a `Button` struct
-might have fields for `width`, `height`, and `label`, as shown in Listing 17-7:
+Acum, vom introduce câteva tipuri care implementează trăsătura `Draw`. Să oferim tipul `Button`. Deoarece implementarea unei biblioteci GUI complete nu este acoperită de această carte, metoda `draw` va avea un corp fără o implementare concret utilă. Pentru a ne imagina cum ar arăta o posibilă implementare, un struct `Button` ar putea include câmpuri precum `width` (lățime), `height` (înălțime) și `label` (etichetă), așa cum este ilustrat în Listarea 17-7:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch17-oop/listing-17-07/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 17-7: A `Button` struct that implements the
-`Draw` trait</span>
+<span class="caption">Listarea 17-7: Structura `Button` care implementează trăsătura `Draw`</span>
 
-The `width`, `height`, and `label` fields on `Button` will differ from the
-fields on other components; for example, a `TextField` type might have those
-same fields plus a `placeholder` field. Each of the types we want to draw on
-the screen will implement the `Draw` trait but will use different code in the
-`draw` method to define how to draw that particular type, as `Button` has here
-(without the actual GUI code, as mentioned). The `Button` type, for instance,
-might have an additional `impl` block containing methods related to what
-happens when a user clicks the button. These kinds of methods won’t apply to
-types like `TextField`.
+Câmpurile `width`, `height` și `label` ale lui `Button` vor diferi față de cele ale altor componente. De exemplu, tipul `TextField` ar putea include aceste câmpuri plus unul suplimentar `placeholder`. Fiecare dintre tipurile pe care intenționăm să le afișăm pe ecran va implementa trăsătura `Draw` folosind cod diferit în metoda `draw` pentru a defini modul specific de desenare, așa cum demonstrează `Button` aici (lipsind, desigur, codul GUI real, așa cum am menționat). De exemplu, pentru `Button` ar putea exista un bloc `impl` separat, conținând metode specifice acțiunilor declanșate de click-ul utilizatorului pe buton, metode ce nu ar fi relevante pentru `TextField`.
 
-If someone using our library decides to implement a `SelectBox` struct that has
-`width`, `height`, and `options` fields, they implement the `Draw` trait on the
-`SelectBox` type as well, as shown in Listing 17-8:
+Dacă un utilizator al bibliotecii noastre optează să implementeze o structură `SelectBox` cu câmpurile `width`, `height` și `options`, va trebui să implementeze și acesta trăsătura `Draw` pentru tipul `SelectBox`, conform Listării 17-8:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch17-oop/listing-17-08/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 17-8: Another crate using `gui` and implementing
-the `Draw` trait on a `SelectBox` struct</span>
+<span class="caption">Listarea 17-8: Un alt crate care utilizează `gui` și implementează trăsătura `Draw` pe structura `SelectBox`</span>
 
-Our library’s user can now write their `main` function to create a `Screen`
-instance. To the `Screen` instance, they can add a `SelectBox` and a `Button`
-by putting each in a `Box<T>` to become a trait object. They can then call the
-`run` method on the `Screen` instance, which will call `draw` on each of the
-components. Listing 17-9 shows this implementation:
+Utilizatorii bibliotecii noastre pot acum să-și construiască funcția `main` pentru a genera o instanță `Screen`. Acesteia i se pot adăuga un `SelectBox` și un `Button`, situați fiecare într-un `Box<T>` pentru a-i transforma în obiecte-trăsătură. În continuare, pot invoca metoda `run` pe instanța de `Screen`, metoda care va apela funcția `draw` pentru fiecare dintre componente. Listarea 17-9 prezintă această implementare:
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -180,76 +90,37 @@ components. Listing 17-9 shows this implementation:
 {{#rustdoc_include ../listings/ch17-oop/listing-17-09/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 17-9: Using trait objects to store values of
-different types that implement the same trait</span>
+<span class="caption">Listarea 17-9: Folosirea obiectelor-trăsătură pentru a stoca valori de diferite tipuri ce implementează aceeași trăsătură</span>
 
-When we wrote the library, we didn’t know that someone might add the
-`SelectBox` type, but our `Screen` implementation was able to operate on the
-new type and draw it because `SelectBox` implements the `Draw` trait, which
-means it implements the `draw` method.
+Când am dezvoltat biblioteca, nu cunoșteam nimic despre adăugarea tipului `SelectBox`, dar implementarea noastră pentru `Screen` a reușit să opereze asupra noului tip și să-l redea, pentru că `SelectBox` implementează trăsătura `Draw`, și în consecință metoda `draw`.
 
-This concept—of being concerned only with the messages a value responds to
-rather than the value’s concrete type—is similar to the concept of *duck
-typing* in dynamically typed languages: if it walks like a duck and quacks
-like a duck, then it must be a duck! In the implementation of `run` on `Screen`
-in Listing 17-5, `run` doesn’t need to know what the concrete type of each
-component is. It doesn’t check whether a component is an instance of a `Button`
-or a `SelectBox`, it just calls the `draw` method on the component. By
-specifying `Box<dyn Draw>` as the type of the values in the `components`
-vector, we’ve defined `Screen` to need values that we can call the `draw`
-method on.
+Conceptul acesta — de a fi preocupat exclusiv de mesajele la care o valoare răspunde, nu de tipul său concret — este asemănător cu cel de *duck typing* în limbajele cu tip dinamic: dacă se mișcă ca o rață și măcăie ca o rață, atunci chiar este o rață! În implementarea metodei `run` de la `Screen`, prezentată în Listarea 17-5, `run` nu are nevoie să cunoască tipul concret al fiecărui component. Acesta nu verifică dacă componentul este un `Button` sau un `SelectBox`, ci pur și simplu invocă metoda `draw` asupra lui. Definind `Box<dyn Draw>` ca tip pentru valorile din vectorul `components`, am specificat că `Screen` necesită valori asupra cărora putem apela metoda `draw`.
 
-The advantage of using trait objects and Rust’s type system to write code
-similar to code using duck typing is that we never have to check whether a
-value implements a particular method at runtime or worry about getting errors
-if a value doesn’t implement a method but we call it anyway. Rust won’t compile
-our code if the values don’t implement the traits that the trait objects need.
+Beneficiul utilizării obiectelor-trăsătură și al sistemului de tipizare din Rust, pentru a scrie cod într-o manieră similară cu duck typing, este că nu este nevoie să verificăm la execuție dacă o valoare implementează o metodă particulară, nici să ne îngrijorăm de posibile erori în cazul în care o valoare nu implementează metoda și totuși se face apel la ea. Rust nu va compila codul nostru dacă valorile nu respectă trăsăturile cerute de obiectele-trăsătură.
 
-For example, Listing 17-10 shows what happens if we try to create a `Screen`
-with a `String` as a component:
+De exemplu, Listarea 17-10 ne ilustrează ce se întâmplă dacă încercăm să construim un `Screen` cu un `String` ca component:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch17-oop/listing-17-10/src/main.rs}}
 ```
 
-<span class="caption">Listing 17-10: Attempting to use a type that doesn’t
-implement the trait object’s trait</span>
+<span class="caption">Listarea 17-10: Tentativa de a folosi un tip ce nu implementează trăsătura cerută de obiectul-trăsătură</span>
 
-We’ll get this error because `String` doesn’t implement the `Draw` trait:
+Următoarea eroare apare pentru că `String` nu implementează trăsătura `Draw`:
 
 ```console
 {{#include ../listings/ch17-oop/listing-17-10/output.txt}}
 ```
 
-This error lets us know that either we’re passing something to `Screen` we
-didn’t mean to pass and so should pass a different type or we should implement
-`Draw` on `String` so that `Screen` is able to call `draw` on it.
+Această eroare ne indică faptul că fie am introdus în `Screen` un element neintenționat, ceea ce înseamnă că ar trebui să folosim un alt tip, fie că trebuie să implementăm trăsătura `Draw` pe `String`, astfel încât `Screen` să poată apela metoda `draw` asupra lui.
 
-### Trait Objects Perform Dynamic Dispatch
+### Obiectele-trăsătură folosesc apelare dinamică
 
-Recall in the [“Performance of Code Using
-Generics”][performance-of-code-using-generics]<!-- ignore --> section in
-Chapter 10 our discussion on the monomorphization process performed by the
-compiler when we use trait bounds on generics: the compiler generates
-nongeneric implementations of functions and methods for each concrete type that
-we use in place of a generic type parameter. The code that results from
-monomorphization is doing *static dispatch*, which is when the compiler knows
-what method you’re calling at compile time. This is opposed to *dynamic
-dispatch*, which is when the compiler can’t tell at compile time which method
-you’re calling. In dynamic dispatch cases, the compiler emits code that at
-runtime will figure out which method to call.
+Să ne amintim în secțiunea [„Performanța Codului Utilizând Generici”][performance-of-code-using-generics]<!-- ignore --> din Capitolul 10 despre discuția privind procesul de monomorfizare efectuat de compilator când utilizăm limite de trăsătură pe generici: compilatorul creează implementări non-generice ale funcțiilor și metodelor pentru fiecare tip concret folosit în locul unui parametru generic de tip. Codul rezultat din monomorfizare realizează *invocare statică*, adică atunci când compilatorul cunoaște ce metodă apelezi în timpul compilării. Aceasta se contrastează cu *invocare dinamică*, atunci când compilatorul nu este capabil să determine în timpul compilării care metodă va fi apelată. În cazurile de apelare dinamică, compilatorul generează cod care va decide în timpul execuției care metodă să invoce.
 
-When we use trait objects, Rust must use dynamic dispatch. The compiler doesn’t
-know all the types that might be used with the code that’s using trait objects,
-so it doesn’t know which method implemented on which type to call. Instead, at
-runtime, Rust uses the pointers inside the trait object to know which method to
-call. This lookup incurs a runtime cost that doesn’t occur with static
-dispatch. Dynamic dispatch also prevents the compiler from choosing to inline a
-method’s code, which in turn prevents some optimizations. However, we did get
-extra flexibility in the code that we wrote in Listing 17-5 and were able to
-support in Listing 17-9, so it’s a trade-off to consider.
+Utilizând obiectele-trăsătură, Rust este constrâns la utilizarea invocării dinamice. Compilatorul nu cunoaște toate tipurile care pot fi folosite cu codul care utilizează obiectele-trăsătură, astfel nu poate determina ce metodă implementată pentru care tip ar trebui apelată. În schimb, în timpul execuției, Rust se folosește de pointerii din interiorul obiectului-trăsătură pentru a identifica metoda de apelat. Această căutare implică un cost la execuție, care nu există în cazul invocării statice. Mai mult, invocarea dinamică împiedică compilatorul să facă inline la codul unei metode, ceea ce la rândul său inhibă anumite optimizări. Cu toate acestea, am câștigat o flexibilitate suplimentară în codul scris în Listarea 17-5 și am fost în stare să o susținem în Listarea 17-9, deci este un compromis pe care trebuie să-l luăm în considerare.
 
 [performance-of-code-using-generics]:
 ch10-01-syntax.html#performance-of-code-using-generics

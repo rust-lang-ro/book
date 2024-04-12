@@ -1,206 +1,110 @@
-## Shared-State Concurrency
+## Concurență cu stare partajată
 
-Message passing is a fine way of handling concurrency, but it’s not the only
-one. Another method would be for multiple threads to access the same shared
-data. Consider this part of the slogan from the Go language documentation
-again: “do not communicate by sharing memory.”
+Transmiterea mesajelor constituie o metodă eficientă de abordare a concurenței, dar nu este unica. O altă cale este ca mai multe fire de execuție să aibă acces simultan la aceleași date partajate. Să ne reamintim de sloganul din documentația limbajului Go: "nu comunicați prin partajarea memoriei".
 
-What would communicating by sharing memory look like? In addition, why would
-message-passing enthusiasts caution not to use memory sharing?
+Dar cum ar arăta comunicarea prin partajarea memoriei? Și de ce ar îndruma avocații transmiterii mesajelor împotriva utilizării partajării memoriei?
 
-In a way, channels in any programming language are similar to single ownership,
-because once you transfer a value down a channel, you should no longer use that
-value. Shared memory concurrency is like multiple ownership: multiple threads
-can access the same memory location at the same time. As you saw in Chapter 15,
-where smart pointers made multiple ownership possible, multiple ownership can
-add complexity because these different owners need managing. Rust’s type system
-and ownership rules greatly assist in getting this management correct. For an
-example, let’s look at mutexes, one of the more common concurrency primitives
-for shared memory.
+Fundamental, canalele în cadrul oricărui limbaj de programare sunt comparabile cu ideea de posesiune unică, în sensul că după ce trimiți o valoare printr-un canal, nu ar trebui să o mai folosești. În contrast, concurența cu memorie partajată se aseamănă cu posesiunea multiplă, permițând mai multor fire accesul concomitent la aceeași locație de memorie. Cum am observat în Capitolul 15, cu ajutorul pointerilor inteligenți, posesiunea multiplă implică o complexitate sporită, deoarece trebuie gestionată coexistența acestor proprietari multipli. Sistemul de tipuri din Rust și regulile sale de posesiune oferă un sprijin considerabil în obținerea unei gestionări corecte. Pentru a ilustra, să examinăm mutexurile, una dintre cele mai răspândite primitive pentru concurența bazată pe memorie partajată.
 
-### Using Mutexes to Allow Access to Data from One Thread at a Time
+### Utilizarea unui mutex pentru acces exclusiv la date
 
-*Mutex* is an abbreviation for *mutual exclusion*, as in, a mutex allows only
-one thread to access some data at any given time. To access the data in a
-mutex, a thread must first signal that it wants access by asking to acquire the
-mutex’s *lock*. The lock is a data structure that is part of the mutex that
-keeps track of who currently has exclusive access to the data. Therefore, the
-mutex is described as *guarding* the data it holds via the locking system.
+*Mutex* reprezintă o abreviere pentru *excludere reciprocă*, adică un mutex permite accesul la date doar unui singur fir de execuție la un anumit moment. Pentru a accesa datele protejate de un mutex, un fir trebuie mai întâi să indice că își dorește accesul obținând *lock*-ul acestui mutex. Lock-ul este o structură de date care face parte din mutex și care monitorizează cine deține accesul exclusiv la date. Așadar, se spune că mutexul *protejează* datele pe care le conține folosind mecanismul de blocare.
 
-Mutexes have a reputation for being difficult to use because you have to
-remember two rules:
+Mutexurile sunt recunoscute pentru complexitatea lor în utilizare, de vreme ce trebuie să reținem două reguli importante:
 
-* You must attempt to acquire the lock before using the data.
-* When you’re done with the data that the mutex guards, you must unlock the
-  data so other threads can acquire the lock.
+* Trebuie să încerci să dobândești lock-ul înainte de a utiliza datele.
+* Când ai terminat cu datele protejate de mutex, trebuie să eliberezi datele astfel încât alte fire să poată dobândi lock-ul.
 
-For a real-world metaphor for a mutex, imagine a panel discussion at a
-conference with only one microphone. Before a panelist can speak, they have to
-ask or signal that they want to use the microphone. When they get the
-microphone, they can talk for as long as they want to and then hand the
-microphone to the next panelist who requests to speak. If a panelist forgets to
-hand the microphone off when they’re finished with it, no one else is able to
-speak. If management of the shared microphone goes wrong, the panel won’t work
-as planned!
+Pentru o metaforă din viața reală a unui mutex, gândește-te la o dezbatere din cadrul unei conferințe care dispune de un singur microfon. Înainte ca un participant să poată interveni, trebuie să ceară sau să semnaleze că dorește să utilizeze microfonul. După ce a primit microfonul, poate să vorbească pentru perioada pe care o dorește și apoi să treacă microfonul următorului care a cerut să intervină. Dacă un participant uită să paseze microfonul când a terminat, nimeni altcineva nu va putea să vorbească. Dacă gestionarea microfonului partajat este defectuoasă, dezbaterea nu va decurge conform planificării!
 
-Management of mutexes can be incredibly tricky to get right, which is why so
-many people are enthusiastic about channels. However, thanks to Rust’s type
-system and ownership rules, you can’t get locking and unlocking wrong.
+Manevrarea mutexurilor poate fi un proces extrem de anevoios de stăpânit, ceea ce explică entuziasmul multora pentru canale. Totuși, datorită sistemului de tipuri și regulilor de posesiune din Rust, nu te poți încurca în operațiunile de blocare și deblocare.
 
-#### The API of `Mutex<T>`
+#### API-ul lui `Mutex<T>`
 
-As an example of how to use a mutex, let’s start by using a mutex in a
-single-threaded context, as shown in Listing 16-12:
+Pentru a exemplifica utilizarea unui mutex, să demarăm prin incorporarea sa într-un context cu un singur fir de execuție, după cum vedem în Listarea 16-12:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch16-fearless-concurrency/listing-16-12/src/main.rs}}
 ```
 
-<span class="caption">Listing 16-12: Exploring the API of `Mutex<T>` in a
-single-threaded context for simplicity</span>
+<span class="caption">Listarea 16-12: Explorarea API-ului `Mutex<T>` într-un context cu un singur fir, pentru simplificare</span>
 
-As with many types, we create a `Mutex<T>` using the associated function `new`.
-To access the data inside the mutex, we use the `lock` method to acquire the
-lock. This call will block the current thread so it can’t do any work until
-it’s our turn to have the lock.
+Precum în cazul multor alte tipuri, instanțiem un `Mutex<T>` printr-o apelare la funcția asociată `new`. Ca să ajungem la datele din mutex, folosim metoda `lock` pentru a obține blocarea. Această operațiune va suspenda firul de execuție actual, fără a mai putea efectua alte sarcini până când îi vine rândul să preia controlul blocării.
 
-The call to `lock` would fail if another thread holding the lock panicked. In
-that case, no one would ever be able to get the lock, so we’ve chosen to
-`unwrap` and have this thread panic if we’re in that situation.
+Această apelare la `lock` ar da greș dacă un alt fir care are blocarea ar genera panică. În acest caz, blocarea n-ar mai putea fi preluată de nimeni, motiv pentru care am optat pentru `unwrap`, pentru a provoca panică în firul de execuție dacă ne confruntăm cu acest scenariu.
 
-After we’ve acquired the lock, we can treat the return value, named `num` in
-this case, as a mutable reference to the data inside. The type system ensures
-that we acquire a lock before using the value in `m`. The type of `m` is
-`Mutex<i32>`, not `i32`, so we *must* call `lock` to be able to use the `i32`
-value. We can’t forget; the type system won’t let us access the inner `i32`
-otherwise.
+Odată blocarea obținută, putem considera valoarea returnată, pe care o numim `num` aici, ca pe o referință mutabilă către conținutul interior. Sistemul de tipuri Rust ne asigură că trebuie să avem blocarea înainte de a folosi valoarea din `m`. Fiindcă `m` este de tip `Mutex<i32>` și nu `i32`, este *imperativ* să invocăm `lock` pentru a putea opera cu valoarea `i32`. Datorită sistemului de tipuri nu ni se va permite să sărim peste acest pas.
 
-As you might suspect, `Mutex<T>` is a smart pointer. More accurately, the call
-to `lock` *returns* a smart pointer called `MutexGuard`, wrapped in a
-`LockResult` that we handled with the call to `unwrap`. The `MutexGuard` smart
-pointer implements `Deref` to point at our inner data; the smart pointer also
-has a `Drop` implementation that releases the lock automatically when a
-`MutexGuard` goes out of scope, which happens at the end of the inner scope. As
-a result, we don’t risk forgetting to release the lock and blocking the mutex
-from being used by other threads, because the lock release happens
-automatically.
+Așa cum ai putea bănui, `Mutex<T>` funcționează ca un pointer inteligent. Mai precis, apelul la `lock` *returnează* un pointer inteligent denumit `MutexGuard`, ambalat într-un `LockResult` cu care ne-am ocupat prin `unwrap`. `MutexGuard` implementează `Deref` pentru a putea accesa datele interne, iar de asemenea dispune de implementarea `Drop`, care eliberează blocarea automat atunci când `MutexGuard` părăsește domeniul de vizibilitate, la finalul domeniului interior. Acest lucru înlătură riscul de a uita să eliberăm blocarea și de a împiedica folosirea mutexului de alte fire, pentru că eliberarea are loc automat.
 
-After dropping the lock, we can print the mutex value and see that we were able
-to change the inner `i32` to 6.
+După ce am eliberat blocarea, avem posibilitatea să afișăm valoarea mutex-ului și să constatăm că i-am modificat valoarea interioară `i32` la 6.
 
-#### Sharing a `Mutex<T>` Between Multiple Threads
+#### Partajarea unui `Mutex<T>` între fire multiple
 
-Now, let’s try to share a value between multiple threads using `Mutex<T>`.
-We’ll spin up 10 threads and have them each increment a counter value by 1, so
-the counter goes from 0 to 10. The next example in Listing 16-13 will have
-a compiler error, and we’ll use that error to learn more about using
-`Mutex<T>` and how Rust helps us use it correctly.
+Să încercăm să partajăm o valoare între mai multe fire de execuție utilizând `Mutex<T>`. Vom lansa 10 fire și le vom permite fiecăruia să crească un contor cu 1, astfel încât contorul să ajungă de la 0 la 10. Următorul exemplu din Listarea 16-13 va produce o eroare de compilare, eroare din care vom învăța mai multe despre cum să utilizăm `Mutex<T>` în mod corect.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch16-fearless-concurrency/listing-16-13/src/main.rs}}
 ```
 
-<span class="caption">Listing 16-13: Ten threads each increment a counter
-guarded by a `Mutex<T>`</span>
+<span class="caption">Listarea 16-13: Zece fire fiecare incrementând un contor protejat prin intermediul unui `Mutex<T>`</span>
 
-We create a `counter` variable to hold an `i32` inside a `Mutex<T>`, as we did
-in Listing 16-12. Next, we create 10 threads by iterating over a range of
-numbers. We use `thread::spawn` and give all the threads the same closure: one
-that moves the counter into the thread, acquires a lock on the `Mutex<T>` by
-calling the `lock` method, and then adds 1 to the value in the mutex. When a
-thread finishes running its closure, `num` will go out of scope and release the
-lock so another thread can acquire it.
+Începem prin a crea o variabilă `counter` ce conține un `i32` în cadrul unui `Mutex<T>`, așa cum am procedat în Listarea 16-12. Apoi, generăm 10 fire iterând printr-un interval de numere, utilizând `thread::spawn` și oferind tuturor firelor aceeași închidere: una care transferă contorul în interiorul firului de execuție, obține blocarea pe `Mutex<T>` invocând metoda `lock`, după care adaugă 1 la valoarea aflată în mutex. Când un fir termină de executat funcția lambda, `num` va ieși din domeniul de vizibilitate și va elibera blocarea, permițând altui fir să o preia.
 
-In the main thread, we collect all the join handles. Then, as we did in Listing
-16-2, we call `join` on each handle to make sure all the threads finish. At
-that point, the main thread will acquire the lock and print the result of this
-program.
+În firul principal, colectăm toți descriptorii de join. Ca în Listarea 16-2, apelăm `join` pe fiecare descriptor, pentru a ne asigura că toate firele sunt finalizate. În acel moment firul principal va obține blocarea și va afișa rezultatul acestui program.
 
-We hinted that this example wouldn’t compile. Now let’s find out why!
+Anterior am menționat că acest exemplu nu va compila. Să descoperim acum motivul!
 
 ```console
 {{#include ../listings/ch16-fearless-concurrency/listing-16-13/output.txt}}
 ```
 
-The error message states that the `counter` value was moved in the previous
-iteration of the loop. Rust is telling us that we can’t move the ownership
-of lock `counter` into multiple threads. Let’s fix the compiler error with a
-multiple-ownership method we discussed in Chapter 15.
+Mesajul de eroare arată că valoarea `counter` a fost transferată în iterarea precedentă a buclei. Rust ne informează că nu avem posibilitatea de a transfera proprietatea `counter` în multiple fire de execuție. În continuare să corectăm eroarea de compilator cu o metodă de posesiune multiplă pe care am discutat-o în Capitolul 15.
 
-#### Multiple Ownership with Multiple Threads
+#### Posesiunea multiplă cu fire multiple
 
-In Chapter 15, we gave a value multiple owners by using the smart pointer
-`Rc<T>` to create a reference counted value. Let’s do the same here and see
-what happens. We’ll wrap the `Mutex<T>` in `Rc<T>` in Listing 16-14 and clone
-the `Rc<T>` before moving ownership to the thread.
+În Capitolul 15, am oferit unei valori mai mulți proprietari utilizând pointerul inteligent `Rc<T>`, pentru a crea o valoare cu numărare referențială. Să încercăm același lucru aici și să vedem ce rezultă. Vom folosi `Mutex<T>` incapsulat în `Rc<T>` în Listarea 16-14 și vom clona `Rc<T>` înainte de a transfera posesiunea către fir.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch16-fearless-concurrency/listing-16-14/src/main.rs}}
 ```
 
-<span class="caption">Listing 16-14: Attempting to use `Rc<T>` to allow
-multiple threads to own the `Mutex<T>`</span>
+<span class="caption">Listarea 16-14: Tentativa de a folosi `Rc<T>` pentru a permite mai multor fire să dețină `Mutex<T>`</span>
 
-Once again, we compile and get... different errors! The compiler is teaching us
-a lot.
+Încercând din nou să compilăm, ne confruntăm cu... niște erori noi! Compilatorul se dovedește a fi un excelent mijloc de învățare.
 
 ```console
 {{#include ../listings/ch16-fearless-concurrency/listing-16-14/output.txt}}
 ```
 
-Wow, that error message is very wordy! Here’s the important part to focus on:
-`` `Rc<Mutex<i32>>` cannot be sent between threads safely ``. The compiler is
-also telling us the reason why: ``the trait `Send` is not implemented for
-`Rc<Mutex<i32>>` ``. We’ll talk about `Send` in the next section: it’s one of
-the traits that ensures the types we use with threads are meant for use in
-concurrent situations.
+Ce mesaj de eroare copios! Să ne concentrăm pe informația crucială: `` `Rc<Mutex<i32>>` cannot be sent between threads safely `` (`Rc<Mutex<i32>>` nu se poate transmite în siguranță între fire). Compilatorul ne explică și de ce: ``the trait `Send` is not implemented for
+`Rc<Mutex<i32>>` `` (trăsătura `Send` nu este implementată pentru `Rc<Mutex<i32>>`). Vom discuta despre `Send` în secțiunea viitoare; este una din trăsăturile esențiale care se asigură că tipurile pe care le utilizăm împreună cu firele de execuție sunt pregătite pentru scenarii de concurență.
 
-Unfortunately, `Rc<T>` is not safe to share across threads. When `Rc<T>`
-manages the reference count, it adds to the count for each call to `clone` and
-subtracts from the count when each clone is dropped. But it doesn’t use any
-concurrency primitives to make sure that changes to the count can’t be
-interrupted by another thread. This could lead to wrong counts—subtle bugs that
-could in turn lead to memory leaks or a value being dropped before we’re done
-with it. What we need is a type exactly like `Rc<T>` but one that makes changes
-to the reference count in a thread-safe way.
+Din nefericire, `Rc<T>` nu este proiectat să fie distribuit în siguranță între fire. Când `Rc<T>` este responsabil de contorizarea referințelor, el adaugă la contor pentru fiecare apel la `clone` și scade din contor când o clonă este descărcată. Însă nu apelează la nicio structură de concurență care să garanteze că modificările contorului nu sunt susceptibile de a fi întrerupte de un alt fir. Acest aspect poate conduce la erori de contorizare care, pe neobservate, pot cauza scurgeri de memorie sau pot determina distrugerea unei valori înainte de finalizarea folosinței sale. Avem nevoie de un tip similar cu `Rc<T>`, dar care să actualizeze contorul de referințe într-o manieră compatibilă cu utilizarea în fire de execuție.
 
-#### Atomic Reference Counting with `Arc<T>`
+#### Numărarea atomară a referințelor cu `Arc<T>`
 
-Fortunately, `Arc<T>` *is* a type like `Rc<T>` that is safe to use in
-concurrent situations. The *a* stands for *atomic*, meaning it’s an *atomically
-reference counted* type. Atomics are an additional kind of concurrency
-primitive that we won’t cover in detail here: see the standard library
-documentation for [`std::sync::atomic`][atomic]<!-- ignore --> for more
-details. At this point, you just need to know that atomics work like primitive
-types but are safe to share across threads.
+Din fericire, `Arc<T>` *este* un tip la fel ca `Rc<T>` care este sigur pentru utilizare în contexte concurente. Litera *a* reprezintă *atomară*, adică este un tip cu *numărare atomară a referințelor*. *Atomicele* sunt o altă categorie de primitive pentru concurență pe care nu o vom discuta în detaliu aici: vezi documentația pentru [`std::sync::atomic`][atomic]<!-- ignore --> din biblioteca standard pentru mai multe informații. Deocamdată e suficient să știi că *atomicele* funcționează similare cu tipurile primitive și sunt sigure pentru a fi partajate între fire de execuție.
 
-You might then wonder why all primitive types aren’t atomic and why standard
-library types aren’t implemented to use `Arc<T>` by default. The reason is that
-thread safety comes with a performance penalty that you only want to pay when
-you really need to. If you’re just performing operations on values within a
-single thread, your code can run faster if it doesn’t have to enforce the
-guarantees atomics provide.
+Poate te întrebi de ce toate tipurile primitive nu sunt atomice și de ce tipurile din biblioteca standard nu sunt construite să folosească implicit `Arc<T>`. Motivul este că siguranța pe mai multe fire de execuție aduce cu sine un cost de performanță pe care dorești să-l accepți numai când ai cu adevărat nevoie. Dacă operațiunile tale se desfășoară în cadrul unui singur fir de execuție atunci codul tău poate fi mai rapid dacă nu e nevoit să aplice garanțiile pe care atomicele le oferă.
 
-Let’s return to our example: `Arc<T>` and `Rc<T>` have the same API, so we fix
-our program by changing the `use` line, the call to `new`, and the call to
-`clone`. The code in Listing 16-15 will finally compile and run:
+Revenind la exemplul nostru: `Arc<T>` și `Rc<T>` partajează aceeași interfață API, deci putem ajusta programul nostru modificând linia `use`, apelul la `new` și apelul la `clone`. Codul din Listarea 16-15 va fi în final capabil să compileze și să ruleze:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch16-fearless-concurrency/listing-16-15/src/main.rs}}
 ```
 
-<span class="caption">Listing 16-15: Using an `Arc<T>` to wrap the `Mutex<T>`
-to be able to share ownership across multiple threads</span>
+<span class="caption">Listarea 16-15: Utilizarea lui `Arc<T>` pentru a incapsula `Mutex<T>` astfel încât să permită partajarea posesiunii pe mai multe fire de execuție</span>
 
-This code will print the following:
+Iată ce va afișa codul:
 
 <!-- Not extracting output because changes to this output aren't significant;
 the changes are likely to be due to the threads running differently rather than
@@ -210,40 +114,16 @@ changes in the compiler -->
 Result: 10
 ```
 
-We did it! We counted from 0 to 10, which may not seem very impressive, but it
-did teach us a lot about `Mutex<T>` and thread safety. You could also use this
-program’s structure to do more complicated operations than just incrementing a
-counter. Using this strategy, you can divide a calculation into independent
-parts, split those parts across threads, and then use a `Mutex<T>` to have each
-thread update the final result with its part.
+Am reușit! Am contorizat de la 0 la 10, lucru care s-ar putea să nu pară impresionant, dar ne-a învățat o mulțime despre `Mutex<T>` și despre siguranța firelor de execuție. De asemenea, ai putea utiliza structura acestui program pentru a realiza operațiuni mai complexe decât simpla incrementare a unui contor. Cu această metodologie, poți descompune un calcul în segmente independente, repartiza aceste segmente între fire de execuție diferite, și folosi `Mutex<T>` pentru ca fiecare fir să își contribuie partea la rezultatul final.
 
-Note that if you are doing simple numerical operations, there are types simpler
-than `Mutex<T>` types provided by the [`std::sync::atomic` module of the
-standard library][atomic]<!-- ignore -->. These types provide safe, concurrent,
-atomic access to primitive types. We chose to use `Mutex<T>` with a primitive
-type for this example so we could concentrate on how `Mutex<T>` works.
+Ia în considerare că, pentru operațiuni numerice simple, există tipuri mai accesibile decât `Mutex<T>` oferite de modulul [`std::sync::atomic`] din biblioteca standard[atomic]<!-- ignore -->. Aceste tipuri permit un acces sigur, concurent și atomic la tipurile de bază. Am ales utilizarea `Mutex<T>` cu un tip simplu în acest exemplu pentru a nu ne distrage atenția de la funcționarea lui `Mutex<T>`.
 
-### Similarities Between `RefCell<T>`/`Rc<T>` and `Mutex<T>`/`Arc<T>`
+### Asemănările dintre `RefCell<T>`/`Rc<T>` și `Mutex<T>`/`Arc<T>`
 
-You might have noticed that `counter` is immutable but we could get a mutable
-reference to the value inside it; this means `Mutex<T>` provides interior
-mutability, as the `Cell` family does. In the same way we used `RefCell<T>` in
-Chapter 15 to allow us to mutate contents inside an `Rc<T>`, we use `Mutex<T>`
-to mutate contents inside an `Arc<T>`.
+Probabil ai remarcat că variabila `counter` este imutabilă, dar am reușit să obținem o referință mutabilă la valoarea dinăuntrul ei; acest lucru înseamnă că `Mutex<T>` asigură mutabilitate internă, așa cum o face familia `Cell`. Astfel cum am utilizat `RefCell<T>` în Capitolul 15 pentru a ne permite să modificăm conținutul unui `Rc<T>`, utilizăm `Mutex<T>` pentru a modifica conținutul unui `Arc<T>`.
 
-Another detail to note is that Rust can’t protect you from all kinds of logic
-errors when you use `Mutex<T>`. Recall in Chapter 15 that using `Rc<T>` came
-with the risk of creating reference cycles, where two `Rc<T>` values refer to
-each other, causing memory leaks. Similarly, `Mutex<T>` comes with the risk of
-creating *deadlocks*. These occur when an operation needs to lock two resources
-and two threads have each acquired one of the locks, causing them to wait for
-each other forever. If you’re interested in deadlocks, try creating a Rust
-program that has a deadlock; then research deadlock mitigation strategies for
-mutexes in any language and have a go at implementing them in Rust. The
-standard library API documentation for `Mutex<T>` and `MutexGuard` offers
-useful information.
+Un alt detaliu important de menționat este că Rust nu poate să te protejeze de toate tipurile de erori de logică când folosești `Mutex<T>`. Reamintește-ți din Capitolul 15 că utilizarea lui `Rc<T>` prezenta riscul de a crea cicluri de referințe, în care două valori `Rc<T>` făceau referire reciprocă, provocând scurgeri de memorie. În mod asemănător, `Mutex<T>` prezintă riscul creării *interblocajelor* (deadlocks). Acestea se întâmplă când o operație necesită blocarea a două resurse și două fire de execuție au blocat fiecare câte una dintre acestea, determinându-le să aștepte reciproc la nesfârșit. Dacă te interesează interblocajele, încearcă să scrii un program în Rust care să genereze un interblocaj; apoi cercetează strategiile de evitare a interblocajelor pentru mutexuri in orice limbaj și încearcă să le aplici în Rust. Documentația API a bibliotecii standard pentru `Mutex<T>` și `MutexGuard` furnizează informații de valoare.
 
-We’ll round out this chapter by talking about the `Send` and `Sync` traits and
-how we can use them with custom types.
+În încheierea acestui capitol, vom discuta despre trăsăturile `Send` și `Sync` și cum pot fi ele utilizate cu tipuri definite de utilizator.
 
 [atomic]: ../std/sync/atomic/index.html

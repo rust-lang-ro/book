@@ -1,116 +1,65 @@
-## Defining an Enum
+## Definirea unei enumerări
 
-Where structs give you a way of grouping together related fields and data, like
-a `Rectangle` with its `width` and `height`, enums give you a way of saying a
-value is one of a possible set of values. For example, we may want to say that
-`Rectangle` is one of a set of possible shapes that also includes `Circle` and
-`Triangle`. To do this, Rust allows us to encode these possibilities as an enum.
+Structurile ne oferă o modalitate de a grupa câmpuri și date conexe. De exemplu, un `Rectangle` cu `width` și `height`. În contrast, enumerările ne permit să expresăm ideea că o valoare poate fi una dintre diversele opțiuni posibile. De pildă, am putea dori să specificăm că `Rectangle` este doar una dintre posibilele forme, care mai cuprinde și `Circle` și `Triangle`. Rust ne permite să transpunem aceste posibilități în cod prin intermediul unei enumerări.
 
-Let’s look at a situation we might want to express in code and see why enums
-are useful and more appropriate than structs in this case. Say we need to work
-with IP addresses. Currently, two major standards are used for IP addresses:
-version four and version six. Because these are the only possibilities for an
-IP address that our program will come across, we can *enumerate* all possible
-variants, which is where enumeration gets its name.
+Pentru a ilustra, să luăm în considerare o situație care ar avea nevoie să fie exprimată în cod pentru a înțelege de ce enumerările sunt utile și mai potrivite decât structurile. Să presupunem că dorim să lucrăm cu adrese IP. În prezent, există două standarde principale pentru adrese IP: versiunea patru și versiunea șase. Acestea sunt singurele variante de adrese IP cu care programul nostru va interacționa, deci putem *enumera* toate aceste variante, lucru de unde provine termenul de enumerare.
 
-Any IP address can be either a version four or a version six address, but not
-both at the same time. That property of IP addresses makes the enum data
-structure appropriate because an enum value can only be one of its variants.
-Both version four and version six addresses are still fundamentally IP
-addresses, so they should be treated as the same type when the code is handling
-situations that apply to any kind of IP address.
+Orice adresă IP poate fi fie de versiunea patru, fie de versiunea șase, dar nu ambele simultan. Această caracteristică a adreselor IP face ca structura de date de tip enumerare să fie adecvată cazului nostru, pentru că o valoare de tip enumerare poate fi doar una dintre variantele sale. Adresele de versiunea patru și șase sunt, în esență, adrese IP, deci ar trebui considerate ca fiind de același tip atunci când codul gestionează situații care se aplică la ambele tipuri de adrese IP.
 
-We can express this concept in code by defining an `IpAddrKind` enumeration and
-listing the possible kinds an IP address can be, `V4` and `V6`. These are the
-variants of the enum:
+Acest concept poate fi transpus în cod prin definirea unei enumerări `IpAddrKind` și enumerarea tipurilor potențiale pe care o adresă IP le poate avea, adică `V4` și `V6`. Acestea sunt variantele enumerării:
 
 ```rust
 {{#rustdoc_include ../listings/ch06-enums-and-pattern-matching/no-listing-01-defining-enums/src/main.rs:def}}
 ```
 
-`IpAddrKind` is now a custom data type that we can use elsewhere in our code.
+Acum, `IpAddrKind` este un tip de date personalizat pe care îl putem utiliza în alte părți ale codului nostru.
 
-### Enum Values
+### Valori enum
 
-We can create instances of each of the two variants of `IpAddrKind` like this:
+Putem genera instanțe pentru ambele variante ale `IpAddrKind` astfel:
 
 ```rust
 {{#rustdoc_include ../listings/ch06-enums-and-pattern-matching/no-listing-01-defining-enums/src/main.rs:instance}}
 ```
 
-Note that the variants of the enum are namespaced under its identifier, and we
-use a double colon to separate the two. This is useful because now both values
-`IpAddrKind::V4` and `IpAddrKind::V6` are of the same type: `IpAddrKind`. We
-can then, for instance, define a function that takes any `IpAddrKind`:
+Observă că variantele enum-ului sunt îngrădite în spațiul de nume al identificatorului său, iar noi utilizăm două puncte pentru a le separa. Acest aspect este util fiindcă, acum, ambele valori `IpAddrKind::V4` și `IpAddrKind::V6` sunt de același tip: `IpAddrKind`. Astfel, putem, de exemplu, să definim o funcție care poate primi orice `IpAddrKind`:
 
 ```rust
 {{#rustdoc_include ../listings/ch06-enums-and-pattern-matching/no-listing-01-defining-enums/src/main.rs:fn}}
 ```
 
-And we can call this function with either variant:
+Iar această funcție poate fi apelată cu oricare dintre variantele enumerate:
 
 ```rust
 {{#rustdoc_include ../listings/ch06-enums-and-pattern-matching/no-listing-01-defining-enums/src/main.rs:fn_call}}
 ```
 
-Using enums has even more advantages. Thinking more about our IP address type,
-at the moment we don’t have a way to store the actual IP address *data*; we
-only know what *kind* it is. Given that you just learned about structs in
-Chapter 5, you might be tempted to tackle this problem with structs as shown in
-Listing 6-1.
+Utilizarea enum-urilor aduce și mai multe beneficii. Dacă ne gândim mai atent la tipul adreselor noastre IP, momentan nu avem o modalitate de a stoca efectiv datele adreselor IP; cunoaștem doar *tipul* acestora. Dat fiind că tocmai ai aflat despre structuri în Capitolul 5, ai putea fi tentat să soluționezi această problemă utilizând structurile, așa cum este exemplificat în Listarea 6-1.
 
 ```rust
 {{#rustdoc_include ../listings/ch06-enums-and-pattern-matching/listing-06-01/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 6-1: Storing the data and `IpAddrKind` variant of
-an IP address using a `struct`</span>
+<span class="caption">Listarea 6-1: Încapsularea datelor și a variantei `IpAddrKind`
+ale unei adrese IP folosind o structură</span>
 
-Here, we’ve defined a struct `IpAddr` that has two fields: a `kind` field that
-is of type `IpAddrKind` (the enum we defined previously) and an `address` field
-of type `String`. We have two instances of this struct. The first is `home`,
-and it has the value `IpAddrKind::V4` as its `kind` with associated address
-data of `127.0.0.1`. The second instance is `loopback`. It has the other
-variant of `IpAddrKind` as its `kind` value, `V6`, and has address `::1`
-associated with it. We’ve used a struct to bundle the `kind` and `address`
-values together, so now the variant is associated with the value.
+În aceste rânduri, am definit o structură numită `IpAddr`. Aceasta conține două câmpuri: un câmp `kind`, care este de tip `IpAddrKind` (enumerarea pe care am stabilit-o mai devreme) și un câmp `address` de tip `String`. Avem două instanțe ale acestei structuri. Prima se numește `home` și cuprinde valoarea `IpAddrKind::V4` atribuită câmpului `kind`, având asociată adresa `127.0.0.1`. Cea de-a doua instanță, `loopback`, conține cealaltă variantă a `IpAddrKind` pentru câmpul `kind`, respectiv `V6`, și este asociată cu adresa `::1`. Am utilizat o structură pentru a grupa valorile `kind` și `address`, astfel încât acum varianta este legată direct de valoarea ei.
 
-However, representing the same concept using just an enum is more concise:
-rather than an enum inside a struct, we can put data directly into each enum
-variant. This new definition of the `IpAddr` enum says that both `V4` and `V6`
-variants will have associated `String` values:
+Cu toate acestea, putem exprima același concept într-un mod mai concis doar cu ajutorul unei enumerări: în loc să încapsulăm o enumerare într-o structură, putem plasa datele direct în fiecare variantă a enumeraței. Această nouă definiție a enumerației `IpAddr` indică faptul că ambele variante `V4` și `V6` vor fi asociate cu valori de tip `String`:
 
 ```rust
 {{#rustdoc_include ../listings/ch06-enums-and-pattern-matching/no-listing-02-enum-with-data/src/main.rs:here}}
 ```
 
-We attach data to each variant of the enum directly, so there is no need for an
-extra struct. Here, it’s also easier to see another detail of how enums work:
-the name of each enum variant that we define also becomes a function that
-constructs an instance of the enum. That is, `IpAddr::V4()` is a function call
-that takes a `String` argument and returns an instance of the `IpAddr` type. We
-automatically get this constructor function defined as a result of defining the
-enum.
+Atașăm datele direct variantei respective a enum-ului, astfel eliminând necesitatea unei structuri suplimentare. Tot aici, este mult mai simplu să înțelegem un alt aspect legat de funcționarea enum-urilor: numele fiecărei variante de enum pe care o definim se transformă de asemenea într-o funcție ce construiește o instanță a acelui enum. Adică, `IpAddr::V4()` reprezintă un apel de funcție care primește un argument de tip `String` și returnează o instanță a tipului `IpAddr`. Obținem în mod automat această funcție constructor ca rezultat al definirii enum-ului.
 
-There’s another advantage to using an enum rather than a struct: each variant
-can have different types and amounts of associated data. Version four IP
-addresses will always have four numeric components that will have values
-between 0 and 255. If we wanted to store `V4` addresses as four `u8` values but
-still express `V6` addresses as one `String` value, we wouldn’t be able to with
-a struct. Enums handle this case with ease:
+Mai există un avantaj în utilizarea unui enum în locul unei structuri: fiecare variantă poate avea diferite tipuri și cantități de date asociate. Adresele IP de versiunea patru vor avea mereu patru componente numerice cu valori între 0 și 255. Dacă am dori să stocăm adresele `V4` sub forma a patru valori `u8`, dar să reprezentăm în același timp adresele `V6` sub forma unei valori `String`, aceasta nu ar fi posibilă cu o structură. Cu toate acestea, enum-urile gestionează cu ușurință acest caz:
 
 ```rust
 {{#rustdoc_include ../listings/ch06-enums-and-pattern-matching/no-listing-03-variants-with-different-data/src/main.rs:here}}
 ```
 
-We’ve shown several different ways to define data structures to store version
-four and version six IP addresses. However, as it turns out, wanting to store
-IP addresses and encode which kind they are is so common that [the standard
-library has a definition we can use!][IpAddr]<!-- ignore --> Let’s look at how
-the standard library defines `IpAddr`: it has the exact enum and variants that
-we’ve defined and used, but it embeds the address data inside the variants in
-the form of two different structs, which are defined differently for each
-variant:
+Am prezentat mai multe metode prin care se pot defini structurile de date pentru a stoca adresele IP de versiunea patru și versiunea șase. Cu toate acestea, se pare că necesitatea de a stoca adrese IP și de a indica tipul lor este atât de frecventă încât însăși [biblioteca standard include o definiție pe care o putem utiliza!][IpAddr]<!-- ignore --> Să ne uităm cum biblioteca standard definește `IpAddr`: aceasta conține aceeași enumerare și variante pe care noi le-am definit și utilizat, însă datele adresei sunt incluse în variante sub forma a două structuri diferite, definite în mod distinct pentru fiecare variantă:
 
 ```rust
 struct Ipv4Addr {
@@ -127,106 +76,69 @@ enum IpAddr {
 }
 ```
 
-This code illustrates that you can put any kind of data inside an enum variant:
-strings, numeric types, or structs, for example. You can even include another
-enum! Also, standard library types are often not much more complicated than
-what you might come up with.
+Acest cod exemplifică faptul că într-o variantă de enumerare se pot integra variate tipuri de date, fie ele string-uri, numere sau structuri. Se poate chiar insera și o altă enumerare. În plus, tipurile din biblioteca standard nu sunt de regulă mult mai complexe decât cele pe care le-ai putea elabora tu.
 
-Note that even though the standard library contains a definition for `IpAddr`,
-we can still create and use our own definition without conflict because we
-haven’t brought the standard library’s definition into our scope. We’ll talk
-more about bringing types into scope in Chapter 7.
+Deși biblioteca standard posedă o definiție pentru `IpAddr`, noi avem capacitatea de a crea și utiliza propria noastră definiție pentru `IpAddr`, fără a întâlni conflicte. Aceasta deoarece nu am importat definiția provenită din biblioteca standard în domeniul nostru de vizibilitate. Profundăm discuția despre cum se importă tipuri în domeniul de vizibilitate în Capitolul 7.
 
-Let’s look at another example of an enum in Listing 6-2: this one has a wide
-variety of types embedded in its variants.
+Să analizăm un alt exemplu de enumerare, ce poate fi găsit în Listarea 6-2. Aici observăm o diversitate mare de tipuri incluse în variantele enumerării.
 
 ```rust
 {{#rustdoc_include ../listings/ch06-enums-and-pattern-matching/listing-06-02/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 6-2: A `Message` enum whose variants each store
-different amounts and types of values</span>
+<span class="caption">Listarea 6-2: Enum-ul `Message` are variante ce stochează cantități și tipuri diferite de valori</span>
 
-This enum has four variants with different types:
+Acest enum conține patru variante de tipuri diferite:
 
-* `Quit` has no data associated with it at all.
-* `Move` has named fields, like a struct does.
-* `Write` includes a single `String`.
-* `ChangeColor` includes three `i32` values.
+* `Quit` nu are asociat niciun fel de date.
+* `Move` conține câmpuri numite, similar unei structuri.
+* `Write` include un singur `String`.
+* `ChangeColor` include trei valori de tip `i32`.
 
-Defining an enum with variants such as the ones in Listing 6-2 is similar to
-defining different kinds of struct definitions, except the enum doesn’t use the
-`struct` keyword and all the variants are grouped together under the `Message`
-type. The following structs could hold the same data that the preceding enum
-variants hold:
+Crearea unui enum cu variante cum sunt cele din Listarea 6-2 se aseamănă cu definirea diferitelor tipuri de structuri, dar cu câteva diferențe: enum nu folosește cuvântul cheie `struct` și toate variantele sunt grupate sub tipul `Message`. Structurile enumerate mai jos ar putea reține aceleași date ca și variantele enum-ului menționate anterior:
 
 ```rust
 {{#rustdoc_include ../listings/ch06-enums-and-pattern-matching/no-listing-04-structs-similar-to-message-enum/src/main.rs:here}}
 ```
 
-But if we used the different structs, each of which has its own type, we
-couldn’t as easily define a function to take any of these kinds of messages as
-we could with the `Message` enum defined in Listing 6-2, which is a single type.
+Dacă am utiliza structuri diferite, fiecare având propriul său tip, ar fi mai dificil să definim o funcție care poate accepta oricare dintre aceste tipuri de mesaje. În schimb, prin intermediul enum-ului `Message`, definit în Listarea 6-2, putem realiza acest lucru mult mai simplu deoarece `Message` reprezintă un singur tip.
 
-There is one more similarity between enums and structs: just as we’re able to
-define methods on structs using `impl`, we’re also able to define methods on
-enums. Here’s a method named `call` that we could define on our `Message` enum:
+Enum-urile și structurile mai au o similitudine: așa cum definim metode pe structuri utilizând `impl`, tot așa putem defini metode și pe enum-uri. Să luăm de exemplu metoda numită `call`, pe care am putea să o definim pentru enum-ul nostru `Message`:
 
 ```rust
 {{#rustdoc_include ../listings/ch06-enums-and-pattern-matching/no-listing-05-methods-on-enums/src/main.rs:here}}
 ```
 
-The body of the method would use `self` to get the value that we called the
-method on. In this example, we’ve created a variable `m` that has the value
-`Message::Write(String::from("hello"))`, and that is what `self` will be in the
-body of the `call` method when `m.call()` runs.
+În corpul metodei utilizăm `self` pentru a obține valoarea pe care am invocat metoda. În acest exemplu, am creat variabila `m` cu valoarea `Message::Write(String::from("hello"))`, iar aceasta va reprezenta `self` în corpul metodei `call` când se execută instrucțiunea `m.call()`.
 
-Let’s look at another enum in the standard library that is very common and
-useful: `Option`.
+Să examinăm și un alt enum foarte comun și util din biblioteca standard, numit `Option`.
 
-### The `Option` Enum and Its Advantages Over Null Values
+### Enum-ul `Option` și superioritatea sa față de valorile null
 
-This section explores a case study of `Option`, which is another enum defined
-by the standard library. The `Option` type encodes the very common scenario in
-which a value could be something or it could be nothing.
+Această secțiune urmărește un studiu de caz al `Option`, care reprezintă o altă enumerare definită înlăuntrul librăriei standard. Tipul `Option` reflectă scenariul întâlnit frecvent în care o valoare poate exista sau poate absenta.
 
-For example, if you request the first item in a non-empty list, you would get
-a value. If you request the first item in an empty list, you would get nothing.
-Expressing this concept in terms of the type system means the compiler can
-check whether you’ve handled all the cases you should be handling; this
-functionality can prevent bugs that are extremely common in other programming
-languages.
+De exemplu, dacă ai solicita primul element dintr-o listă ce conține elemente, ai obține o valoare. În schimb, dacă ai solicita primul element dintr-o listă goală, nu ai obține nimic. Transpunerea acestui concept în sistemul de tipuri permite compilatorului să verifice dacă ai tratat toate cazurile pe care ar trebui să le gestionezi; această funcționalitate poate contribui la prevenirea apariției unor erori extrem de comune în alte limbaje de programare.
 
-Programming language design is often thought of in terms of which features you
-include, but the features you exclude are important too. Rust doesn’t have the
-null feature that many other languages have. *Null* is a value that means there
-is no value there. In languages with null, variables can always be in one of
-two states: null or not-null.
+Designul unui limbaj de programare este adesea gândit în contextul funcțiilor pe care le adaugi, dar funcțiile pe care le ignori sunt la fel de importante. Rust nu dispune de opțiunea null pe care multe alte limbaje o oferă. *Null* este o valoare care indică lipsa unui răspuns sau a unei valori valide. În limbajele care permit valori null, variabilele pot exista mereu într-una din cele două stări: null sau non-null.
 
-In his 2009 presentation “Null References: The Billion Dollar Mistake,” Tony
-Hoare, the inventor of null, has this to say:
+În discursul său din 2009, intitulat "Referințe Nule: Eroarea de un miliard de dolari", Tony Hoare, părintele conceptului de null, exprima astfel:
 
-> I call it my billion-dollar mistake. At that time, I was designing the first
-> comprehensive type system for references in an object-oriented language. My
-> goal was to ensure that all use of references should be absolutely safe, with
-> checking performed automatically by the compiler. But I couldn’t resist the
-> temptation to put in a null reference, simply because it was so easy to
-> implement. This has led to innumerable errors, vulnerabilities, and system
-> crashes, which have probably caused a billion dollars of pain and damage in
-> the last forty years.
+> Aceasta este greșeala mea de un miliard de dolari. Atunci, în acel moment,
+> eram la etapa de proiectare a primului sistem complet de tipuri pentru
+> referințe în cadrul unui limbaj orientat pe obiecte. Misiunea pe care mi-o
+> asumasem era să garantez că orice utilizare a referințelor va fi absolut
+> sigură, cu verificări efectuate automat de către compilator. Cu toate
+> acestea, tentația de a introduce o referință nulă, deoarece era atât de
+> simplu de realizat, a fost irezistibilă. Aceasta a condus la un număr
+> inestimabil de erori, vulnerabilități și sisteme care s-au prăbușit,
+> provocând, probabil, prejudicii de un miliard de dolari în ultimele patru
+> decenii.
 
-The problem with null values is that if you try to use a null value as a
-not-null value, you’ll get an error of some kind. Because this null or not-null
-property is pervasive, it’s extremely easy to make this kind of error.
+Problema cu valorile nule constă în faptul că, atunci când încerci să folosești o valoare nulă ca și cum ar fi una nenulă, inevitabil vei întâlni o eroare. Această caracteristică de null sau non-null este atât de răspândită, încât este extrem de ușor să comiți acest tip de eroare.
 
-However, the concept that null is trying to express is still a useful one: a
-null is a value that is currently invalid or absent for some reason.
+Totuși, conceptul pe care valoarea null îl reprezintă este în continuare unul esențial: un null reprezintă o valoare care este, temporar, nevalidă sau menținută absentă, dintr-un anumit motiv.
 
-The problem isn’t really with the concept but with the particular
-implementation. As such, Rust does not have nulls, but it does have an enum
-that can encode the concept of a value being present or absent. This enum is
-`Option<T>`, and it is [defined by the standard library][option]<!-- ignore -->
-as follows:
+Problema nu este cu conceptul în sine, ci mai degrabă cu modul său specific de implementare. Prin urmare, Rust nu conține valori null, dar dispune de o enumerare care poate exemplifica ideea de prezență sau absență a unei valori. Această enumerare este `Option<T>`, definită în [biblioteca standard][option] astfel:
 
 ```rust
 enum Option<T> {
@@ -235,89 +147,39 @@ enum Option<T> {
 }
 ```
 
-The `Option<T>` enum is so useful that it’s even included in the prelude; you
-don’t need to bring it into scope explicitly. Its variants are also included in
-the prelude: you can use `Some` and `None` directly without the `Option::`
-prefix. The `Option<T>` enum is still just a regular enum, and `Some(T)` and
-`None` are still variants of type `Option<T>`.
+Enumerarea `Option<T>` este atât de folositoare încât este inclusă chiar și în preludiu, nu necesită a fi adusă explicit în domeniul de vizibilitate. Variantele sale sunt de asemenea incluse în preludiu: poți folosi `Some` și `None` direct, fără a avea nevoie de prefixul `Option::`. Enumerarea `Option<T>` rămâne doar o enumerare obișnuită, iar `Some(T)` și `None` sunt în continuare variantele sale, de tip `Option<T>`.
 
-The `<T>` syntax is a feature of Rust we haven’t talked about yet. It’s a
-generic type parameter, and we’ll cover generics in more detail in Chapter 10.
-For now, all you need to know is that `<T>` means that the `Some` variant of
-the `Option` enum can hold one piece of data of any type, and that each
-concrete type that gets used in place of `T` makes the overall `Option<T>` type
-a different type. Here are some examples of using `Option` values to hold
-number types and string types:
+Sintaxa `<T>` este o caracteristică a Rust pe care nu am discutat-o încă. Este un parametru de tip generic, despre care vom vorbi în amănunt în Capitolul 10. Deocamdată, trebuie doar să știi că `<T>` semnifică faptul că varianta `Some` a enumerării `Option` poate conține o dată de orice tip, iar fiecare tip concret care este utilizat în locul lui `T` transformă tipul global `Option<T>` într-un tip diferit. Iată câteva exemple de utilizare a valorilor `Option` pentru a reține tipuri de numere și de șiruri de caractere:
 
 ```rust
 {{#rustdoc_include ../listings/ch06-enums-and-pattern-matching/no-listing-06-option-examples/src/main.rs:here}}
 ```
 
-The type of `some_number` is `Option<i32>`. The type of `some_char` is
-`Option<char>`, which is a different type. Rust can infer these types because
-we’ve specified a value inside the `Some` variant. For `absent_number`, Rust
-requires us to annotate the overall `Option` type: the compiler can’t infer the
-type that the corresponding `Some` variant will hold by looking only at a
-`None` value. Here, we tell Rust that we mean for `absent_number` to be of type
-`Option<i32>`.
+Tipul variabilei `some_number` este `Option<i32>`. În contrast, `some_char` este de tip `Option<char>`, deci avem de-a face cu un tip diferit. Rust este capabil să deducă aceste tipuri fără nicio intervenție din partea noastră datorită faptului că am specificat deja o valoare în varianta `Some`. În cazul lui `absent_number`, lucrurile sunt un pic diferite. Aici, Rust ne solicită să adnotăm explicit tipul `Option` principal: compilatorul nu poate deduce tipul pe care variantul `Some` îl va deține doar uitându-se la o valoare `None`. De aceea, în acest context, îi comunicăm noi explicit lui Rust că intenționăm ca `absent_number` să fie de tip `Option<i32>`.
 
-When we have a `Some` value, we know that a value is present and the value is
-held within the `Some`. When we have a `None` value, in some sense it means the
-same thing as null: we don’t have a valid value. So why is having `Option<T>`
-any better than having null?
+Când lucrăm cu o valoare `Some`, știm că avem o valoare prezentă și că aceasta se află în interiorul `Some`. În contrast, când avem o valoare `None`, semnifică într-un fel același lucru ca și null: nu dispunem de o valoare validă. Dar de ce ar fi mai avantajos să folosim `Option<T>` în locul lui null?
 
-In short, because `Option<T>` and `T` (where `T` can be any type) are different
-types, the compiler won’t let us use an `Option<T>` value as if it were
-definitely a valid value. For example, this code won’t compile, because it’s
-trying to add an `i8` to an `Option<i8>`:
+Pe scurt, avantajul de a lucra cu `Option<T>` în loc de null ține de faptul că `Option<T>` și `T` (unde `T` poate fi orice tip) reprezintă tipuri diferite. De-oarece avem de a face cu tipuri diferite, compilatorul nu ne va permite să utilizăm o valoare `Option<T>` ca și cum am fi absolut siguri că ea conține o valoare validă. De exemplu, codul următor nu va compila, deoarece încearcă să adauge un `i8` la un `Option<i8>`:
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch06-enums-and-pattern-matching/no-listing-07-cant-use-option-directly/src/main.rs:here}}
 ```
 
-If we run this code, we get an error message like this one:
+Dacă rulăm acest cod, vom primi un mesaj de eroare similar cu acesta:
 
 ```console
 {{#include ../listings/ch06-enums-and-pattern-matching/no-listing-07-cant-use-option-directly/output.txt}}
 ```
 
-Intense! In effect, this error message means that Rust doesn’t understand how
-to add an `i8` and an `Option<i8>`, because they’re different types. When we
-have a value of a type like `i8` in Rust, the compiler will ensure that we
-always have a valid value. We can proceed confidently without having to check
-for null before using that value. Only when we have an `Option<i8>` (or
-whatever type of value we’re working with) do we have to worry about possibly
-not having a value, and the compiler will make sure we handle that case before
-using the value.
+Intens! Acesta ne spune că Rust nu poate efectua operația de adunare între un `i8` și un `Option<i8>`, deoarece acestea sunt de tipuri diferite. În Rust, atunci când lucrăm cu o valoare de tip `i8`, compilatorul se asigură că valoarea respectivă este întotdeauna validă. Prin urmare, putem utiliza valoarea respectivă fără a fi nevoie să verificăm în prealabil dacă aceasta este null. Problemele apar doar atunci când avem de-a face cu un `Option<i8>` (sau orice alt tip de valoare). În acest caz, este posibil să nu avem o valoare validă, iar compilatorul se va asigura că vom trata acest caz corect înainte de a folosi valoarea respectivă.
 
-In other words, you have to convert an `Option<T>` to a `T` before you can
-perform `T` operations with it. Generally, this helps catch one of the most
-common issues with null: assuming that something isn’t null when it actually is.
+Altfel spus, pentru a putea efectua operațiuni cu `Option<T>`, va trebui mai întâi să-l convertim la `T`. Această regulă ne ajută să depistăm una dintre problemele cele mai comune legate de valoarea null: presupunerea că o anumită valoare nu poate fi null, când de fapt aceasta poate fi.
 
-Eliminating the risk of incorrectly assuming a not-null value helps you to be
-more confident in your code. In order to have a value that can possibly be
-null, you must explicitly opt in by making the type of that value `Option<T>`.
-Then, when you use that value, you are required to explicitly handle the case
-when the value is null. Everywhere that a value has a type that isn’t an
-`Option<T>`, you *can* safely assume that the value isn’t null. This was a
-deliberate design decision for Rust to limit null’s pervasiveness and increase
-the safety of Rust code.
+Faptul că putem elimina riscul de a presupune incorect că o valoare nu este null ne conferă mai multă încredere în corectitudinea codului nostru. De asemenea, pentru a putea avea o valoare care să poată fi eventual null, trebuie să optăm explicit pentru tipul de valoare `Option<T>`. Ulterior, la utilizarea acestei valori, vom fi nevoiți să tratăm explicit cazul în care valoarea este null. Oriunde avem o valoare al cărei tip nu este `Option<T>`, putem presupune în siguranță că valoarea respectivă nu este null. Aceasta este o decizie deliberată de proiectare a limbajului Rust, menită să limiteze prevalența valorilor null și să crească siguranța codului scris în Rust.
 
-So how do you get the `T` value out of a `Some` variant when you have a value
-of type `Option<T>` so that you can use that value? The `Option<T>` enum has a
-large number of methods that are useful in a variety of situations; you can
-check them out in [its documentation][docs]<!-- ignore -->. Becoming familiar
-with the methods on `Option<T>` will be extremely useful in your journey with
-Rust.
+Acum să vedem cum putem extrage valoarea `T` dintr-un `Option<T>` de tip `Some`, astfel încât să o putem folosi. Enumerația `Option<T>` dispune de o serie de metode utile în diverse contexte, pe care le poți vedea în [documentația acestora][docs]<!-- ignore -->. Cunoașterea metodelor variabilei `Option<T>` va fi extrem de importantă pe parcursul călătoriei tale cu Rust.
 
-In general, in order to use an `Option<T>` value, you want to have code that
-will handle each variant. You want some code that will run only when you have a
-`Some(T)` value, and this code is allowed to use the inner `T`. You want some
-other code to run only if you have a `None` value, and that code doesn’t have a
-`T` value available. The `match` expression is a control flow construct that
-does just this when used with enums: it will run different code depending on
-which variant of the enum it has, and that code can use the data inside the
-matching value.
+În general, pentru a folosi o valoare `Option<T>`, va trebui să scrii un cod care să poată trata fiecare variantă. Vei avea nevoie de un cod ce se va executa doar atunci când ai o valoare `Some(T)`, iar acesta va putea folosi valoarea `T` internă. În același timp, vei avea nevoie de un alt cod ce se va executa doar dacă ai o valoare `None`, iar acesta nu va avea acces la o valoare `T`. Expresia `match` este un construct al fluxului de control care, atunci când este folosită cu enumerări, ne permite să rulăm cod diferit în funcție de tipul variantelor, având posibilitatea de a utiliza datele din interiorul valorii potrivite.
 
 [IpAddr]: ../std/net/enum.IpAddr.html
 [option]: ../std/option/enum.Option.html

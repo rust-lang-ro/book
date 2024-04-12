@@ -1,88 +1,44 @@
-## Publishing a Crate to Crates.io
+## Publicarea unui crate pe crates.io
 
-We’ve used packages from [crates.io](https://crates.io/)<!-- ignore --> as
-dependencies of our project, but you can also share your code with other people
-by publishing your own packages. The crate registry at
-[crates.io](https://crates.io/)<!-- ignore --> distributes the source code of
-your packages, so it primarily hosts code that is open source.
+Folosim crate-uri de pe [crates.io](https://crates.io/) ca dependențe pentru proiectul nostru, dar poți de asemenea să-ți împărtășești codul cu alți programatori publicând propriile crate-uri. Registrul de crate-uri de pe [crates.io](https://crates.io/) difuzează codul sursă al pachetelor tale, găzduind în principal cod open source.
 
-Rust and Cargo have features that make your published package easier for people
-to find and use. We’ll talk about some of these features next and then explain
-how to publish a package.
+Rust și Cargo dispun de caracteristici care fac mai ușoară găsirea și utilizarea crate-ului tău publicat de către alții. Vom vorbi în continuare despre unele dintre aceste caracteristici și apoi vom explica cum se publică un crate.
 
-### Making Useful Documentation Comments
+### Crearea de comentarii documentație utile
 
-Accurately documenting your packages will help other users know how and when to
-use them, so it’s worth investing the time to write documentation. In Chapter
-3, we discussed how to comment Rust code using two slashes, `//`. Rust also has
-a particular kind of comment for documentation, known conveniently as a
-*documentation comment*, that will generate HTML documentation. The HTML
-displays the contents of documentation comments for public API items intended
-for programmers interested in knowing how to *use* your crate as opposed to how
-your crate is *implemented*.
+Documentarea corectă a pachetelor voastre va ajuta alți utilizatori să înțeleagă cum și când să le folosească, de aceea este important să alocați timp pentru a redacta documentația. În Capitolul 3, am învățat cum se pot adăuga comentarii codului Rust folosind `//`. Rust oferă de asemenea un tip special de comentariu pentru documentație, cunoscut ca *comentariu de documentație*, ce generează documentație în format HTML. HTML-ul prezintă conținutul comentariilor de documentație pentru elementele API publice, orientate către programatori interesați să cunoască modul în care pot *utiliza* crate-ul dumneavoastră, nu neapărat cum este el *implementat*.
 
-Documentation comments use three slashes, `///`, instead of two and support
-Markdown notation for formatting the text. Place documentation comments just
-before the item they’re documenting. Listing 14-1 shows documentation comments
-for an `add_one` function in a crate named `my_crate`.
+Comentariile de documentație folosesc trei slash-uri, `///`, în locul celor două și permit folosirea notației Markdown pentru formatarea textelor. Aceste comentarii de documentație se plasează imediat înaintea elementului documentat. Listarea 14-1 prezintă comentariile de documentație pentru funcția `add_one` dintr-un crate denumit `my_crate`.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch14-more-about-cargo/listing-14-01/src/lib.rs}}
 ```
 
-<span class="caption">Listing 14-1: A documentation comment for a
-function</span>
+<span class="caption">Listarea 14-1: Un comentariu de documentație pentru o funcție</span>
 
-Here, we give a description of what the `add_one` function does, start a
-section with the heading `Examples`, and then provide code that demonstrates
-how to use the `add_one` function. We can generate the HTML documentation from
-this documentation comment by running `cargo doc`. This command runs the
-`rustdoc` tool distributed with Rust and puts the generated HTML documentation
-in the *target/doc* directory.
+Aici, descriem funcționalitatea funcției `add_one`, demarăm o secțiune cu titlul `Examples` și furnizăm cod ce exemplifică modul de utilizare al funcției `add_one`. Putem crea documentația HTML aferentă acestui comentariu de documentație executând comanda `cargo doc`. Această comandă pornește instrumentul `rustdoc` care vine odată cu instalarea Rustului și plasează documentația HTML generată în directorul *target/doc*.
 
-For convenience, running `cargo doc --open` will build the HTML for your
-current crate’s documentation (as well as the documentation for all of your
-crate’s dependencies) and open the result in a web browser. Navigate to the
-`add_one` function and you’ll see how the text in the documentation comments is
-rendered, as shown in Figure 14-1:
+Pentru a facilita accesul, executând `cargo doc --open` va construi documentația HTML pentru crate-ul curent (inclusiv documentația pentru toate dependențele crate-ului) și va deschide rezultatul într-un navigator web. Navigând către funcția `add_one`, veți observa cum este randat textul din comentariile de documentație, așa cum se observă în Figura 14-1:
 
-<img alt="Rendered HTML documentation for the `add_one` function of `my_crate`" src="img/trpl14-01.png" class="center" />
+<img alt="Documentație HTML pentru funcția `add_one` a `my_crate`" src="img/trpl14-01.png" class="center" />
 
-<span class="caption">Figure 14-1: HTML documentation for the `add_one`
-function</span>
+<span class="caption">Figura 14-1: Documentația HTML pentru funcția `add_one`</span>
 
-#### Commonly Used Sections
+#### Secțiuni comun utilizate
 
-We used the `# Examples` Markdown heading in Listing 14-1 to create a section
-in the HTML with the title “Examples.” Here are some other sections that crate
-authors commonly use in their documentation:
+Am folosit antetul Markdown `# Examples` în Listarea 14-1 pentru a crea o secțiune în HTML cu titlul "Examples". Alte secțiuni comune pe care autorii de crate-uri le includ în documentațiile lor sunt:
 
-* **Panics**: The scenarios in which the function being documented could
-  panic. Callers of the function who don’t want their programs to panic should
-  make sure they don’t call the function in these situations.
-* **Errors**: If the function returns a `Result`, describing the kinds of
-  errors that might occur and what conditions might cause those errors to be
-  returned can be helpful to callers so they can write code to handle the
-  different kinds of errors in different ways.
-* **Safety**: If the function is `unsafe` to call (we discuss unsafety in
-  Chapter 19), there should be a section explaining why the function is unsafe
-  and covering the invariants that the function expects callers to uphold.
+* **Panics**: Situațiile în care funcția descrisă ar putea provoca o panică. Cei care apelează funcția trebuie să se asigure că nu o fac în aceste condiții, pentru a evita erori critice în programul lor.
+* **Errors**: Dacă funcția returnează un `Result`, este util pentru apelanți să cunoască tipurile de erori posibile și condițiile care le-ar putea cauza, astfel încât să poată gestiona corespunzător fiecare tip de eroare.
+* **Safety**: În cazul unei funcții marcate ca `unsafe` (ceea ce vom aborda în Capitolul 19), este important să existe o secțiune care explică motivele pentru care funcția este considerată nesigură și care sunt invarianții pe care funcția îi presupune respectați de către apelanți.
 
-Most documentation comments don’t need all of these sections, but this is a
-good checklist to remind you of the aspects of your code users will be
-interested in knowing about.
+Nu este necesar ca toate secțiunile de documentație să fie prezente, dar această listă poate servi ca o reamintire utilă despre elementele codului care ar putea fi de interes utilizatorilor.
 
-#### Documentation Comments as Tests
+#### Comentarii de documentație ca teste
 
-Adding example code blocks in your documentation comments can help demonstrate
-how to use your library, and doing so has an additional bonus: running `cargo
-test` will run the code examples in your documentation as tests! Nothing is
-better than documentation with examples. But nothing is worse than examples
-that don’t work because the code has changed since the documentation was
-written. If we run `cargo test` with the documentation for the `add_one`
-function from Listing 14-1, we will see a section in the test results like this:
+Includerea exemplelor de cod în comentariile de documentație poate ilustra cum să fie folosită biblioteca ta, iar un avantaj suplimentar este că, atunci când rulezi `cargo test`, exemplele de cod din comentariile tale vor fi executate ca teste! Nu există ceva mai util decât documentație însoțită de exemple. Totodată, nu există ceva mai problematic decât exemple care nu funcționează pentru că s-a modificat codul de la scrierea documentației. Dacă executăm `cargo test` cu documentația pentru funcția `add_one` prezentată în Listarea 14-1, vom observa în rezultatele testelor o secțiune similară cu aceasta:
 
 <!-- manual-regeneration
 cd listings/ch14-more-about-cargo/listing-14-01/
@@ -99,216 +55,124 @@ test src/lib.rs - add_one (line 5) ... ok
 test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.27s
 ```
 
-Now if we change either the function or the example so the `assert_eq!` in the
-example panics and run `cargo test` again, we’ll see that the doc tests catch
-that the example and the code are out of sync with each other!
+Dacă acum schimbăm fie funcția, fie exemplul, astfel încât `assert_eq!` din exemplu să producă panică și executăm `cargo test` din nou, vom constata că testele din documentație detectează neconcordanța dintre exemplu și cod!
 
-#### Commenting Contained Items
+#### Comentarea elementelor încapsulate
 
-The style of doc comment `//!` adds documentation to the item that contains the
-comments rather than to the items following the comments. We typically use
-these doc comments inside the crate root file (*src/lib.rs* by convention) or
-inside a module to document the crate or the module as a whole.
+Stilul de comentariu doc `//!` adaugă documentație la elementul care include comentariile în loc să le adauge la cele care urmează după comentarii. Folosim aceste comentarii doc în mod obișnuit în interiorul fișierului rădăcină al crate-ului (*src/lib.rs* conform convenției) sau în cadrul unui modul pentru a documenta întregul crate sau modul.
 
-For example, to add documentation that describes the purpose of the `my_crate`
-crate that contains the `add_one` function, we add documentation comments that
-start with `//!` to the beginning of the *src/lib.rs* file, as shown in Listing
-14-2:
+De exemplu, pentru a adăuga documentație care descrie scopul crate-ului `my_crate`, care conține funcția `add_one`, inserăm comentarii de documentație începând cu `//!` la începutul fișierului *src/lib.rs*, așa cum este arătat în Listarea 14-2:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch14-more-about-cargo/listing-14-02/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 14-2: Documentation for the `my_crate` crate as a
-whole</span>
+<span class="caption">Listarea 14-2: Documentația pentru crate-ul `my_crate` ca întreg</span>
 
-Notice there isn’t any code after the last line that begins with `//!`. Because
-we started the comments with `//!` instead of `///`, we’re documenting the item
-that contains this comment rather than an item that follows this comment. In
-this case, that item is the *src/lib.rs* file, which is the crate root. These
-comments describe the entire crate.
+Remarcăm faptul că nu se găsește niciun cod după ultima linie care începe cu `//!`. Alegând să începem comentariile cu `//!` și nu cu `///`, ne-am documentat elementul care conține acest comentariu și nu un element care ar urma după comentariu. În acest caz, respectivul element este fișierul *src/lib.rs*, rădăcina crate-ului. Aceste comentarii descriu crate-ul în totalitatea sa.
 
-When we run `cargo doc --open`, these comments will display on the front
-page of the documentation for `my_crate` above the list of public items in the
-crate, as shown in Figure 14-2:
+Când rulăm `cargo doc --open`, aceste comentarii vor fi vizibile pe pagina principală a documentației `my_crate`, plasate deasupra listei de elemente publice ale crate-ului, așa cum putem observa în Figura 14-2:
 
-<img alt="Rendered HTML documentation with a comment for the crate as a whole" src="img/trpl14-02.png" class="center" />
+<img alt="Documentație HTML generată cu un comentariu la nivelul întregului crate" src="img/trpl14-02.png" class="center" />
 
-<span class="caption">Figure 14-2: Rendered documentation for `my_crate`,
-including the comment describing the crate as a whole</span>
+<span class="caption">Figura 14-2: Documentația generată pentru `my_crate`, incluzând comentariul ce descrie crate-ul în întregime</span>
 
-Documentation comments within items are useful for describing crates and
-modules especially. Use them to explain the overall purpose of the container to
-help your users understand the crate’s organization.
+Comentariile de documentație din interiorul elementelor sunt deosebit de utile pentru descrierea crate-urilor și modulelor. Le utilizăm pentru a clarifica scopul general al containerului, facilitând astfel înțelegerea organizării crate-ului de către utilizatori.
 
-### Exporting a Convenient Public API with `pub use`
+### Exportarea unui API public și accesibil cu `pub use`
 
-The structure of your public API is a major consideration when publishing a
-crate. People who use your crate are less familiar with the structure than you
-are and might have difficulty finding the pieces they want to use if your crate
-has a large module hierarchy.
+Structura API-ului public este esențială atunci când vine vorba de publicarea unui crate. Utilizatorii acestuia pot avea dificultăți în a localiza componentele dorite, mai ales dacă structura de module este labirintică.
 
-In Chapter 7, we covered how to make items public using the `pub` keyword, and
-bring items into a scope with the `use` keyword. However, the structure that
-makes sense to you while you’re developing a crate might not be very convenient
-for your users. You might want to organize your structs in a hierarchy
-containing multiple levels, but then people who want to use a type you’ve
-defined deep in the hierarchy might have trouble finding out that type exists.
-They might also be annoyed at having to enter `use`
-`my_crate::some_module::another_module::UsefulType;` rather than `use`
-`my_crate::UsefulType;`.
+În Capitolul 7, am explicat cum să facem elemente publice folosind cuvântul cheie `pub` și cum să le importăm într-un domeniu de vizibilitate cu `use`. Dar structura internă pe care ai dezvoltat-o ar putea să nu fie prea accesibilă pentru utilizatori. De exemplu, dacă ai structuri aranjate după o ierarhie complexă, utilizatorii s-ar putea să nu descopere ușor anumite tipuri de date sau să fie deranjați de necesitatea de a folosi o cale lungă de module: `use my_crate::some_module::another_module::UsefulType;` în loc de `use my_crate::UsefulType;`.
 
-The good news is that if the structure *isn’t* convenient for others to use
-from another library, you don’t have to rearrange your internal organization:
-instead, you can re-export items to make a public structure that’s different
-from your private structure by using `pub use`. Re-exporting takes a public
-item in one location and makes it public in another location, as if it were
-defined in the other location instead.
+Norocul este că, dacă structura internă *nu* este convenabilă utilizatorilor din alte librării, nu e nevoie să o reorganizezi. În schimb, poți re-exporta elemente pentru a crea o structură publică diferită folosind `pub use`. Această tehnică permite ca elementele publice dintr-un loc să fie disponibile într-un altul, ca și cum ar fi fost definite acolo.
 
-For example, say we made a library named `art` for modeling artistic concepts.
-Within this library are two modules: a `kinds` module containing two enums
-named `PrimaryColor` and `SecondaryColor` and a `utils` module containing a
-function named `mix`, as shown in Listing 14-3:
+Să ne imaginăm, de exemplu, că am dezvoltat o bibliotecă numită `art` pentru reprezentarea conceptelor artistice. În interiorul acesteia avem două module: `kinds`, care conține două enumerări, `PrimaryColor` și `SecondaryColor`, și `utils` cu funcția `mix`, așa cum este prezentat în Listarea 14-3:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground,test_harness
 {{#rustdoc_include ../listings/ch14-more-about-cargo/listing-14-03/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 14-3: An `art` library with items organized into
-`kinds` and `utils` modules</span>
+<span class="caption">Listarea 14-3: Biblioteca `art` cu elementele organizate în modulele `kinds` și `utils`</span>
 
-Figure 14-3 shows what the front page of the documentation for this crate
-generated by `cargo doc` would look like:
+Figura 14-3 ilustrează cum arată pagina principală a documentației pentru crate-ul `art`, generată de `cargo doc`:
 
-<img alt="Rendered documentation for the `art` crate that lists the `kinds` and `utils` modules" src="img/trpl14-03.png" class="center" />
+<img alt="Documentația generată pentru crate-ul `art` care prezintă modulele `kinds` și `utils`" src="img/trpl14-03.png" class="center" />
 
-<span class="caption">Figure 14-3: Front page of the documentation for `art`
-that lists the `kinds` and `utils` modules</span>
+<span class="caption">Figura 14-3: Pagina principală a documentației pentru `art`, care prezintă modulele `kinds` și `utils`</span>
 
-Note that the `PrimaryColor` and `SecondaryColor` types aren’t listed on the
-front page, nor is the `mix` function. We have to click `kinds` and `utils` to
-see them.
+Remarcăm că tipurile `PrimaryColor` și `SecondaryColor` nu sunt prezentate pe pagina principală, nici funcția `mix`. Trebuie să selectăm modulele `kinds` și `utils` pentru a le vedea.
 
-Another crate that depends on this library would need `use` statements that
-bring the items from `art` into scope, specifying the module structure that’s
-currently defined. Listing 14-4 shows an example of a crate that uses the
-`PrimaryColor` and `mix` items from the `art` crate:
+Pentru a utiliza această bibliotecă, un alt crate ar necesita declarații `use` care să includă elementele din `art` în domeniul de vizibilitate, specificând structura modulară curent definită. Listarea 14-4 demonstrează un exemplu de crate care integrează elementele `PrimaryColor` și `mix` din crate-ul `art`:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch14-more-about-cargo/listing-14-04/src/main.rs}}
 ```
 
-<span class="caption">Listing 14-4: A crate using the `art` crate’s items with
-its internal structure exported</span>
+<span class="caption">Listarea 14-4: O crate care integrează elementele din crate-ul `art` cu structura sa internă expusă</span>
 
-The author of the code in Listing 14-4, which uses the `art` crate, had to
-figure out that `PrimaryColor` is in the `kinds` module and `mix` is in the
-`utils` module. The module structure of the `art` crate is more relevant to
-developers working on the `art` crate than to those using it. The internal
-structure doesn’t contain any useful information for someone trying to
-understand how to use the `art` crate, but rather causes confusion because
-developers who use it have to figure out where to look, and must specify the
-module names in the `use` statements.
+Autorul codului prezentat în Listarea 14-4, care utilizează crate-ul `art`, a fost nevoit să descifreze că `PrimaryColor` este parte din modulul `kinds` și `mix` din modulul `utils`. Structura modulară a crate-ului `art` este mai semnificativă pentru cei care dezvoltă `art` decât pentru utilizatorii săi. Structura internă nu furnizează informații utile pentru cineva care dorește să învețe cum să folosească `art`, ci mai degrabă creează confuzie, fiind necesar ca dezvoltatorii să deducă locațiile specifice și să specifice modulele în declarațiile `use`.
 
-To remove the internal organization from the public API, we can modify the
-`art` crate code in Listing 14-3 to add `pub use` statements to re-export the
-items at the top level, as shown in Listing 14-5:
+Pentru a îndepărta organizarea internă din API-ul public, putem ajusta codul crate-ului `art` din Listarea 14-3 prin adăugarea de declarații `pub use` care re-exportă elementele la nivelul cel mai de sus, așa cum este prezentat în Listarea 14-5:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch14-more-about-cargo/listing-14-05/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 14-5: Adding `pub use` statements to re-export
-items</span>
+<span class="caption">Listarea 14-5: Adăugarea de declarații `pub use` pentru re-exportarea elementelor</span>
 
-The API documentation that `cargo doc` generates for this crate will now list
-and link re-exports on the front page, as shown in Figure 14-4, making the
-`PrimaryColor` and `SecondaryColor` types and the `mix` function easier to find.
+Documentația API creată de `cargo doc` pentru acest crate va prezenta acum re-exportările pe pagina de start, după cum se poate vedea în Figura 14-4, facilitând găsirea tipurilor `PrimaryColor` și `SecondaryColor` și a funcției `mix`.
 
-<img alt="Rendered documentation for the `art` crate with the re-exports on the front page" src="img/trpl14-04.png" class="center" />
+<img alt="Documentația creată pentru crate-ul `art` cu re-exportările pe pagina principală" src="img/trpl14-04.png" class="center" />
 
-<span class="caption">Figure 14-4: The front page of the documentation for `art`
-that lists the re-exports</span>
+<span class="caption">Figura 14-4: Pagina de start a documentației pentru `art` care afișează re-exportările</span>
 
-The `art` crate users can still see and use the internal structure from Listing
-14-3 as demonstrated in Listing 14-4, or they can use the more convenient
-structure in Listing 14-5, as shown in Listing 14-6:
+Utilizatorii crate-ului `art` încă pot vedea și utiliza structura internă din Listarea 14-3 așa cum este ilustrat în Listarea 14-4, sau pot opta pentru structura mai accesibilă din Listarea 14-5, așa cum este exemplificat în Listarea 14-6:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch14-more-about-cargo/listing-14-06/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 14-6: A program using the re-exported items from
-the `art` crate</span>
+<span class="caption">Listarea 14-6: Un program care utilizează elementele re-exportate din crate-ul `art`</span>
 
-In cases where there are many nested modules, re-exporting the types at the top
-level with `pub use` can make a significant difference in the experience of
-people who use the crate. Another common use of `pub use` is to re-export
-definitions of a dependency in the current crate to make that crate's
-definitions part of your crate’s public API.
+Atunci când avem de-a face cu multe module încapsulate, re-exportarea tipurilor la nivelul cel mai de sus folosind `pub use` poate îmbunătăți semnificativ experiența utilizatorilor crate-ului. O altă practică frecventă a `pub use` este re-exportarea definițiilor unei dependențe în crate-ul actual, pentru a integra definițiile acelui crate în API-ul public al propriului crate.
 
-Creating a useful public API structure is more of an art than a science, and
-you can iterate to find the API that works best for your users. Choosing `pub
-use` gives you flexibility in how you structure your crate internally and
-decouples that internal structure from what you present to your users. Look at
-some of the code of crates you’ve installed to see if their internal structure
-differs from their public API.
+Elaborarea unei structuri a API-ului public eficiente este mai degrabă o artă decât o știință, și multe ori e nevoie de a itera asupra ei pentru a dezvolta API-ul care răspunde cel mai bine nevoilor utilizatorilor tăi. Folosirea `pub use` permite flexibilitate în structurarea internă a crate-ului tău și separă acea structură internă de ceea ce oferi utilizatorilor tăi. Examinează codul din unele crate-uri pe care le-ai instalat pentru a observa dacă structura lor internă se diferențiază de API-ul public.
 
-### Setting Up a Crates.io Account
+### Configurarea unui cont pe crates.io 
 
-Before you can publish any crates, you need to create an account on
-[crates.io](https://crates.io/)<!-- ignore --> and get an API token. To do so,
-visit the home page at [crates.io](https://crates.io/)<!-- ignore --> and log
-in via a GitHub account. (The GitHub account is currently a requirement, but
-the site might support other ways of creating an account in the future.) Once
-you’re logged in, visit your account settings at
-[https://crates.io/me/](https://crates.io/me/)<!-- ignore --> and retrieve your
-API key. Then run the `cargo login` command with your API key, like this:
+Pentru a publica crate-uri, trebuie mai întâi să îți creezi un cont pe [crates.io](https://crates.io/) și să obții o cheie (token) de API. Pentru aceasta, accesează pagina principală [crates.io](https://crates.io/) și conectează-te folosind un cont de GitHub. (Deocamdată este obligatoriu să folosești un cont de GitHub, dar pe viitor s-ar putea adăuga și alte metode de înregistrare.) După autentificare, mergi la setările contului tău accesând [https://crates.io/me/](https://crates.io/me/) și copie-ți cheia API. În continuare, execută comanda `cargo login` cu cheia ta API, după cum urmează:
 
 ```console
 $ cargo login abcdefghijklmnopqrstuvwxyz012345
 ```
 
-This command will inform Cargo of your API token and store it locally in
-*~/.cargo/credentials*. Note that this token is a *secret*: do not share it
-with anyone else. If you do share it with anyone for any reason, you should
-revoke it and generate a new token on [crates.io](https://crates.io/)<!-- ignore
--->.
+Această comandă îi va comunica lui Cargo cheia ta API și o va salva local în fișierul *~/.cargo/credentials*. Fii atent, această cheie este un *secret* și nu trebuie să o împărtășești cu nimeni. Dacă, dintr-un anumit motiv, o vei împărtăși, revoc-o și generează una nouă pe [crates.io](https://crates.io/).
 
-### Adding Metadata to a New Crate
+### Adăugarea metadatelor la un crate nou
 
-Let’s say you have a crate you want to publish. Before publishing, you’ll need
-to add some metadata in the `[package]` section of the crate’s *Cargo.toml*
-file.
+Să zicem că ai în plan să publici un crate. Înainte de a trece la publicare, e necesar să adaugi anumite metadate în secțiunea `[package]` a fișierului *Cargo.toml* corespunzător crate-ului.
 
-Your crate will need a unique name. While you’re working on a crate locally,
-you can name a crate whatever you’d like. However, crate names on
-[crates.io](https://crates.io/)<!-- ignore --> are allocated on a first-come,
-first-served basis. Once a crate name is taken, no one else can publish a crate
-with that name. Before attempting to publish a crate, search for the name you
-want to use. If the name has been used, you will need to find another name and
-edit the `name` field in the *Cargo.toml* file under the `[package]` section to
-use the new name for publishing, like so:
+Crate-ul tău trebuie să aibă un nume unic. Atunci când lucrezi la un crate pe plan local, poți opta pentru orice nume dorești. Însă, numele pentru crate-uri pe [crates.io](https://crates.io/) se atribuie pe sistemul 'primul venit, primul servit'. Odată ce un nume este ocupat, nu se mai permite publicarea unui alt crate cu același nume. Verifică dacă numele pe care îl dorești este disponibil înainte de a încerca să publici crate-ul. Dacă descoperi că numele a fost deja folosit, va trebui să alegi un altul și să actualizezi câmpul `name` din *Cargo.toml*, în secțiunea `[package]`, pentru a putea folosi noul nume la publicare, astfel:
 
-<span class="filename">Filename: Cargo.toml</span>
+<span class="filename">Numele fișierului: Cargo.toml</span>
 
 ```toml
 [package]
 name = "guessing_game"
 ```
 
-Even if you’ve chosen a unique name, when you run `cargo publish` to publish
-the crate at this point, you’ll get a warning and then an error:
+Dacă ai ales un nume care este unic, când rulezi comanda `cargo publish` pentru publicarea crate-ului în acest punct, vei întâmpina prima dată un avertisment, urmat de o eroare:
 
 <!-- manual-regeneration
 cd listings/ch14-more-about-cargo/listing-14-01/
@@ -328,16 +192,9 @@ Caused by:
   the remote server responded with an error: missing or empty metadata fields: description, license. Please see https://doc.rust-lang.org/cargo/reference/manifest.html for how to upload metadata
 ```
 
-This errors because you’re missing some crucial information: a description and
-license are required so people will know what your crate does and under what
-terms they can use it. In *Cargo.toml*, add a description that's just a
-sentence or two, because it will appear with your crate in search results. For
-the `license` field, you need to give a *license identifier value*. The [Linux
-Foundation’s Software Package Data Exchange (SPDX)][spdx] lists the identifiers
-you can use for this value. For example, to specify that you’ve licensed your
-crate using the MIT License, add the `MIT` identifier:
+Apare această eroare pentru că lipsesc informații cruciale: descrierea și licența sunt obligatorii, pentru ca alții să poată înțelege ce face crate-ul tău și sub ce termeni pot să-l utilizeze. În fișierul *Cargo.toml*, adaugă o descriere scurtă, de una-două propoziții, aceasta urmând să apară împreună cu crate-ul tău în rezultatele de căutare. Câmpul `license` necesită introducerea unei *valori de identificare a licenței*. Identificatorii pe care îi poți folosi pentru acest scop sunt listati de [Software Package Data Exchange (SPDX) a Fundației Linux][spdx]. De exemplu, dacă ai licențiat crate-ul cu Licența MIT, adaugi identificatorul `MIT`:
 
-<span class="filename">Filename: Cargo.toml</span>
+<span class="filename">Numele fișierului: Cargo.toml</span>
 
 ```toml
 [package]
@@ -345,53 +202,34 @@ name = "guessing_game"
 license = "MIT"
 ```
 
-If you want to use a license that doesn’t appear in the SPDX, you need to place
-the text of that license in a file, include the file in your project, and then
-use `license-file` to specify the name of that file instead of using the
-`license` key.
+Dacă preferi o licență care nu se află în listele SPDX, atunci textul acelei licențe trebuie inclus într-un fișier în proiectul tău și specificat folosind `license-file` pentru a indica numele fișierului, în loc să folosești cheia `license`.
 
-Guidance on which license is appropriate for your project is beyond the scope
-of this book. Many people in the Rust community license their projects in the
-same way as Rust by using a dual license of `MIT OR Apache-2.0`. This practice
-demonstrates that you can also specify multiple license identifiers separated
-by `OR` to have multiple licenses for your project.
+Alegerea licenței potrivite pentru proiectul tău este un subiect care nu este acoperit de această carte. Este comun în comunitatea Rust ca proiecte să fie licențiate similar cu Rust, prin utilizarea unei licențe duble `MIT OR Apache-2.0`. Acest lucru arată că e posibil să specifici multiple identificatoare de licență, separate prin `OR`, pentru a oferi mai multe opțiuni de licențiere pentru proiectul tău.
 
-With a unique name, the version, your description, and a license added, the
-*Cargo.toml* file for a project that is ready to publish might look like this:
+Cu un nume unic, o versiune, o descriere adăugată și o licență definită, fișierul *Cargo.toml* al unui proiect pregătit pentru publicare poate arăta în felul următor:
 
-<span class="filename">Filename: Cargo.toml</span>
+<span class="filename">Numele fișierului: Cargo.toml</span>
 
 ```toml
 [package]
 name = "guessing_game"
 version = "0.1.0"
 edition = "2021"
-description = "A fun game where you guess what number the computer has chosen."
+description = "Un joc distractiv unde încerci să ghicești numărul ales de calculator."
 license = "MIT OR Apache-2.0"
 
 [dependencies]
 ```
 
-[Cargo’s documentation](https://doc.rust-lang.org/cargo/) describes other
-metadata you can specify to ensure others can discover and use your crate more
-easily.
+Poți găsi în [documentația Cargo](https://doc.rust-lang.org/cargo/) detalii suplimentare despre alte metadate care îmbunătățesc descoperirea și utilizarea crate-ului tău de către alții.
 
-### Publishing to Crates.io
+### Publicarea pe crates.io
 
-Now that you’ve created an account, saved your API token, chosen a name for
-your crate, and specified the required metadata, you’re ready to publish!
-Publishing a crate uploads a specific version to
-[crates.io](https://crates.io/)<!-- ignore --> for others to use.
+Acum că ți-ai creat un cont, ai salvat cheia API, ai ales un nume pentru crate-ul tău și ai specificat toate metadatele necesare, ești pregătit să publici! Publicarea unui crate trimite o versiune specifică pe [crates.io](https://crates.io/)<!-- ignore --> pentru utilizare de către alții.
 
-Be careful, because a publish is *permanent*. The version can never be
-overwritten, and the code cannot be deleted. One major goal of
-[crates.io](https://crates.io/)<!-- ignore --> is to act as a permanent archive
-of code so that builds of all projects that depend on crates from
-[crates.io](https://crates.io/)<!-- ignore --> will continue to work. Allowing
-version deletions would make fulfilling that goal impossible. However, there is
-no limit to the number of crate versions you can publish.
+Trebuie să fii precaut, deoarece o publicare este *ireversibilă*. Versiunea nu poate fi înlocuită, iar codul nu poate fi retras. Unul dintre principalele obiective ale [crates.io](https://crates.io/)<!-- ignore --> este să servească ca o arhivă permanentă de cod, pentru ca toate proiectele care depind de crate-uri de pe [crates.io](https://crates.io/)<!-- ignore --> să poată fi construite și în viitor. Permițând ștergerea de versiuni, am împiedica atingerea acestui obiectiv. Cu toate acestea, poți publica un număr nelimitat de versiuni ale crate-ului tău.
 
-Run the `cargo publish` command again. It should succeed now:
+Execută din nou comanda `cargo publish`. De data aceasta ar trebui să fie cu succes:
 
 <!-- manual-regeneration
 go to some valid crate, publish a new version
@@ -410,42 +248,19 @@ $ cargo publish
    Uploading guessing_game v0.1.0 (file:///projects/guessing_game)
 ```
 
-Congratulations! You’ve now shared your code with the Rust community, and
-anyone can easily add your crate as a dependency of their project.
+Felicitări! Codul tău a fost acum distribuit comunității Rust, astfel încât toți pot să includă foarte ușor crate-ul tău ca dependență în proiectele lor.
 
-### Publishing a New Version of an Existing Crate
+### Publicarea unei versiuni noi a unui crate existent
 
-When you’ve made changes to your crate and are ready to release a new version,
-you change the `version` value specified in your *Cargo.toml* file and
-republish. Use the [Semantic Versioning rules][semver] to decide what an
-appropriate next version number is based on the kinds of changes you’ve made.
-Then run `cargo publish` to upload the new version.
+Când ai efectuat modificări în crate-ul tău și ești pregătit să faci o versiune nouă, trebuie să modifici valoarea `version` din fișierul tău *Cargo.toml* și să re-publici. Urmărește [regulile versionării semantice][semver] ca să determini care ar trebui să fie numărul de versiune adecvat, bazat pe modificările efectuate. Apoi execută `cargo publish` pentru a încărca noua versiune.
 
-<!-- Old link, do not remove -->
-<a id="removing-versions-from-cratesio-with-cargo-yank"></a>
+### Retragerea versiunilor de pe crates.io folosind `cargo yank`
 
-### Deprecating Versions from Crates.io with `cargo yank`
+Cu toate că nu poți șterge versiunile anterioare ale unui crate, poți să previi adăugarea lor ca o nouă dependență de către proiecte viitoare. Acest lucru este de ajutor atunci când o versiune a unui crate este deficientă dintr-un oarecare motiv. În asemenea situații, Cargo oferă posibilitatea de a *retrage* o versiune de crate.
 
-Although you can’t remove previous versions of a crate, you can prevent any
-future projects from adding them as a new dependency. This is useful when a
-crate version is broken for one reason or another. In such situations, Cargo
-supports *yanking* a crate version.
+Retragerea unei versiuni împiedică proiectele noi să depindă de acea versiune, permițând în același timp tuturor proiectelor existente care o folosesc să continue fără probleme. În esență, a retrage o versiune semnifică faptul că toate proiectele cu un *Cargo.lock* deja existent nu vor avea de suferit și niciun viitor fișier *Cargo.lock* nou-generat nu va utiliza versiunea retrasă.
 
-Yanking a version prevents new projects from depending on that version while
-allowing all existing projects that depend on it to continue. Essentially, a
-yank means that all projects with a *Cargo.lock* will not break, and any future
-*Cargo.lock* files generated will not use the yanked version.
-
-To yank a version of a crate, in the directory of the crate that you’ve
-previously published, run `cargo yank` and specify which version you want to
-yank. For example, if we've published a crate named `guessing_game` version
-1.0.1 and we want to yank it, in the project directory for `guessing_game` we'd
-run:
-
-<!-- manual-regeneration:
-cargo yank carol-test --version 2.1.0
-cargo yank carol-test --version 2.1.0 --undo
--->
+Pentru a retrage o versiune a unui crate, în directoriul unde crate-ul a fost publicat inițial, execută `cargo yank` și indică versiunea pe care dorești să o retragi. Spre exemplu, dacă am publicat un crate denumit `guessing_game` la versiunea 1.0.1 și dorim să o retragem, în directoriul proiectului `guessing_game` am executa:
 
 ```console
 $ cargo yank --vers 1.0.1
@@ -453,8 +268,7 @@ $ cargo yank --vers 1.0.1
         Yank guessing_game@1.0.1
 ```
 
-By adding `--undo` to the command, you can also undo a yank and allow projects
-to start depending on a version again:
+Prin adăugarea `--undo` la comandă, poți de asemenea anula o retragere și permite din nou proiectelor noi să depindă de acea versiune:
 
 ```console
 $ cargo yank --vers 1.0.1 --undo
@@ -462,8 +276,7 @@ $ cargo yank --vers 1.0.1 --undo
       Unyank guessing_game@1.0.1
 ```
 
-A yank *does not* delete any code. It cannot, for example, delete accidentally
-uploaded secrets. If that happens, you must reset those secrets immediately.
+O retragere *nu* implică ștergerea vreunui cod. De pildă, nu poate elimina secretele încărcate din greșeală. Dacă se întâmplă acest lucru, trebuie să resetezi imediat respectivele secrete.
 
 [spdx]: http://spdx.org/licenses/
 [semver]: http://semver.org/

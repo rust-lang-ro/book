@@ -1,152 +1,73 @@
-## Characteristics of Object-Oriented Languages
+## Caracteristicile limbajelor orientate pe obiecte
 
-There is no consensus in the programming community about what features a
-language must have to be considered object-oriented. Rust is influenced by many
-programming paradigms, including OOP; for example, we explored the features
-that came from functional programming in Chapter 13. Arguably, OOP languages
-share certain common characteristics, namely objects, encapsulation, and
-inheritance. Let’s look at what each of those characteristics means and whether
-Rust supports it.
+Nu există un consens în comunitatea de programatori referitor la ce caracteristici ar trebui să aibă un limbaj de programare pentru a fi considerat orientat pe obiecte. Rust este influențat de numeroase paradigme de programare, inclusiv OOP; de exemplu, în Capitolul 13 am examinat caracteristicile împrumutate din programarea funcțională. Se poate argumenta că limbajele OOP se caracterizează prin anumite trăsături comune, cum ar fi obiecte, încapsulare și moștenire. Să analizăm ce înseamnă aceste caracteristici și dacă Rust le implementează.
 
-### Objects Contain Data and Behavior
+### Obiectele conțin date și comportamente
 
-The book *Design Patterns: Elements of Reusable Object-Oriented Software* by
-Erich Gamma, Richard Helm, Ralph Johnson, and John Vlissides (Addison-Wesley
-Professional, 1994), colloquially referred to as *The Gang of Four* book, is a
-catalog of object-oriented design patterns. It defines OOP this way:
+Cartea *Design Patterns: Elements of Reusable Object-Oriented Software* de Erich Gamma, Richard Helm, Ralph Johnson și John Vlissides (Addison-Wesley Professional, 1994), cunoscută informal ca și cartea *Gang of Four* (Banda celor patru), prezintă un catalog de pattern-uri de design orientate pe obiecte. Aceasta definește OOP astfel:
 
-> Object-oriented programs are made up of objects. An *object* packages both
-> data and the procedures that operate on that data. The procedures are
-> typically called *methods* or *operations*.
+> Programele orientate-obiect sunt alcătuite din obiecte. Un *obiect* include
+> atât date cât și procedurile care lucrează cu aceste date. Procedurile sunt
+> în mod uzual numite *metode* sau *operații*.
 
-Using this definition, Rust is object-oriented: structs and enums have data,
-and `impl` blocks provide methods on structs and enums. Even though structs and
-enums with methods aren’t *called* objects, they provide the same
-functionality, according to the Gang of Four’s definition of objects.
+Conform acestei definiții, Rust este un limbaj orientat pe obiecte: structurile și enum-urile conțin date, iar blocurile `impl` oferă metode pentru aceste structuri și enum-uri. Chiar dacă structurile și enum-urile cu metode nu sunt etichetate explcit ca *obiecte*, ele oferă aceeași funcționalitate din punct de vedere al definiției oferite de The Gang of Four.
 
-### Encapsulation that Hides Implementation Details
+### Încapsularea care ascunde detalii de implementare
 
-Another aspect commonly associated with OOP is the idea of *encapsulation*,
-which means that the implementation details of an object aren’t accessible to
-code using that object. Therefore, the only way to interact with an object is
-through its public API; code using the object shouldn’t be able to reach into
-the object’s internals and change data or behavior directly. This enables the
-programmer to change and refactor an object’s internals without needing to
-change the code that uses the object.
+Un alt aspect adesea asociat cu OOP este ideea de *încapsulare*, care presupune că detaliile de implementare ale unui obiect nu sunt accesibile codului ce utilizează acel obiect. Prin urmare, singura cale de a interacționa cu un obiect este prin API-ul său public; codul care îl folosește nu ar trebui să fie capabil să acceseze internul obiectului și să modifice direct datele sau comportamentul acestuia. Acest lucru îi permite programatorului să schimbe și să refacă structura internă a obiectului fără a avea nevoie să modifice codul ce utilizează obiectul.
 
-We discussed how to control encapsulation in Chapter 7: we can use the `pub`
-keyword to decide which modules, types, functions, and methods in our code
-should be public, and by default everything else is private. For example, we
-can define a struct `AveragedCollection` that has a field containing a vector
-of `i32` values. The struct can also have a field that contains the average of
-the values in the vector, meaning the average doesn’t have to be computed
-on demand whenever anyone needs it. In other words, `AveragedCollection` will
-cache the calculated average for us. Listing 17-1 has the definition of the
-`AveragedCollection` struct:
+Am discutat despre cum se poate controla încapsularea în Capitolul 7: putem folosi cuvântul cheie `pub` pentru a hotărî ce module, tipuri, funcții și metode din codul nostru ar trebui să fie accesibile public, iar în mod implicit, tot restul este privat. De exemplu, noi putem defini o structură `AveragedCollection` care are un câmp ce conține un vector cu valori de tip `i32`. Structura mai poate să aibă și un câmp ce reține media valorilor din vector, semnificând că media nu trebuie calculată de fiecare dată când este necesară. Altfel spus, `AveragedCollection` va memora pentru noi media calculată. Listarea 17-1 prezintă definiția structurii `AveragedCollection`:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch17-oop/listing-17-01/src/lib.rs}}
 ```
 
-<span class="caption">Listing 17-1: An `AveragedCollection` struct that
-maintains a list of integers and the average of the items in the
-collection</span>
+<span class="caption">Listarea 17-1: O structură `AveragedCollection` care păstrează o listă de valori întregi și media acestor valori</span>
 
-The struct is marked `pub` so that other code can use it, but the fields within
-the struct remain private. This is important in this case because we want to
-ensure that whenever a value is added or removed from the list, the average is
-also updated. We do this by implementing `add`, `remove`, and `average` methods
-on the struct, as shown in Listing 17-2:
+Structura este marcată cu `pub`, astfel încât să poată fi folosită de alte coduri, însă câmpurile din cadrul structurii rămân private. Acest aspect este important întrucât dorim să ne asigurăm că atunci când o valoare este adăugată sau ștearsă din listă, media este de asemenea actualizată. Realizăm acest lucru implementând metodele `add`, `remove` și `average` pe structura respectivă, așa cum este arătat în Listarea 17-2:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch17-oop/listing-17-02/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 17-2: Implementations of the public methods
-`add`, `remove`, and `average` on `AveragedCollection`</span>
+<span class="caption">Listarea 17-2: Implementarea metodelor publice `add`, `remove` și `average` pe `AveragedCollection`</span>
 
-The public methods `add`, `remove`, and `average` are the only ways to access
-or modify data in an instance of `AveragedCollection`. When an item is added
-to `list` using the `add` method or removed using the `remove` method, the
-implementations of each call the private `update_average` method that handles
-updating the `average` field as well.
+Metodele publice `add`, `remove` și `average` sunt singurele căi de interacțiune sau modificare a datelor într-o instanță a `AveragedCollection`. Când un element este adăugat în `list` prin metoda `add` sau eliminat utilizând `remove`, implementările acestora invocă metoda privată `update_average`, responsabilă de actualizarea câmpului `average`.
 
-We leave the `list` and `average` fields private so there is no way for
-external code to add or remove items to or from the `list` field directly;
-otherwise, the `average` field might become out of sync when the `list`
-changes. The `average` method returns the value in the `average` field,
-allowing external code to read the `average` but not modify it.
+Am păstrat câmpurile `list` și `average` ca fiind private pentru a împiedica codul extern să adauge sau să elimine itemi direct din câmpul `list`; altfel, câmpul `average` ar putea deveni desincronizat atunci când lista se modifică. Metoda `average` returnează valoarea din câmpul `average`, permițând codului extern să acceseze valoarea medie, însă nu și să o modifice.
 
-Because we’ve encapsulated the implementation details of the struct
-`AveragedCollection`, we can easily change aspects, such as the data structure,
-in the future. For instance, we could use a `HashSet<i32>` instead of a
-`Vec<i32>` for the `list` field. As long as the signatures of the `add`,
-`remove`, and `average` public methods stay the same, code using
-`AveragedCollection` wouldn’t need to change. If we made `list` public instead,
-this wouldn’t necessarily be the case: `HashSet<i32>` and `Vec<i32>` have
-different methods for adding and removing items, so the external code would
-likely have to change if it were modifying `list` directly.
+Întrucât am încapsulat detaliile de implementare ale structurii `AveragedCollection`, în viitor putem schimba cu ușurință diverse aspecte, cum ar fi structura datelor. De pildă, am putea folosi un `HashSet<i32>` în loc de un `Vec<i32>` pentru câmpul `list`. Dacă semnăturile metodelor publice `add`, `remove` și `average` rămân neschimbate, codul care folosește `AveragedCollection` nu va necesita nicio modificare. Dacă `list` ar fi fost public, situația ar fi putut fi diferită: `HashSet<i32>` și `Vec<i32>` au metode diferite pentru adăugarea și eliminarea elementelor, ceea ce ar implica probabil schimbări în codul extern dacă acesta ar modifica `list` direct.
 
-If encapsulation is a required aspect for a language to be considered
-object-oriented, then Rust meets that requirement. The option to use `pub` or
-not for different parts of code enables encapsulation of implementation details.
+Dacă încapsularea este un criteriu esențial pentru ca un limbaj să fie considerat orientat pe obiecte, atunci Rust satisface și această condiție. Posibilitatea de a utiliza `pub` sau nu pentru diverse secțiuni ale codului facilitează încapsularea detaliilor implementării.
 
-### Inheritance as a Type System and as Code Sharing
+### Moștenirea ca sistem de tipuri și de partajare a codului
 
-*Inheritance* is a mechanism whereby an object can inherit elements from
-another object’s definition, thus gaining the parent object’s data and behavior
-without you having to define them again.
+*Moștenirea* este un mecanism prin care un obiect poate moșteni elemente definitorii ale altui obiect, câștigând, astfel, datele și comportamentul obiectului părinte fără a necesita o redefinire.
 
-If a language must have inheritance to be an object-oriented language, then
-Rust is not one. There is no way to define a struct that inherits the parent
-struct’s fields and method implementations without using a macro.
+În cazul în care prezența moștenirii este o condiție obligatorie pentru ca un limbaj de programare să fie considerat orientat pe obiecte, Rust nu se încadrează în această categorie. Nu există un mod prin care să definești un struct ce moștenește câmpurile și implementările de metode ale structurii părinte fără utilizarea unui macro.
 
-However, if you’re used to having inheritance in your programming toolbox, you
-can use other solutions in Rust, depending on your reason for reaching for
-inheritance in the first place.
+Totuși, dacă ești obișnuit să utilizezi moștenirea în setul tău de instrumente de programare, Rust îți oferă alte opțiuni, în funcție de motivul pentru care alegi să folosești moștenirea inițial.
 
-You would choose inheritance for two main reasons. One is for reuse of code:
-you can implement particular behavior for one type, and inheritance enables you
-to reuse that implementation for a different type. You can do this in a limited
-way in Rust code using default trait method implementations, which you saw in
-Listing 10-14 when we added a default implementation of the `summarize` method
-on the `Summary` trait. Any type implementing the `Summary` trait would have
-the `summarize` method available on it without any further code. This is
-similar to a parent class having an implementation of a method and an
-inheriting child class also having the implementation of the method. We can
-also override the default implementation of the `summarize` method when we
-implement the `Summary` trait, which is similar to a child class overriding the
-implementation of a method inherited from a parent class.
+Moștenirea este selectată din două motive principale. Primul este reutilizarea codului: poți implementa un anumit comportament pentru un tip și, prin moștenire, ai posibilitatea de a aplica aceiași implementare unui tip diferit. În Rust, acest lucru se poate realiza într-un mod restrâns folosind implementările implicite ale metodelor unei trăsături, aspect observat în Listarea 10-14, când am inclus o implementare implicită a metodei `summarize` pentru trăsătura `Summary`. Orice tip ce implementează trăsătura `Summary` va beneficia de metoda `summarize` fără a fi necesar cod adițional. Aceast aspect se aseamănă cu o clasă părinte care deține o implementare a unei metode și cu o clasă derivată care moștenește implementarea dată. Mai mult, putem suprascrie implementarea implicită a metodei `summarize` în momentul în care implementăm trăsătura `Summary`, fiind analog cu o clasă derivată care suprascrie o metodă primită prin moștenire de la o clasă părinte.
 
-The other reason to use inheritance relates to the type system: to enable a
-child type to be used in the same places as the parent type. This is also
-called *polymorphism*, which means that you can substitute multiple objects for
-each other at runtime if they share certain characteristics.
+Al doilea motiv pentru a recurge la moștenire este legat de sistemul de tipuri: permite unui tip derivat să fie utilizat în toate contextele în care ar putea fi utilizat tipul părinte. Așa utilizare este cunoscută și sub numele de *polimorfism*, sugerând că, în timpul execuției, poți substitui mai multe obiecte între ele dacă partajează anumite trăsături.
 
-> ### Polymorphism
+> ### Polimorfism
 >
-> To many people, polymorphism is synonymous with inheritance. But it’s
-> actually a more general concept that refers to code that can work with data
-> of multiple types. For inheritance, those types are generally subclasses.
+> Pentru mulți, polimorfismul este văzut ca fiind sinonim cu moștenirea. Însă,
+> este de fapt un concept mult mai general, care face referire la cod capabil
+> să interacționeze cu date de diverse tipuri. Pentru moștenire, aceste tipuri
+> sunt, în general, subclase.
 >
-> Rust instead uses generics to abstract over different possible types and
-> trait bounds to impose constraints on what those types must provide. This is
-> sometimes called *bounded parametric polymorphism*.
+> Rust preferă să utilizeze generici pentru a generaliza peste diferite tipuri
+> posibile și delimitări de trăsătură pentru a impune constrângeri legate de
+> funcționalitățile pe care aceste tipuri trebuie să le furnizeze. Așa metodă
+> este uneori denumită *polimorfism parametric limitat*.
 
-Inheritance has recently fallen out of favor as a programming design solution
-in many programming languages because it’s often at risk of sharing more code
-than necessary. Subclasses shouldn’t always share all characteristics of their
-parent class but will do so with inheritance. This can make a program’s design
-less flexible. It also introduces the possibility of calling methods on
-subclasses that don’t make sense or that cause errors because the methods don’t
-apply to the subclass. In addition, some languages will only allow single
-inheritance (meaning a subclass can only inherit from one class), further
-restricting the flexibility of a program’s design.
+Recent, moștenirea a devenit o soluție de design mai puțin favorizată în multe limbaje de programare, deoarece adesea există riscul de a partaja mai mult cod decât este necesar. Subclasele nu ar trebui neapărat să moștenească toate caracteristicile clasei părinte, ce exact se întâmplă în cazul moștenirii. Astfel poate reduce flexibilitatea designului unui program. De asemenea, generează posibilitatea de a invoca metode pe subclase care nu sunt adecvate sau care provoacă erori deoarece metodele nu întotdeauna sunt aplicabile la subclasa dată. În plus, unele limbaje permit doar moștenire simplă (o subclasă poate moșteni numai de la o singură clasă), limitând și mai mult flexibilitatea designului de program.
 
-For these reasons, Rust takes the different approach of using trait objects
-instead of inheritance. Let’s look at how trait objects enable polymorphism in
-Rust.
+Din aceste motive, Rust alege o altă cale, utilizând obiecte-trăsătură în loc de moștenire. Să analizăm cum obiectele-trăsătură facilitează polimorfismul în Rust.

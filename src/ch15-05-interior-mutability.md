@@ -1,133 +1,63 @@
-## `RefCell<T>` and the Interior Mutability Pattern
+## `RefCell<T>` și mutabilitatea interioară
 
-*Interior mutability* is a design pattern in Rust that allows you to mutate
-data even when there are immutable references to that data; normally, this
-action is disallowed by the borrowing rules. To mutate data, the pattern uses
-`unsafe` code inside a data structure to bend Rust’s usual rules that govern
-mutation and borrowing. Unsafe code indicates to the compiler that we’re
-checking the rules manually instead of relying on the compiler to check them
-for us; we will discuss unsafe code more in Chapter 19.
+*Mutabilitate interioară* este o metodologie de proiectare în Rust care îți permite să modifici datele chiar dacă există referințe imutabile la acele date; de obicei, această acțiune este restricționată de regulile de împrumut. Pentru a modifica datele, această metodă folosește cod `unsafe` în interiorul unei structuri de date pentru a flexibiliza regulile standard ale Rust privind mutația și împrumutul. Codul `unsafe` semnalează compilatorului că ne asumăm verificarea regulilor manual, în loc să ne bazăm pe compilator să facă acest lucru; vom detalia codul `unsafe` în capitolul 19.
 
-We can use types that use the interior mutability pattern only when we can
-ensure that the borrowing rules will be followed at runtime, even though the
-compiler can’t guarantee that. The `unsafe` code involved is then wrapped in a
-safe API, and the outer type is still immutable.
+Tipurile care implementează conceptul de mutabilitate interioară pot fi utilizate doar atunci când suntem capabili să garantăm respectarea regulilor de împrumut în timp real, chiar dacă compilatorul nu poate oferi această asigurare. În consecință, codul `unsafe` este învelit într-o interfață API sigură, iar tipul exterior al structurii rămâne imutabil.
 
-Let’s explore this concept by looking at the `RefCell<T>` type that follows the
-interior mutability pattern.
+Să ne aprofundăm înțelegerea acestui concept prin analiza tipului `RefCell<T>`, care utilizeară mutabilitatea interioară.
 
-### Enforcing Borrowing Rules at Runtime with `RefCell<T>`
+### Aplicarea regulilor de împrumut la rulare cu `RefCell<T>`
 
-Unlike `Rc<T>`, the `RefCell<T>` type represents single ownership over the data
-it holds. So, what makes `RefCell<T>` different from a type like `Box<T>`?
-Recall the borrowing rules you learned in Chapter 4:
+În contrast cu `Rc<T>`, tipul `RefCell<T>` indică o unică posesiune asupra datelor pe care le deține. Atunci, ce anume diferențiază `RefCell<T>` de un tip ca `Box<T>`? Să revedem regulile de împrumut învățate în Capitolul 4:
 
-* At any given time, you can have *either* (but not both) one mutable reference
-  or any number of immutable references.
-* References must always be valid.
+* În orice moment, se poate avea *fie* (dar nu și cumulat) o referință mutabilă sau oricâte referințe imutabile.
+* Referințele trebuie mereu să fie valide.
 
-With references and `Box<T>`, the borrowing rules’ invariants are enforced at
-compile time. With `RefCell<T>`, these invariants are enforced *at runtime*.
-With references, if you break these rules, you’ll get a compiler error. With
-`RefCell<T>`, if you break these rules, your program will panic and exit.
+Când folosim referințe și `Box<T>`, invarianțele regulilor de împrumut sunt garantate la timpul de compilare. Pentru `RefCell<T>`, aceste invarianțe sunt aplicate *la rulare*. Când încălcăm aceste reguli utilizând referințe, vom întâmpina o eroare de compilator. Cu `RefCell<T>`, dacă regulile sunt încălcate, programul va genera panică și se va opri.
 
-The advantages of checking the borrowing rules at compile time are that errors
-will be caught sooner in the development process, and there is no impact on
-runtime performance because all the analysis is completed beforehand. For those
-reasons, checking the borrowing rules at compile time is the best choice in the
-majority of cases, which is why this is Rust’s default.
+Avantajul verificării regulilor de împrumut în timpul compilării este acela că erorile sunt descoperite mai devreme în ciclul de dezvoltare, și nu influențează performanța la rulare, deoarece toată analiza este finalizată în prealabil. Aceasta este de ce verificarea în momentul compilării este preferată în majoritatea situațiilor și reprezintă implicita alegere în Rust.
 
-The advantage of checking the borrowing rules at runtime instead is that
-certain memory-safe scenarios are then allowed, where they would’ve been
-disallowed by the compile-time checks. Static analysis, like the Rust compiler,
-is inherently conservative. Some properties of code are impossible to detect by
-analyzing the code: the most famous example is the Halting Problem, which is
-beyond the scope of this book but is an interesting topic to research.
+Beneficiul verificării regulilor de împrumut în timpul rulării este că acesta permite anumite situații sigure pentru memoria sistemului, ce ar fi fost altfel refuzate de către verificările de compilare. Analiza statică, cum ar fi cea realizată de compilatorul Rust, este de regulă precaută. Iar unele caracteristici ale codului sunt imposibil de identificat prin simpla analiză: cea mai cunoscută problemă fiind Problema Opririi (the Halting Problem), care este dincolo de scopul acestei cărți, însă constituie un subiect fascinant de cercetare.
 
-Because some analysis is impossible, if the Rust compiler can’t be sure the
-code complies with the ownership rules, it might reject a correct program; in
-this way, it’s conservative. If Rust accepted an incorrect program, users
-wouldn’t be able to trust in the guarantees Rust makes. However, if Rust
-rejects a correct program, the programmer will be inconvenienced, but nothing
-catastrophic can occur. The `RefCell<T>` type is useful when you’re sure your
-code follows the borrowing rules but the compiler is unable to understand and
-guarantee that.
+Deoarece unele analize sunt de neefectuat, dacă compilatorul Rust nu poate fi absolut sigur că un cod respectă regulile de posesiune, există riscul ca acesta să refuze un program corect; o abordare foarte precaută. Dacă Rust ar accepta un cod greșit, încrederea utilizatorilor în promisiunile Rust ar fi subminată. Pe de altă parte, respingerea unui program corect este doar o neplăcere pentru programator, fără consecințe grave. Tipul `RefCell<T>` este valoros atunci când ești convins că regulile de împrumut sunt urmate în codul tău, dar compilatorul nu poate confirma și asigura asta.
 
-Similar to `Rc<T>`, `RefCell<T>` is only for use in single-threaded scenarios
-and will give you a compile-time error if you try using it in a multithreaded
-context. We’ll talk about how to get the functionality of `RefCell<T>` in a
-multithreaded program in Chapter 16.
+Ca și `Rc<T>`, `RefCell<T>` este menit pentru scenarii în care să se opereze pe un singur fir de execuție și va cauza o eroare la compilare dacă încerci să-l folosești într-un context multithreading. Vom discuta cum să accesăm funcționalitățile `RefCell<T>` într-o aplicație multithreading în Capitolul 16.
 
-Here is a recap of the reasons to choose `Box<T>`, `Rc<T>`, or `RefCell<T>`:
+Aceasta este o recapitulare a motivelor de a alege `Box<T>`, `Rc<T>`, sau `RefCell<T>`:
 
-* `Rc<T>` enables multiple owners of the same data; `Box<T>` and `RefCell<T>`
-  have single owners.
-* `Box<T>` allows immutable or mutable borrows checked at compile time; `Rc<T>`
-  allows only immutable borrows checked at compile time; `RefCell<T>` allows
-  immutable or mutable borrows checked at runtime.
-* Because `RefCell<T>` allows mutable borrows checked at runtime, you can
-  mutate the value inside the `RefCell<T>` even when the `RefCell<T>` is
-  immutable.
+* `Rc<T>` permite mai mulți posesori pentru aceleași date; `Box<T>` și `RefCell<T>` sunt limitate la un singur posesor.
+* `Box<T>` aduce posibilitatea de împrumuturi imutabile sau mutabile verificate în timpul compilării; `Rc<T>` permite doar împrumuturi imutabile verificate în aceeași manieră; `RefCell<T>` oferă împrumuturi imutabile sau mutabile verificate la runtime.
+* Fiindcă `RefCell<T>` admite împrumuturi mutabile verificate pe parcursul execuției, poți modifica valoarea din interiorul `RefCell<T>` chiar dacă acesta este imutabil.
 
-Mutating the value inside an immutable value is the *interior mutability*
-pattern. Let’s look at a situation in which interior mutability is useful and
-examine how it’s possible.
+A modifica valoarea în interiorul unei variabile imutabile ilustrează modelul de *mutabilitate interioară*. Să investigăm o situație în care mutabilitatea interioară este avantajoasă și să inspectăm cum este posibil acest lucru.
 
-### Interior Mutability: A Mutable Borrow to an Immutable Value
+### Mutabilitatea internă: Un împrumut mutabil către o valoare imutabilă
 
-A consequence of the borrowing rules is that when you have an immutable value,
-you can’t borrow it mutably. For example, this code won’t compile:
+Ca urmare a regulilor de împrumut, atunci când ai o valoare imutabilă, nu poți obține un împrumut mutabil pentru aceasta. De exemplu, codul următor nu va fi compilat:
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch15-smart-pointers/no-listing-01-cant-borrow-immutable-as-mutable/src/main.rs}}
 ```
 
-If you tried to compile this code, you’d get the following error:
+Încercând să compilezi codul de mai sus, ai întâmpina următoarea eroare:
 
 ```console
 {{#include ../listings/ch15-smart-pointers/no-listing-01-cant-borrow-immutable-as-mutable/output.txt}}
 ```
 
-However, there are situations in which it would be useful for a value to mutate
-itself in its methods but appear immutable to other code. Code outside the
-value’s methods would not be able to mutate the value. Using `RefCell<T>` is
-one way to get the ability to have interior mutability, but `RefCell<T>`
-doesn’t get around the borrowing rules completely: the borrow checker in the
-compiler allows this interior mutability, and the borrowing rules are checked
-at runtime instead. If you violate the rules, you’ll get a `panic!` instead of
-a compiler error.
+Există, însă, situații în care ar fi de folos ca o valoare să se poată modifica însăși în metodele sale, dar să pară imutabilă din perspectiva altor părți ale codului. Codul din exteriorul metodelor acelei valori nu ar putea să modifice valoarea. Utilizarea `RefCell<T>` reprezintă o modalitate de a avea mutabilitate internă, dar `RefCell<T>` nu evită regulile de împrumut în mod complet: verificatorul de împrumut din compilator permite această mutabilitate internă, dar regulile de împrumut sunt verificate în timpul execuției, nu la compilare. Dacă încalci regulile, vei primi un `panic!` în loc de o eroare de compilare.
 
-Let’s work through a practical example where we can use `RefCell<T>` to mutate
-an immutable value and see why that is useful.
+Să analizăm un exemplu practic în care utilizăm `RefCell<T>` pentru a muta o valoare imutabilă și să descoperim utilitatea acestui lucru.
 
-#### A Use Case for Interior Mutability: Mock Objects
+#### Un caz practic pentru mutabilitatea internă: Obiectele mock
 
-Sometimes during testing a programmer will use a type in place of another type,
-in order to observe particular behavior and assert it’s implemented correctly.
-This placeholder type is called a *test double*. Think of it in the sense of a
-“stunt double” in filmmaking, where a person steps in and substitutes for an
-actor to do a particular tricky scene. Test doubles stand in for other types
-when we’re running tests. *Mock objects* are specific types of test doubles
-that record what happens during a test so you can assert that the correct
-actions took place.
+În timpul procesului de testare, un programator poate utiliza un tip ca substitut pentru altul pentru a analiza anumite comportamente și pentru a confirma că acestea sunt implementate corect. Acest substitut este numit *dublură de testare* (test double). Poți gândi la acesta ca echivalentul unei „dubluri de cascadorie” în filme, unde cineva intervine și joacă rolul unui actor pentru a realiza o scenă complexă. Obiectele *mock* (de imitare) sunt un tip specific de dublură de testare care înregistrează ce se petrece în timpul unui test, permițându-ți să verifici că acțiunile întreprinse sunt cele corecte.
 
-Rust doesn’t have objects in the same sense as other languages have objects,
-and Rust doesn’t have mock object functionality built into the standard library
-as some other languages do. However, you can definitely create a struct that
-will serve the same purposes as a mock object.
+În Rust nu există obiecte în modul tradițional ca în alte limbaje, nici nu dispune de funcționalitate pentru obiecte mock încorporată în librăria standard, ca în alte limbaje. Cu toate acestea, este posibil să creezi o structură care să îndeplinească funcțiile unui obiect mock.
 
-Here’s the scenario we’ll test: we’ll create a library that tracks a value
-against a maximum value and sends messages based on how close to the maximum
-value the current value is. This library could be used to keep track of a
-user’s quota for the number of API calls they’re allowed to make, for example.
+Să ne uităm la scenariul pe care urmează să-l testăm: vom construi o librărie care supraveghează o valoare în comparație cu o valoare maximă și trimite mesaje pe baza proximității valorii sale față de acea valoare maximă. De exemplu, librăria ar putea fi utilizată pentru a monitoriza cota de apeluri API la care un utilizator are acces.
 
-Our library will only provide the functionality of tracking how close to the
-maximum a value is and what the messages should be at what times. Applications
-that use our library will be expected to provide the mechanism for sending the
-messages: the application could put a message in the application, send an
-email, send a text message, or something else. The library doesn’t need to know
-that detail. All it needs is something that implements a trait we’ll provide
-called `Messenger`. Listing 15-20 shows the library code:
+Librăria va oferi exclusiv funcții de monitorizare a distanței față de valoarea maximă și de stabilire a mesajelor care trebuie transmise și în ce momente. Se așteaptă ca aplicațiile care folosesc librăria să implementeze mecanismul de trimitere a acestor mesaje: fie că e vorba de integrarea unui mesaj în aplicație, expedierea unui email, trimiterea unui mesaj text sau orice altă metodă. Nu este necesar ca librăria să fie la curent cu aceste detalii. Tot ce necesită este o implementare a trăsăturii pe care o vom oferi și pe care o numim `Messenger`. Listarea 15-20 ilustrează codul acestei biblioteci:
 
 <span class="filename">Filename: src/lib.rs</span>
 
@@ -135,26 +65,11 @@ called `Messenger`. Listing 15-20 shows the library code:
 {{#rustdoc_include ../listings/ch15-smart-pointers/listing-15-20/src/lib.rs}}
 ```
 
-<span class="caption">Listing 15-20: A library to keep track of how close a
-value is to a maximum value and warn when the value is at certain levels</span>
+<span class="caption">Listarea 15-20: O bibliotecă pentru monitorizarea proximității unei valori față de o valoare maximă și emiterea de avertismente la atingerea anumitor niveluri</span>
 
-One important part of this code is that the `Messenger` trait has one method
-called `send` that takes an immutable reference to `self` and the text of the
-message. This trait is the interface our mock object needs to implement so that
-the mock can be used in the same way a real object is. The other important part
-is that we want to test the behavior of the `set_value` method on the
-`LimitTracker`. We can change what we pass in for the `value` parameter, but
-`set_value` doesn’t return anything for us to make assertions on. We want to be
-able to say that if we create a `LimitTracker` with something that implements
-the `Messenger` trait and a particular value for `max`, when we pass different
-numbers for `value`, the messenger is told to send the appropriate messages.
+Un aspect esențial al acestui cod este faptul că trăsătura `Messenger` are o metodă numită `send`, ce primește o referință imutabilă la `self` și textul mesajului. Această trăsătură constituie interfața pe care mock-ul creat de noi trebuie să o implementeze pentru ca să fie folosit la fel ca un obiect real. A doua Parte importantă este că dorim să testăm comportamentul metodei `set_value` din clasa `LimitTracker`. Putem modifica valoarea parametrului `value`, însă `set_value` nu returnează nimic pe care să ne bazăm aserțiunile. Ne dorim să putem afirma că dacă inițiem un `LimitTracker` cu un element ce implementează trăsătura `Messenger` și o anumită valoare pentru `max`, atunci când furnizăm valori diferite pentru `value`, mesagerul primește instrucțiuni să expediază mesaje corespunzătoare.
 
-We need a mock object that, instead of sending an email or text message when we
-call `send`, will only keep track of the messages it’s told to send. We can
-create a new instance of the mock object, create a `LimitTracker` that uses the
-mock object, call the `set_value` method on `LimitTracker`, and then check that
-the mock object has the messages we expect. Listing 15-21 shows an attempt to
-implement a mock object to do just that, but the borrow checker won’t allow it:
+Avem nevoie de un mock object care, în loc să trimită un email sau un mesaj text când se apelează metoda `send`, să înregistreze doar mesajele pe care e solicitat să le trimită. Putem crea un exemplar nou al obiectului mock, iniția un `LimitTracker` care folosește acest mock, invoca metoda `set_value` pe `LimitTracker` și apoi să verificăm dacă obiectul mock conține mesajele pe care le anticipăm. Listarea 15-21 prezintă o tentativă de implementare a unui obiect mock în acest sens, însă verificatorul de împrumut nu permite acest lucru:
 
 <span class="filename">Filename: src/lib.rs</span>
 
@@ -162,183 +77,89 @@ implement a mock object to do just that, but the borrow checker won’t allow it
 {{#rustdoc_include ../listings/ch15-smart-pointers/listing-15-21/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 15-21: An attempt to implement a `MockMessenger`
-that isn’t allowed by the borrow checker</span>
+<span class="caption">Listarea 15-21: Tentativa de implementare a unui `MockMessenger` refuzată de verificatorul de împrumut</span>
 
-This test code defines a `MockMessenger` struct that has a `sent_messages`
-field with a `Vec` of `String` values to keep track of the messages it’s told
-to send. We also define an associated function `new` to make it convenient to
-create new `MockMessenger` values that start with an empty list of messages. We
-then implement the `Messenger` trait for `MockMessenger` so we can give a
-`MockMessenger` to a `LimitTracker`. In the definition of the `send` method, we
-take the message passed in as a parameter and store it in the `MockMessenger`
-list of `sent_messages`.
+În codul de test prezentat, definim structura `MockMessenger` care include un câmp `sent_messages` cu un `Vec` de `String-uri` menit a ține evidența mesajelor ce urmează a fi expediate. Introducem, de asemenea, funcția asociată `new`, care permite crearea simplă a noilor instanțe `MockMessenger` cu o listă inițială goală de mesaje. Mai departe, punem în aplicare trăsătura `Messenger` pentru `MockMessenger`, astfel încât să putem integra un `MockMessenger` într-un `LimitTracker`. În definiția metodei `send`, încorporăm mesajul primit ca parametru în lista `sent_messages` a `MockMessenger`.
 
-In the test, we’re testing what happens when the `LimitTracker` is told to set
-`value` to something that is more than 75 percent of the `max` value. First, we
-create a new `MockMessenger`, which will start with an empty list of messages.
-Then we create a new `LimitTracker` and give it a reference to the new
-`MockMessenger` and a `max` value of 100. We call the `set_value` method on the
-`LimitTracker` with a value of 80, which is more than 75 percent of 100. Then
-we assert that the list of messages that the `MockMessenger` is keeping track
-of should now have one message in it.
+Testul nostru are ca obiectiv să determine comportamentul `LimitTracker`-ului atunci când i se cere să ajusteze `value` la o valoare ce depășește 75% din `max`. Inițial, instanțiem un `MockMessenger` nou, care pornește cu zero mesaje înregistrate. Urmează crearea unui `LimitTracker` la care atașăm o referință spre `MockMessenger` și stabilim `max` la 100. Executăm metoda `set_value` a `LimitTracker`ului cu valoarea 80, ce excede 75% din 100. Confirmăm apoi că lista de mesaje monitorizată de `MockMessenger` ar trebui să conțină acum un mesaj.
 
-However, there’s one problem with this test, as shown here:
+Totuși, acest test întâmpină o problemă, așa cum este evidențiat aici:
 
 ```console
 {{#include ../listings/ch15-smart-pointers/listing-15-21/output.txt}}
 ```
 
-We can’t modify the `MockMessenger` to keep track of the messages, because the
-`send` method takes an immutable reference to `self`. We also can’t take the
-suggestion from the error text to use `&mut self` instead, because then the
-signature of `send` wouldn’t match the signature in the `Messenger` trait
-definition (feel free to try and see what error message you get).
+Nu putem actualiza `MockMessenger` pentru a evidenția mesajele, pentru că metoda `send` utilizează o referință imutabilă la `self`. De asemenea, nu putem adopta sugestia din mesajul de eroare de a folosi `&mut self`, din motivul că semnătura metodei `send` nu ar mai fi compatibilă cu cea definită în trăsătura `Messenger` (ești încurajat să testezi și să vezi ce mesaj de eroare primești).
 
-This is a situation in which interior mutability can help! We’ll store the
-`sent_messages` within a `RefCell<T>`, and then the `send` method will be
-able to modify `sent_messages` to store the messages we’ve seen. Listing 15-22
-shows what that looks like:
+Aceasta este o situație în care mutabilitatea internă ne poate veni în ajutor! Vom stoca `sent_messages` într-un `RefCell<T>`, iar apoi metoda `send` va putea modifica `sent_messages` pentru a reține mesajele observate. Listarea 15-22 ne prezintă cum arată acest lucru:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch15-smart-pointers/listing-15-22/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 15-22: Using `RefCell<T>` to mutate an inner
-value while the outer value is considered immutable</span>
+<span class="caption">Listarea 15-22: Utilizarea `RefCell<T>` pentru modificarea unei valori interne când valoarea externă este considerată imutabilă</span>
 
-The `sent_messages` field is now of type `RefCell<Vec<String>>` instead of
-`Vec<String>`. In the `new` function, we create a new `RefCell<Vec<String>>`
-instance around the empty vector.
+Câmpul `sent_messages` este acum de tipul `RefCell<Vec<String>>` în loc de `Vec<String>`. În funcția `new`, inițiem o instanță nouă de `RefCell<Vec<String>>` care încapsulează vectorul gol.
 
-For the implementation of the `send` method, the first parameter is still an
-immutable borrow of `self`, which matches the trait definition. We call
-`borrow_mut` on the `RefCell<Vec<String>>` in `self.sent_messages` to get a
-mutable reference to the value inside the `RefCell<Vec<String>>`, which is the
-vector. Then we can call `push` on the mutable reference to the vector to keep
-track of the messages sent during the test.
+În implementarea metodei `send`, primul parametru este tot un împrumut imutabil al `self`, în conformitate cu definiția trăsăturii. Invocăm `borrow_mut` pe `RefCell<Vec<String>>` din `self.sent_messages` pentru a accesa o referință mutabilă la valoarea din `RefCell<Vec<String>>`, care este vectorul. După aceea, putem apela `push` pe referința mutabilă la vector pentru a ține evidența mesajelor trimise în timpul testului.
 
-The last change we have to make is in the assertion: to see how many items are
-in the inner vector, we call `borrow` on the `RefCell<Vec<String>>` to get an
-immutable reference to the vector.
+Ultima ajustare ce trebuie făcută este la nivelul aserțiunii: pentru a vedea câte elemente sunt în vectorul intern, invocăm `borrow` pe `RefCell<Vec<String>>` pentru a obține o referință imutabilă la vector.
 
-Now that you’ve seen how to use `RefCell<T>`, let’s dig into how it works!
+Având o idee generală asupra modului de utilizare a `RefCell<T>`, să explorăm acum în profunzime cum funcționează acesta!
 
-#### Keeping Track of Borrows at Runtime with `RefCell<T>`
+#### Monitorizarea împrumuturilor la execuție cu `RefCell<T>`
 
-When creating immutable and mutable references, we use the `&` and `&mut`
-syntax, respectively. With `RefCell<T>`, we use the `borrow` and `borrow_mut`
-methods, which are part of the safe API that belongs to `RefCell<T>`. The
-`borrow` method returns the smart pointer type `Ref<T>`, and `borrow_mut`
-returns the smart pointer type `RefMut<T>`. Both types implement `Deref`, so we
-can treat them like regular references.
+Când definim referințe imutabile și mutabile, aplicăm sintaxa `&` și respectiv `&mut`. În cazul folosirii `RefCell<T>`, ne bazăm pe metodele `borrow` și `borrow_mut`, ce reprezintă o parte din API-ul sigur (safe) al `RefCell<T>`. Metoda `borrow` generează pointerul inteligent de tip `Ref<T>`, iar `borrow_mut` produce pointerul inteligent de tip `RefMut<T>`. Având în vedere că ambele tipuri de pointeri implementează `Deref`, putem interacționa cu ei la fel ca și cu referințele convenționale.
 
-The `RefCell<T>` keeps track of how many `Ref<T>` and `RefMut<T>` smart
-pointers are currently active. Every time we call `borrow`, the `RefCell<T>`
-increases its count of how many immutable borrows are active. When a `Ref<T>`
-value goes out of scope, the count of immutable borrows goes down by one. Just
-like the compile-time borrowing rules, `RefCell<T>` lets us have many immutable
-borrows or one mutable borrow at any point in time.
+`RefCell<T>` contabilizează câți pointeri inteligenți `Ref<T>` și `RefMut<T>` sunt activi la moment. La fiecare apel al metodei `borrow`, `RefCell<T>` crește contorul de împrumuturi imutabile active. Odată cu ieșirea unei valori `Ref<T>` din domeniul de vizibilitate, contorul respectiv scade cu unu. În conformitate cu regulile de împrumut stabilite la compilare, `RefCell<T>` permite existența simultană a mai multor împrumuturi imutabile sau a unui singur împrumut mutabil.
 
-If we try to violate these rules, rather than getting a compiler error as we
-would with references, the implementation of `RefCell<T>` will panic at
-runtime. Listing 15-23 shows a modification of the implementation of `send` in
-Listing 15-22. We’re deliberately trying to create two mutable borrows active
-for the same scope to illustrate that `RefCell<T>` prevents us from doing this
-at runtime.
+Dacă încălcăm aceste reguli, spre deosebire de obținerea unei erori de compilare, cum ar fi cazul cu referințele standard, implementarea `RefCell<T>` va declanșa o panică la execuție. Listarea 15-23 modifică implementarea metodei `send` prezentată în Listarea 15-22. Demonstrăm intenționat încercarea de a activa două împrumuturi mutabile pentru același domeniu de vizibilitate, pentru a arăta că `RefCell<T>` intervine pentru a preveni acest lucru la timpul execuției.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore,panics
 {{#rustdoc_include ../listings/ch15-smart-pointers/listing-15-23/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 15-23: Creating two mutable references in the
-same scope to see that `RefCell<T>` will panic</span>
+<span class="caption">Listarea 15-23: Crearea a două referințe mutabile în același domeniu de vizibilitate pentru a demonstra că `RefCell<T>` va genera panică</span>
 
-We create a variable `one_borrow` for the `RefMut<T>` smart pointer returned
-from `borrow_mut`. Then we create another mutable borrow in the same way in the
-variable `two_borrow`. This makes two mutable references in the same scope,
-which isn’t allowed. When we run the tests for our library, the code in Listing
-15-23 will compile without any errors, but the test will fail:
+Inițializăm variabila `one_borrow` pentru pointerul inteligent `RefMut<T>` returnat de funcția `borrow_mut`. Apoi, inițializăm o nouă împrumutare mutabilă în mod similar în variabila `two_borrow`. Aceasta rezultă în două referințe mutabile în același domeniu de vizibilitate, lucru interzis. Când executăm testele pentru biblioteca noastră, codul din Listarea 15-23 va compila fără greșeli, dar testul nu va reuși:
 
 ```console
 {{#include ../listings/ch15-smart-pointers/listing-15-23/output.txt}}
 ```
 
-Notice that the code panicked with the message `already borrowed:
-BorrowMutError`. This is how `RefCell<T>` handles violations of the borrowing
-rules at runtime.
+Notăm că s-a generat panică cu mesajul `already borrowed: BorrowMutError`. Aceasta este modalitatea prin care `RefCell<T>` gestionează încălcarea regulilor de împrumut în timpul execuției programului.
 
-Choosing to catch borrowing errors at runtime rather than compile time, as
-we’ve done here, means you’d potentially be finding mistakes in your code later
-in the development process: possibly not until your code was deployed to
-production. Also, your code would incur a small runtime performance penalty as
-a result of keeping track of the borrows at runtime rather than compile time.
-However, using `RefCell<T>` makes it possible to write a mock object that can
-modify itself to keep track of the messages it has seen while you’re using it
-in a context where only immutable values are allowed. You can use `RefCell<T>`
-despite its trade-offs to get more functionality than regular references
-provide.
+Alegerea de a prinde erorile de împrumut în timpul execuției, în loc de în timpul compilării, cum am făcut în acest caz, ar putea însemna identificarea greșelilor din cod mai târziu în procesul de dezvoltare: posibil chiar doar după lansarea codului în producție. De asemenea, codul va suporta un mic cost suplimentar de performanță la execuție din cauza urmăririi împrumuturilor în timp real, în loc de în timpul compilării. Însă utilizarea `RefCell<T>` permite scrierea unui obiect mock care se poate modifica pentru a înregistra mesajele pe care le primește, chiar și într-un context unde sunt permise doar valori nealterabile. `RefCell<T>` poate fi folosit, acceptând anumite compromisuri, pentru o funcționalitate sporită față de referințele standard.
 
-### Having Multiple Owners of Mutable Data by Combining `Rc<T>` and `RefCell<T>`
+### Mai mulți posesori de date mutabile prin combinarea `Rc<T>` cu `RefCell<T>`
 
-A common way to use `RefCell<T>` is in combination with `Rc<T>`. Recall that
-`Rc<T>` lets you have multiple owners of some data, but it only gives immutable
-access to that data. If you have an `Rc<T>` that holds a `RefCell<T>`, you can
-get a value that can have multiple owners *and* that you can mutate!
+O metodă frecventă de a utiliza `RefCell<T>` este în combinație cu `Rc<T>`. Reamintim că `Rc<T>` permite să avem mai mulți proprietari pentru aceleași date, însă ne oferă doar acces imutabil la ele. Dacă deținem un `Rc<T>` ce include un `RefCell<T>`, vom putea avea o valoare care să aibă posesori multipli *și* să fie mutabilă!
 
-For example, recall the cons list example in Listing 15-18 where we used
-`Rc<T>` to allow multiple lists to share ownership of another list. Because
-`Rc<T>` holds only immutable values, we can’t change any of the values in the
-list once we’ve created them. Let’s add in `RefCell<T>` to gain the ability to
-change the values in the lists. Listing 15-24 shows that by using a
-`RefCell<T>` in the `Cons` definition, we can modify the value stored in all
-the lists:
+De exemplu, rememorăm exemplul cu lista de tip cons prezentat în Listarea 15-18, unde am utilizat `Rc<T>` pentru a permite mai multor liste să partajeze posesiunea unei alte liste. Fiindcă `Rc<T>` permite doar valori imutabile, nu putem altera nicio valoare în listă odată ce acestea au fost create. Adăugând `RefCell<T>`, obținem posibilitatea de a modifica valorile în cadrul listelor. Listarea 15-24 ilustrează că, integrând `RefCell<T>` în definiția `Cons`, putem schimba valoarea depozitată în toate listele:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch15-smart-pointers/listing-15-24/src/main.rs}}
 ```
 
-<span class="caption">Listing 15-24: Using `Rc<RefCell<i32>>` to create a
-`List` that we can mutate</span>
+<span class="caption">Listarea 15-24: Utilizarea `Rc<RefCell<i32>>` pentru a crea o `Listă` ce poate fi modificată</span>
 
-We create a value that is an instance of `Rc<RefCell<i32>>` and store it in a
-variable named `value` so we can access it directly later. Then we create a
-`List` in `a` with a `Cons` variant that holds `value`. We need to clone
-`value` so both `a` and `value` have ownership of the inner `5` value rather
-than transferring ownership from `value` to `a` or having `a` borrow from
-`value`.
+Construim o valoare care este instanța `Rc<RefCell<i32>>` și o păstrăm într-o variabilă numită `value` pentru a putea fi accesată direct ulterior. Apoi, generăm o `Listă` în `a` cu o variantă `Cons` care conține `value`. Este necesar să clonăm `value` pentru ca atât `a`, cât și `value` să dețină posesiunea asupra valorii interne `5`, în loc să transferăm posesiunea de la `value` la `a` sau ca `a` să împrumute de la `value`.
 
-We wrap the list `a` in an `Rc<T>` so when we create lists `b` and `c`, they
-can both refer to `a`, which is what we did in Listing 15-18.
+Încapsulăm lista `a` cu ajutorul `Rc<T>`, astfel încât, când creăm listele `b` și `c`, acestea să se poată referi la `a`, așa cum am făcut în Listarea 15-18.
 
-After we’ve created the lists in `a`, `b`, and `c`, we want to add 10 to the
-value in `value`. We do this by calling `borrow_mut` on `value`, which uses the
-automatic dereferencing feature we discussed in Chapter 5 (see the section
-[“Where’s the `->` Operator?”][wheres-the---operator]<!-- ignore -->) to
-dereference the `Rc<T>` to the inner `RefCell<T>` value. The `borrow_mut`
-method returns a `RefMut<T>` smart pointer, and we use the dereference operator
-on it and change the inner value.
+După ce am format listele `a`, `b` și `c`, dorim să adăugăm 10 la valoarea din `value`. Acest lucru îl realizăm apelând `borrow_mut` pe `value`, care se folosește de funcția de dereferențiere automată prezentată în Capitolul 5 (consulteză secțiunea [„Unde este operatorul `->`?”][wheres-the---operator]<!-- ignore -->) pentru a dereferenția `Rc<T>` la valoarea `RefCell<T>` internă. Metoda `borrow_mut` ne generează un smart pointer `RefMut<T>`, iar noi utilizăm operatorul de dereferențiere pentru a schimba valoarea internă.
 
-When we print `a`, `b`, and `c`, we can see that they all have the modified
-value of 15 rather than 5:
-
+La afișarea listelor `a`, `b` și `c`, constatăm că toate prezintă noua valoare modificată de 15, nu cea inițială de 5:
 ```console
 {{#include ../listings/ch15-smart-pointers/listing-15-24/output.txt}}
 ```
 
-This technique is pretty neat! By using `RefCell<T>`, we have an outwardly
-immutable `List` value. But we can use the methods on `RefCell<T>` that provide
-access to its interior mutability so we can modify our data when we need to.
-The runtime checks of the borrowing rules protect us from data races, and it’s
-sometimes worth trading a bit of speed for this flexibility in our data
-structures. Note that `RefCell<T>` does not work for multithreaded code!
-`Mutex<T>` is the thread-safe version of `RefCell<T>` and we’ll discuss
-`Mutex<T>` in Chapter 16.
+Această abordare este extrem de ingenioasă! Utilizând `RefCell<T>`, avem de-a face cu o valoare de listă `List` care pare imutabilă din exterior. Însă, avem la dispoziție metodele de pe `RefCell<T>` care ne permit accesul la mutabilitatea interioară, astfel încât putem interveni asupra datelor când este necesar. Verificările de runtime privind regulile de împrumut ne apără împotriva conflictelor de date, fiind în anumite cazuri rațional să oferim în schimb o ușoară diminuare a vitezei pentru această flexibilitate adăugată structurilor noastre. E important de reținut că `RefCell<T>` nu funcționează pentru codul executat pe mai multe thread-uri! Alternativa sigură pentru thread-uri la `RefCell<T>` este `Mutex<T>`, pe care o vom explora în Capitolul 16.
 
 [wheres-the---operator]: ch05-03-method-syntax.html#wheres-the---operator

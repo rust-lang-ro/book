@@ -1,24 +1,14 @@
-# Functional Language Features: Iterators and Closures
+# Elemente de programare funcțională în Rust: închideri și iteratori
 
-Rust’s design has taken inspiration from many existing languages and
-techniques, and one significant influence is *functional programming*.
-Programming in a functional style often includes using functions as values by
-passing them in arguments, returning them from other functions, assigning them
-to variables for later execution, and so forth.
+Designul Rust a fost inspirat de numeroase limbaje și tehnici existente, o influență semnificativă fiind *programarea funcțională*. Stilul funcțional de programare implică frecvent utilizarea funcțiilor ca valori: acestea pot fi transmise ca argumente, returnate de alte funcții sau atribuite variabilelor pentru execuție ulterioară.
 
-In this chapter, we won’t debate the issue of what functional programming is or
-isn’t but will instead discuss some features of Rust that are similar to
-features in many languages often referred to as functional.
+În acest capitol, nu vom intra în dezbaterea despre ce definește programarea funcțională, ci vom explora unele caracteristici ale limbajului Rust care sunt tipice pentru limbajele considerate funcționale.
 
-More specifically, we’ll cover:
+În detaliu, vom aborda:
 
-* *Closures*, a function-like construct you can store in a variable
-* *Iterators*, a way of processing a series of elements
-* How to use closures and iterators to improve the I/O project in Chapter 12
-* The performance of closures and iterators (Spoiler alert: they’re faster than
-  you might think!)
+* *Închiderile* (closures), structuri similare funcțiilor pe care le poți salva într-o variabilă
+* *Iteratorii*, o abordare pentru procesarea unei serii de elemente
+* Modul în care închiderile și iteratorii pot fi folosiți pentru a îmbunătăți proiectul de I/O din Capitolul 12
+* Performanța închiderilor și a iteratorilor (Spoiler: sunt mai performanți decât ai crede!)
 
-We’ve already covered some other Rust features, such as pattern matching and
-enums, that are also influenced by the functional style. Because mastering
-closures and iterators is an important part of writing idiomatic, fast Rust
-code, we’ll devote this entire chapter to them.
+Am discutat anterior despre alte aspecte ale lui Rust, cum ar fi corelarea șabloanelor și enumerațiile, care sunt de asemenea marcate de influența stilului funcțional. Deoarece stăpânirea închiderilor și a iteratorilor constituie un element cheie în redactarea codului Rust idiomatic și eficient, le vom aloca un întreg capitol.

@@ -1,57 +1,35 @@
-## Reading a File
+## Citirea fișierului
 
-Now we’ll add functionality to read the file specified in the `file_path`
-argument. First, we need a sample file to test it with: we’ll use a file with a
-small amount of text over multiple lines with some repeated words. Listing 12-3
-has an Emily Dickinson poem that will work well! Create a file called
-*poem.txt* at the root level of your project, and enter the poem “I’m Nobody!
-Who are you?”
+Acum vom adăuga funcționalitatea de citire a fișierului specificat în argumentul `file_path`. Mai întâi, avem nevoie de un exemplu de fișier pentru a testa: vom folosi un fișier cu o mică cantitate de text distribuit pe mai multe linii și cu anumite cuvinte repetate. Listarea 12-3 ne prezintă o poezie de Emily Dickinson care este foarte potrivită! Creează un fișier cu numele *poem.txt* la nivelul rădăcină al proiectului tău și include poezia “I’m Nobody! Who are you?”
 
-<span class="filename">Filename: poem.txt</span>
+<span class="filename">Numele fișierului: poem.txt</span>
 
 ```text
 {{#include ../listings/ch12-an-io-project/listing-12-03/poem.txt}}
 ```
 
-<span class="caption">Listing 12-3: A poem by Emily Dickinson makes a good test
-case</span>
+<span class="caption">Listarea 12-3: O poezie de Emily Dickinson, un excelent caz de test</span>
 
-With the text in place, edit *src/main.rs* and add code to read the file, as
-shown in Listing 12-4.
+Cu textul prezent, editează *src/main.rs* și adaugă codul pentru citirea fișierului, după cum e prezentat în Listarea 12-4.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,should_panic,noplayground
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-04/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 12-4: Reading the contents of the file specified
-by the second argument</span>
+<span class="caption">Listarea 12-4: Citirea conținutului fișierului specificat de al doilea argument</span>
 
-First, we bring in a relevant part of the standard library with a `use`
-statement: we need `std::fs` to handle files.
+Inițial, introducem o parte relevantă din biblioteca standard cu instrucțiunea `use`: ne este necesar `std::fs` pentru gestionarea fișierelor.
 
-In `main`, the new statement `fs::read_to_string` takes the `file_path`, opens
-that file, and returns a `std::io::Result<String>` of the file’s contents.
+În `main`, noua expresie `fs::read_to_string` utilizează `file_path`, deschide fișierul respectiv și returnează un `std::io::Result<String>` cu conținutul fișierului.
 
-After that, we again add a temporary `println!` statement that prints the value
-of `contents` after the file is read, so we can check that the program is
-working so far.
+Ulterior, adăugăm încă o instrucțiune `println!` temporară pentru a afișa valoarea variabilei `contents` după ce fișierul a fost citit, pentru a verifica funcționalitatea codului până în acest moment.
 
-Let’s run this code with any string as the first command line argument (because
-we haven’t implemented the searching part yet) and the *poem.txt* file as the
-second argument:
+Execută acest cod folosind orice șir de caractere ca prim argument al liniei de comandă (pentru că încă nu am implementat partea de căutare) și fișierul *poem.txt* ca al doilea argument:
 
 ```console
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-04/output.txt}}
 ```
 
-Great! The code read and then printed the contents of the file. But the code
-has a few flaws. At the moment, the `main` function has multiple
-responsibilities: generally, functions are clearer and easier to maintain if
-each function is responsible for only one idea. The other problem is that we’re
-not handling errors as well as we could. The program is still small, so these
-flaws aren’t a big problem, but as the program grows, it will be harder to fix
-them cleanly. It’s good practice to begin refactoring early on when developing
-a program, because it’s much easier to refactor smaller amounts of code. We’ll
-do that next.
+Excelent! Codul a accesat și a afișat conținutul fișierului. Totuși, codul prezintă câteva slăbiciuni. În prezent, funcția `main` are responsabilități multiple: în general, funcțiile sunt mai clare și mai simplu de întreținut dacă fiecare este responsabilă doar pentru un singur concept. O altă problemă este gestionarea ineficientă a erorilor. Programul este mic acum, așa că aceste deficiențe nu reprezintă o problemă majoră, dar pe măsură ce programul se mărește, acestea vor fi mai dificil de rezolvat într-un mod clar. Începerea timpurie a refactoring-ului (reorganizarea codului) în timpul dezvoltării unui program este o practică bună, deoarece refacerea codului este mult mai simplă când porțiunile sunt mai mici. Asta și vom face în continuare.

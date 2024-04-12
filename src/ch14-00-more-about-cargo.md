@@ -1,15 +1,11 @@
-# More About Cargo and Crates.io
+# Mai multe informații despre Cargo și Crates.io
 
-So far we’ve used only the most basic features of Cargo to build, run, and test
-our code, but it can do a lot more. In this chapter, we’ll discuss some of its
-other, more advanced features to show you how to do the following:
+Până în prezent, am utilizat caracteristicile fundamentale ale Cargo pentru a construi, executa și testa codul nostru. Totuși, Cargo dispune de mult mai multe. În acest capitol, vom explora câteva dintre aceste posibilități avansate, pentru a afla cum putem efectua următoarele acțiuni:
 
-* Customize your build through release profiles
-* Publish libraries on [crates.io](https://crates.io/)<!-- ignore -->
-* Organize large projects with workspaces
-* Install binaries from [crates.io](https://crates.io/)<!-- ignore -->
-* Extend Cargo using custom commands
+* Personalizăm procesul de build prin utilizarea profilurilor de release
+* Publicăm bibliotecile pe [crates.io](https://crates.io/)<!-- ignore -->
+* Gestionăm proiecte extinse utilizând workspaces
+* Instalăm pachete binare de pe [crates.io](https://crates.io/)<!-- ignore -->
+* Extindem capacitatea de a lucra cu Cargo adăugând comenzi personalizate
 
-Cargo can do even more than the functionality we cover in this chapter, so for
-a full explanation of all its features, see [its
-documentation](https://doc.rust-lang.org/cargo/).
+Posibilitățile oferite de Cargo sunt mai vaste decât cele prezentate în acest capitol, de aceea, pentru o înțelegere completă a întregului spectru de funcții, vă recomand să consultați [documentația oficială](https://doc.rust-lang.org/cargo/).

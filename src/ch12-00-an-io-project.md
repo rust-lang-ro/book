@@ -1,45 +1,22 @@
-# An I/O Project: Building a Command Line Program
+# Un proiect de I/O: Construirea unei aplicații de linie de comandă
 
-This chapter is a recap of the many skills you’ve learned so far and an
-exploration of a few more standard library features. We’ll build a command line
-tool that interacts with file and command line input/output to practice some of
-the Rust concepts you now have under your belt.
+În acest capitol vom recapitula diversele abilități învățate până acum și vom explora noi funcționalități ale bibliotecii standard. Construim o aplicație de linie de comandă pentru a interacționa cu fișiere și intrarea/ieșirea de linie de comandă, astfel exersăm conceptele Rust cu care sunteți deja familiarizați.
 
-Rust’s speed, safety, single binary output, and cross-platform support make it
-an ideal language for creating command line tools, so for our project, we’ll
-make our own version of the classic command line search tool `grep`
-(**g**lobally search a **r**egular **e**xpression and **p**rint). In the
-simplest use case, `grep` searches a specified file for a specified string. To
-do so, `grep` takes as its arguments a file path and a string. Then it reads
-the file, finds lines in that file that contain the string argument, and prints
-those lines.
+Datorită vitezei, siguranței, output-ului binar unic și suportului multi-platformă, Rust este un limbaj excelent pentru crearea de aplicații de linie de comandă. În proiectul nostru vom realiza o versiune proprie a utilitarului clasic de căutare în linia de comandă `grep` (căutare **g**lobală pentru o **r**egulară **e**xpresie și **p**rintare). În cel mai elementar scenariu, `grep` scanează un string specific în cadrul unui fișier dat. Astfel, `grep` utilizează ca argumente o cale de fișier și un string, citește fișierul, identifică liniile care includ string-ul specificat și le afișează.
 
-Along the way, we’ll show how to make our command line tool use the terminal
-features that many other command line tools use. We’ll read the value of an
-environment variable to allow the user to configure the behavior of our tool.
-We’ll also print error messages to the standard error console stream (`stderr`)
-instead of standard output (`stdout`), so, for example, the user can redirect
-successful output to a file while still seeing error messages onscreen.
+De-a lungul capitolului, vom detalia modul în care aplicația noastră de linie de comandă poate folosi caracteristicile terminalului comune altor astfel de aplicații. Vom citi valoarea unei variabile de mediu pentru a permite utilizatorului să modifice comportamentul instrumentului nostru. Mai mult, vom afișa mesajele de eroare în fluxul consolei standard de eroare (`stderr`) decât în cel de ieșire standard (`stdout`), permițând astfel utilizatorului să redirecționeze ieșirile reușite către un fișier, dar să păstreze mesajele de eroare vizibile pe ecran.
 
-One Rust community member, Andrew Gallant, has already created a fully
-featured, very fast version of `grep`, called `ripgrep`. By comparison, our
-version will be fairly simple, but this chapter will give you some of the
-background knowledge you need to understand a real-world project such as
-`ripgrep`.
+Un membru al comunității Rust, Andrew Gallant, a creat o versiune avansată și rapidă de `grep`, cunoscută sub numele de `ripgrep`. Versiunea noastră va fi simplificată, dar capitolul va oferi informațiile de bază necesare pentru a înțelege un proiect concret precum `ripgrep`.
 
-Our `grep` project will combine a number of concepts you’ve learned so far:
+Proiectul `grep` va sintetiza numeroase concepte stăpânite până în momentul de față:
 
-* Organizing code (using what you learned about modules in [Chapter 7][ch7]<!--
-  ignore -->)
-* Using vectors and strings (collections, [Chapter 8][ch8]<!-- ignore -->)
-* Handling errors ([Chapter 9][ch9]<!-- ignore -->)
-* Using traits and lifetimes where appropriate ([Chapter 10][ch10]<!-- ignore
-  -->)
-* Writing tests ([Chapter 11][ch11]<!-- ignore -->)
+* Organizarea codului (așa cum am văzut în [Capitolul 7][ch7]<!-- ignore -->)
+* Folosirea vectorilor și string-urilor (discutat în [Capitolul 8][ch8]<!-- ignore -->)
+* Gestionarea erorilor (abordată în [Capitolul 9][ch9]<!-- ignore -->)
+* Implementarea trăsăturilor și gestionarea duratelor de viață (prezentate în [Capitolul 10][ch10]<!-- ignore -->)
+* Crearea de teste (explicate în [Capitolul 11][ch11]<!-- ignore -->)
 
-We’ll also briefly introduce closures, iterators, and trait objects, which
-Chapters [13][ch13]<!-- ignore --> and [17][ch17]<!-- ignore --> will cover in
-detail.
+Vom face, de asemenea, o trecere rapidă prin conceptul de închideri, iteratori și obiecte-trăsătură, pe care le vom aprofunda în Capitolele [13][ch13]<!-- ignore --> și [17][ch17]<!-- ignore -->.
 
 [ch7]: ch07-00-managing-growing-projects-with-packages-crates-and-modules.html
 [ch8]: ch08-00-common-collections.html

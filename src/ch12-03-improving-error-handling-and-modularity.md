@@ -1,501 +1,282 @@
-## Refactoring to Improve Modularity and Error Handling
+## Refactorizarea pentru îmbunătățirea modularității și gestionarea erorilor
 
-To improve our program, we’ll fix four problems that have to do with the
-program’s structure and how it’s handling potential errors. First, our `main`
-function now performs two tasks: it parses arguments and reads files. As our
-program grows, the number of separate tasks the `main` function handles will
-increase. As a function gains responsibilities, it becomes more difficult to
-reason about, harder to test, and harder to change without breaking one of its
-parts. It’s best to separate functionality so each function is responsible for
-one task.
+Pentru a îmbunătăți programul nostru, ne vom axa pe rezolvarea a patru probleme care sunt legate de structura programului și de modul cum gestionează acesta erorile potențiale. În primul rând, funcția noastră `main` îndeplinește în prezent două sarcini: parsează argumentele și citește fișiere. Odată cu creșterea programului nostru, numărul de sarcini gestionate de funcția `main` de asemenea va crește. Pe măsură ce o funcție acumulează mai multe responsabilități, devine tot mai dificil de analizat, mai complicat de testat și mai greoi de modificat fără a afecta una dintre funcționalitățile sale. Este preferabil să separăm funcționalitățile astfel încât fiecare funcție să fie responsabilă doar de o anumită sarcină.
 
-This issue also ties into the second problem: although `query` and `file_path`
-are configuration variables to our program, variables like `contents` are used
-to perform the program’s logic. The longer `main` becomes, the more variables
-we’ll need to bring into scope; the more variables we have in scope, the harder
-it will be to keep track of the purpose of each. It’s best to group the
-configuration variables into one structure to make their purpose clear.
+Al doilea aspect ce necesită atenție este faptul că, deși `query` și `file_path` sunt variabile de configurare pentru program, avem și variabile cum ar fi `contents` ce sunt folosite pentru implementarea logicii programului. Cu cât blocul `main` se extinde, cu atât va fi necesar să aducem în scop mai multe variabile; iar odată cu creșterea numărului de variabile în domeniul de vizibilitate, devine tot mai complicat să urmărim funcția fiecăreia. Ar fi mai adecvat să consolidăm variabilele de configurare într-o singură structură pentru astfel a clarifica rolul lor.
 
-The third problem is that we’ve used `expect` to print an error message when
-reading the file fails, but the error message just prints `Should have been
-able to read the file`. Reading a file can fail in a number of ways: for
-example, the file could be missing, or we might not have permission to open it.
-Right now, regardless of the situation, we’d print the same error message for
-everything, which wouldn’t give the user any information!
+A treia problemă constă în utilizarea instrucțiunii `expect` pentru generarea unui mesaj de eroare când citirea fișierului eșuează, care acum se rezumă doar la `Should have been able to read the file`. Eșecul citirii unui fișier poate surveni din diverse motive - cum ar fi absența fișierului sau lipsa permisiunii de acces. Momentan, am afișa același mesaj indiferent de situație, fără a furniza ceva informativ utilizatorului.
 
-Fourth, we use `expect` repeatedly to handle different errors, and if the user
-runs our program without specifying enough arguments, they’ll get an `index out
-of bounds` error from Rust that doesn’t clearly explain the problem. It would
-be best if all the error-handling code were in one place so future maintainers
-had only one place to consult the code if the error-handling logic needed to
-change. Having all the error-handling code in one place will also ensure that
-we’re printing messages that will be meaningful to our end users.
+A patra problemă este legată de utilizarea repetată a lui `expect` în tratamentul diferitelor erori și faptul că, dacă un utilizator execută programul fără a oferi suficiente argumente, se va întâlni cu o eroare de tip `index out of bounds` din partea Rust, o eroare care nu descrie clar problema. Ideal ar fi ca întreg codul de gestionare a erorilor să fie centralizat, astfel încât viitorii dezvoltatori să aibă un singur punct de referință la care să se raporteze dacă logica de gestionare a erorilor necesită ajustări. Concentrând codul destinat erorilor într-un loc unic ne garantăm că mesajele generate sunt pertinente și utile pentru utilizatorii finali.
 
-Let’s address these four problems by refactoring our project.
+Să ne ocupăm de aceste patru probleme printr-o atentă refactorizare a proiectului.
 
-### Separation of Concerns for Binary Projects
+### Separarea responsabilităților în proiectele binare
 
-The organizational problem of allocating responsibility for multiple tasks to
-the `main` function is common to many binary projects. As a result, the Rust
-community has developed guidelines for splitting the separate concerns of a
-binary program when `main` starts getting large. This process has the following
-steps:
+Problema organizațională de atribuire a responsabilităților pentru diverse sarcini funcției `main` este frecventă în multe proiecte binare. Drept consecință, comunitatea Rust a elaborat ghiduri pentru descompunerea preocupărilor separate ale unui program binar când funcția `main` începe să crească prea mult în dimensiune. Procesul cuprinde următorii pași:
 
-* Split your program into a *main.rs* and a *lib.rs* and move your program’s
-  logic to *lib.rs*.
-* As long as your command line parsing logic is small, it can remain in
-  *main.rs*.
-* When the command line parsing logic starts getting complicated, extract it
-  from *main.rs* and move it to *lib.rs*.
+* Împarte programul într-un *main.rs* și un *lib.rs* și transferă logica programului
+  în *lib.rs*.
+* Dacă logica de procesare a liniei de comandă este simplă, aceasta poate să
+  rămână în *main.rs*.
+* Când logica de procesare a liniei de comandă devine complexă, extrage-o
+  din *main.rs* și mut-o în *lib.rs*.
 
-The responsibilities that remain in the `main` function after this process
-should be limited to the following:
+Responsabilitățile ce ar trebui să rămână în funcția `main` în urma acestui proces se limitează la:
 
-* Calling the command line parsing logic with the argument values
-* Setting up any other configuration
-* Calling a `run` function in *lib.rs*
-* Handling the error if `run` returns an error
+* Apelarea logicii de procesare a liniei de comandă cu valorile argumentelor
+* Configurarea oricăror setări suplimentare
+* Invocarea unei funcții `run` din *lib.rs*
+* Tratarea erorii dacă `run` returnează o eroare
 
-This pattern is about separating concerns: *main.rs* handles running the
-program, and *lib.rs* handles all the logic of the task at hand. Because you
-can’t test the `main` function directly, this structure lets you test all of
-your program’s logic by moving it into functions in *lib.rs*. The code that
-remains in *main.rs* will be small enough to verify its correctness by reading
-it. Let’s rework our program by following this process.
+Această metodologie se axează pe separarea responsabilităților: *main.rs* se ocupă de execuția programului, iar *lib.rs* gestionează integral logica specifică sarcinii. Deoarece funcția `main` nu poate fi testată în mod direct, această structură îți oferă posibilitatea să testezi toată logica programului prin includerea ei în funcții din *lib.rs*. Codul rezidual din *main.rs* va fi atât de concis încât corectitudinea lui se poate constata prin simpla lectură. Să procedăm la reconfigurarea programului nostru aplicând acești pași.
 
-#### Extracting the Argument Parser
+#### Extragerea parserului de argumente
 
-We’ll extract the functionality for parsing arguments into a function that
-`main` will call to prepare for moving the command line parsing logic to
-*src/lib.rs*. Listing 12-5 shows the new start of `main` that calls a new
-function `parse_config`, which we’ll define in *src/main.rs* for the moment.
+Vom separa funcționalitatea de parsare a argumentelor într-o funcție pe care `main` o va chema, pregătind astfel mutarea logicii de parsare a argumentelor din linia de comandă în *src/lib.rs*. Listarea 12-5 ilustrează noul început al funcției `main`, unde aceasta apelează o nouă funcție `parse_config`, definită momentan în *src/main.rs*.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-05/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 12-5: Extracting a `parse_config` function from
-`main`</span>
+<span class="caption">Listarea 12-5: Extragerea unei funcții `parse_config` din `main`</span>
 
-We’re still collecting the command line arguments into a vector, but instead of
-assigning the argument value at index 1 to the variable `query` and the
-argument value at index 2 to the variable `file_path` within the `main`
-function, we pass the whole vector to the `parse_config` function. The
-`parse_config` function then holds the logic that determines which argument
-goes in which variable and passes the values back to `main`. We still create
-the `query` and `file_path` variables in `main`, but `main` no longer has the
-responsibility of determining how the command line arguments and variables
-correspond.
+Continuăm să adunăm argumentele liniei de comandă într-un vector, dar în loc de a atribui direct valoarea argumentului de la indexul 1 variabilei `query` și valoarea argumentului de la indexul 2 variabilei `file_path` în funcția `main`, acum transmitem întreg vectorul către funcția `parse_config`. Funcția `parse_config` are acum rolul de a determina care argument corespunde căreia dintre variabile și trimite valorile înapoi în `main`. În `main` continuăm să creăm variabilele `query` și `file_path`, însă `main` nu mai are rolul de a face corelația dintre argumentele de comandă și variabile.
 
-This rework may seem like overkill for our small program, but we’re refactoring
-in small, incremental steps. After making this change, run the program again to
-verify that the argument parsing still works. It’s good to check your progress
-often, to help identify the cause of problems when they occur.
+Această restructurare ar putea să pară inutilă pentru un program de dimensiuni atît de reduse ca al nostru, însă anume așa și refactorizăm: în pași mici și consecutivi. După ce efectezi această modificare, rulează iar programul pentru a te asigura că procesul de parsare a argumentelor funcționează în continuare. E recomandat să verifici progresul frecvent, pentru a putea identifica mai ușor sursa problemelor atunci când apar.
 
-#### Grouping Configuration Values
+#### Gruparea valorilor de configurare
 
-We can take another small step to improve the `parse_config` function further.
-At the moment, we’re returning a tuple, but then we immediately break that
-tuple into individual parts again. This is a sign that perhaps we don’t have
-the right abstraction yet.
+Putem face încă un mic pas pentru a îmbunătăți funcția `parse_config`.
+În prezent, returnăm o tuplă, dar apoi o descompunem imediat în componentele ei individuale. Acest lucru poate semnala faptul că nu am ajuns încă la abstracția corectă.
 
-Another indicator that shows there’s room for improvement is the `config` part
-of `parse_config`, which implies that the two values we return are related and
-are both part of one configuration value. We’re not currently conveying this
-meaning in the structure of the data other than by grouping the two values into
-a tuple; we’ll instead put the two values into one struct and give each of the
-struct fields a meaningful name. Doing so will make it easier for future
-maintainers of this code to understand how the different values relate to each
-other and what their purpose is.
+Alt semnal care indică posibilitatea îmbunătățirii este partea `config` din `parse_config`, ce sugerează că cele două valori returnate sunt interconectate și constituie împreună o configurație unitară. În momentul de față, nu comunicăm acest sens în structura datelor, decât prin gruparea valorilor într-o tuplă; în loc de aceasta, vom încorpora cele două valori într-o structură și le vom atribui câmpurilor nume sugestive. Aceasta va simplifica munca viitorilor dezvoltatori care vor interacționa cu codul, facilitând înțelegerea interdependenței valorilor și scopurilor pe care le servesc.
 
-Listing 12-6 shows the improvements to the `parse_config` function.
+Listarea 12-6 prezintă îmbunătățirile aduse funcției `parse_config`.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,should_panic,noplayground
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-06/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 12-6: Refactoring `parse_config` to return an
-instance of a `Config` struct</span>
+<span class="caption">Listarea 12-6: Refactorizarea funcției `parse_config` pentru returnarea unei instanțe a structurii `Config`</span>
 
-We’ve added a struct named `Config` defined to have fields named `query` and
-`file_path`. The signature of `parse_config` now indicates that it returns a
-`Config` value. In the body of `parse_config`, where we used to return
-string slices that reference `String` values in `args`, we now define `Config`
-to contain owned `String` values. The `args` variable in `main` is the owner of
-the argument values and is only letting the `parse_config` function borrow
-them, which means we’d violate Rust’s borrowing rules if `Config` tried to take
-ownership of the values in `args`.
+Am introdus o structură denumită `Config`, concepută cu câmpurile `query` și `file_path`. Semnătura funcției `parse_config` reflectă acum faptul că se returnează o valoare de tip `Config`. În conținutul `parse_config`, acolo unde înainte returnam secțiuni care făceau referire la valori de tip `String` din `args`, configurăm acum `Config` astfel încât să conțină în directă posesiune valorile sale `String`. Variabila `args` din funcția `main` este proprietara valorilor argumente și permite funcției `parse_config` doar să le împrumute, iar dacă `Config` ar încerca să preia controlul asupra acestor valori atunci situația ar contraveni regulilor Rust privind împrumutul.
 
-There are a number of ways we could manage the `String` data; the easiest,
-though somewhat inefficient, route is to call the `clone` method on the values.
-This will make a full copy of the data for the `Config` instance to own, which
-takes more time and memory than storing a reference to the string data.
-However, cloning the data also makes our code very straightforward because we
-don’t have to manage the lifetimes of the references; in this circumstance,
-giving up a little performance to gain simplicity is a worthwhile trade-off.
+Există multiple metode prin care am putea controla datele de tip `String`; cea mai simplă, deși posibil ineficientă, este să apelăm metoda `clone` pe respectivele valori. Acest lucru ar genera o copie integrală a datelor, pe care instanța `Config` le-ar deține, consumând mai mult timp și memorie decât dacă am stoca o referință la datele string. Totuși, clonarea datelor are avantajul de a ne simplifica codul, nefiind necesar să gestionăm duratele de viață ale referințelor. În această situație, renunțarea la o cantitate mică de performanță în schimbul simplificării este un compromis justificat.
 
-> ### The Trade-Offs of Using `clone`
+> ### Dezavantajele utilizării funcției `clone`
 >
-> There’s a tendency among many Rustaceans to avoid using `clone` to fix
-> ownership problems because of its runtime cost. In
-> [Chapter 13][ch13]<!-- ignore -->, you’ll learn how to use more efficient
-> methods in this type of situation. But for now, it’s okay to copy a few
-> strings to continue making progress because you’ll make these copies only
-> once and your file path and query string are very small. It’s better to have
-> a working program that’s a bit inefficient than to try to hyperoptimize code
-> on your first pass. As you become more experienced with Rust, it’ll be
-> easier to start with the most efficient solution, but for now, it’s
-> perfectly acceptable to call `clone`.
+> Mulți dintre cei care programează în Rust au tendința de a evita utilizarea
+> funcției `clone` pentru a soluționa problemele de posesiune, din cauza
+> impactului pe care îl are asupra timpului de execuție. În
+> [Capitolul 13][ch13]<!-- ignore -->, vei învăța metode mai eficiente pentru
+> aceste tipuri de situații. Totuși, în acest moment, nu este o problemă să
+> copiezi câteva string-uri pentru a avansa în progresul tău, deoarece aceste
+> copieri se vor face doar o singură dată și atât string-ul de interogare,
+> cât și calea directoriului tău sunt destul de reduse ca dimensiune. Este
+> preferabil să ai un program funcțional care nu este optimizat la maximum
+> decât să încerci să optimizezi excesiv codul din prima încercare. Pe măsură
+> ce vei deveni mai versat în Rust, va fi mai simplu să pornești direct cu
+> soluția cea mai eficientă, dar pentru moment, este complet acceptabil să
+> apelezi la `clone`.
 
-We’ve updated `main` so it places the instance of `Config` returned by
-`parse_config` into a variable named `config`, and we updated the code that
-previously used the separate `query` and `file_path` variables so it now uses
-the fields on the `Config` struct instead.
+Am modificat funcția `main` astfel încât să atribuie instanța de `Config` întoarsă de `parse_config` unei variabile denumite `config`, și am actualizat codul care anterior utiliza variabilele `query` și `file_path` separat, astfel încât acum să acceseze câmpurile structurii `Config`.
 
-Now our code more clearly conveys that `query` and `file_path` are related and
-that their purpose is to configure how the program will work. Any code that
-uses these values knows to find them in the `config` instance in the fields
-named for their purpose.
+În acest fel, codul nostru comunică mai eficient faptul că `query` și `file_path` sunt corelate și că funcția lor este de a seta configurarea pentru comportamentul programului. Orice porțiune de cod care le folosește va ști că trebuie să le caute în instanța `config`, în câmpurile cu numele corespunzător scopului lor.
 
-#### Creating a Constructor for `Config`
+#### Crearea unui constructor pentru `Config`
 
-So far, we’ve extracted the logic responsible for parsing the command line
-arguments from `main` and placed it in the `parse_config` function. Doing so
-helped us to see that the `query` and `file_path` values were related and that
-relationship should be conveyed in our code. We then added a `Config` struct to
-name the related purpose of `query` and `file_path` and to be able to return the
-values’ names as struct field names from the `parse_config` function.
+Până acum, am separat logica de parsare a argumentelor liniei de comandă din `main` și am inclus-o în funcția `parse_config`. Acest demers ne-a ajutat să observăm că valorile pentru `query` și `file_path` sunt interconectate și această conexiune trebuie evidențiată în codul nostru. În consecință, am introdus structura `Config` pentru a numi scopul conex al `query` și `file_path` și pentru a putea returna numele acestor valori sub forma unor nume de câmpuri ale structurii din cadrul funcției `parse_config`.
 
-So now that the purpose of the `parse_config` function is to create a `Config`
-instance, we can change `parse_config` from a plain function to a function
-named `new` that is associated with the `Config` struct. Making this change
-will make the code more idiomatic. We can create instances of types in the
-standard library, such as `String`, by calling `String::new`. Similarly, by
-changing `parse_config` into a `new` function associated with `Config`, we’ll
-be able to create instances of `Config` by calling `Config::new`. Listing 12-7
-shows the changes we need to make.
+Așadar, fiindcă rolul funcției `parse_config` este de a inițializa o instanță `Config`, putem transforma `parse_config` dintr-o funcție obișnuită într-o funcție numită `new`, asociată acum structurii `Config`. Prin această modificare, codul nostru va deveni mai idiomatic. Putem crea instanțe ale tipurilor din biblioteca standard, cum ar fi `String`, invocând `String::new`. În mod similar, prin schimbarea funcției `parse_config` în `new`, asociată cu `Config`, vom putea crea instanțe de `Config` invocând `Config::new`. Listarea 12-7 ilustrează schimbările pe care trebuie să le efectuăm.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,should_panic,noplayground
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-07/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 12-7: Changing `parse_config` into
-`Config::new`</span>
+<span class="caption">Listarea 12-7: Transformarea `parse_config` în `Config::new`</span>
 
-We’ve updated `main` where we were calling `parse_config` to instead call
-`Config::new`. We’ve changed the name of `parse_config` to `new` and moved it
-within an `impl` block, which associates the `new` function with `Config`. Try
-compiling this code again to make sure it works.
+Am actualizat locul din `main` unde `parse_config` era apelată, pentru a folosi în schimb `Config::new`. Am redenumit `parse_config` în `new` și am transferat-o într-un bloc `impl`, asociind astfel funcția `new` cu structura `Config`. Încearcă să compilezi din nou codul pentru a te asigura că funcționează cum trebuie.
 
-### Fixing the Error Handling
+### Remediind problemele de tratare a erorilor
 
-Now we’ll work on fixing our error handling. Recall that attempting to access
-the values in the `args` vector at index 1 or index 2 will cause the program to
-panic if the vector contains fewer than three items. Try running the program
-without any arguments; it will look like this:
+Acum ne vom concentra pe îmbunătățirea gestionării erorilor. Reamintim că încercarea de a accesa valorile din vectorul `args` la indexul 1 sau 2 poate provoca panică în program dacă vectorul are mai puțin de trei elemente. Încercând rularea programului fără niciun argument; ieșirea va arăta în felul următor:
 
 ```console
 {{#include ../listings/ch12-an-io-project/listing-12-07/output.txt}}
 ```
 
-The line `index out of bounds: the len is 1 but the index is 1` is an error
-message intended for programmers. It won’t help our end users understand what
-they should do instead. Let’s fix that now.
+#### Îmbunătățind mesajul de eroare
 
-#### Improving the Error Message
+În Listarea 12-8, includem o verificare în funcția `new` ce se asigură că secțiunea este destul de lungă înainte de a accesa indecșii 1 și 2. Dacă secțiunea nu este suficientă, programul va intra în panică și va afișa un mesaj de eroare îmbunătățit.
 
-In Listing 12-8, we add a check in the `new` function that will verify that the
-slice is long enough before accessing index 1 and 2. If the slice isn’t long
-enough, the program panics and displays a better error message.
-
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-08/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 12-8: Adding a check for the number of
-arguments</span>
+<span class="caption">Listarea 12-8: Adăugând o verificare pentru numărul de argumente</span>
 
-This code is similar to [the `Guess::new` function we wrote in Listing
-9-13][ch9-custom-types]<!-- ignore -->, where we called `panic!` when the
-`value` argument was out of the range of valid values. Instead of checking for
-a range of values here, we’re checking that the length of `args` is at least 3
-and the rest of the function can operate under the assumption that this
-condition has been met. If `args` has fewer than three items, this condition
-will be true, and we call the `panic!` macro to end the program immediately.
+Acest cod este similar cu funcția `Guess::new` pe care am creat-o în Listarea 9-13][ch9-custom-types]<!-- ignore -->, unde am folosit macro-ul `panic!` când valoarea `value` era în afara limitei valorilor valide. Aici, în loc de verificarea unui interval de valori, ne asigurăm că lungimea `args` este cel puțin 3, iar restul funcției poate opera sub presupunerea că această condiție este îndeplinită. Dacă `args` are mai puțin de trei elemente, această condiție este verificată și se apelează macro-ul `panic!` pentru a opri imediat programul.
 
-With these extra few lines of code in `new`, let’s run the program without any
-arguments again to see what the error looks like now:
+Cu aceste câteva linii de cod suplimentare în `new`, să consultăm din nou rularea programului fără argumente pentru a vedea cum arată eroarea acum:
 
 ```console
 {{#include ../listings/ch12-an-io-project/listing-12-08/output.txt}}
 ```
 
-This output is better: we now have a reasonable error message. However, we also
-have extraneous information we don’t want to give to our users. Perhaps using
-the technique we used in Listing 9-13 isn’t the best to use here: a call to
-`panic!` is more appropriate for a programming problem than a usage problem,
-[as discussed in Chapter 9][ch9-error-guidelines]<!-- ignore -->. Instead,
-we’ll use the other technique you learned about in Chapter 9—[returning a
-`Result`][ch9-result]<!-- ignore --> that indicates either success or an error.
+Rezultatul este mai bun: în sfîrșit avem un mesaj de eroare adecvat. Totuși, rămânem cu informații suplimentare care nu sunt necesare utilizatorilor noștri. Se pare că metoda utilizată în Listarea 9-13 nu este cea mai potrivită aici: un apel la `panic!` e mai adecvat pentru o problemă de programare decât una de utilizare, așa cum am discutat în Capitolul 9. În schimb, vom aplica o altă metodă pe care ai învățat-o în Capitolul 9—[returnarea unui `Result`][ch9-result] care indică fie succesul, fie o eroare.
 
 <!-- Old headings. Do not remove or links may break. -->
 <a id="returning-a-result-from-new-instead-of-calling-panic"></a>
 
-#### Returning a `Result` Instead of Calling `panic!`
+#### Returnarea unui `Result` în loc de apelarea `panic!`
 
-We can instead return a `Result` value that will contain a `Config` instance in
-the successful case and will describe the problem in the error case. We’re also
-going to change the function name from `new` to `build` because many
-programmers expect `new` functions to never fail. When `Config::build` is
-communicating to `main`, we can use the `Result` type to signal there was a
-problem. Then we can change `main` to convert an `Err` variant into a more
-practical error for our users without the surrounding text about `thread
-'main'` and `RUST_BACKTRACE` that a call to `panic!` causes.
+Putem opta pentru returnarea unei valori `Result` care va include o instanță `Config` în cazul unui succes și va detalia problema în situația unei erori. Intenționăm să schimbăm numele funcției din `new` în `build`, deoarece mulți programatori presupun că funcțiile `new` nu ar trebui să eșueze niciodată. În comunicarea dintre `Config::build` și `main`, folosim tipul `Result` pentru a semnala potențiala apariție a unei probleme. Astfel, putem ajusta funcția `main` să convertească o variantă `Err` într-o eroare mai prietenoasă pentru utilizatorii noștri, fără textul suplimentar legat de `thread 'main'` și `RUST_BACKTRACE` care însoțește apelul la `panic!`.
 
-Listing 12-9 shows the changes we need to make to the return value of the
-function we’re now calling `Config::build` and the body of the function needed
-to return a `Result`. Note that this won’t compile until we update `main` as
-well, which we’ll do in the next listing.
+Listarea 12-9 prezintă modificările necesare valorii de retur a funcției denumite acum `Config::build` și ale corpului acesteia necesare pentru a returna un `Result`. Notăm că aceste schimbări nu vor compila decât după ce actualizăm și funcția `main`, lucru pe care îl vom face în lista următoare.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-09/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 12-9: Returning a `Result` from
-`Config::build`</span>
+<span class="caption">Listarea 12-9: Returnarea unui `Result` din `Config::build`</span>
 
-Our `build` function returns a `Result` with a `Config` instance in the success
-case and a `&'static str` in the error case. Our error values will always be
-string literals that have the `'static` lifetime.
+Funcția `build` returnează un `Result` care conține o instanță `Config` în caz de succes și un `&'static str` în caz de eroare, valorile de eroare fiind întotdeauna literali de string cu durata de viață `'static`.
 
-We’ve made two changes in the body of the function: instead of calling `panic!`
-when the user doesn’t pass enough arguments, we now return an `Err` value, and
-we’ve wrapped the `Config` return value in an `Ok`. These changes make the
-function conform to its new type signature.
+Am efectuat două schimbări în corpul funcției: în loc să folosim `panic!` când utilizatorul nu furnizează suficiente argumente, acum returnăm o valoare `Err` și am ambalat valoarea de retur `Config` într-un `Ok`. Aceste ajustări asigură conformitatea funcției cu noua sa semnătură de tip.
 
-Returning an `Err` value from `Config::build` allows the `main` function to
-handle the `Result` value returned from the `build` function and exit the
-process more cleanly in the error case.
+Returnând o valoare `Err` în cadrul `Config::build`, funcția `main` poate gestiona valoarea `Result` returnată din `build` și poate încheia procesul într-o manieră mai curată în situația unei erori.
 
 <!-- Old headings. Do not remove or links may break. -->
 <a id="calling-confignew-and-handling-errors"></a>
 
-#### Calling `Config::build` and Handling Errors
+#### Apelarea `Config::build` și gestionarea erorilor
 
-To handle the error case and print a user-friendly message, we need to update
-`main` to handle the `Result` being returned by `Config::build`, as shown in
-Listing 12-10. We’ll also take the responsibility of exiting the command line
-tool with a nonzero error code away from `panic!` and instead implement it by
-hand. A nonzero exit status is a convention to signal to the process that
-called our program that the program exited with an error state.
+Pentru a gestiona cazul de eroare și a afișa un mesaj prietenos pentru utilizatori, trebuie să actualizăm funcția `main` pentru a prelucra `Result` returnat de `Config::build`, așa cum e demonstrat în Listarea 12-10. De asemenea, ne asumăm responsabilitatea de a încheia execuția instrumentului de linie de comandă cu un cod de eroare non-zero, rol care anterior îl avea `panic!`, și implementăm această funcție manual. Un cod de ieșire non-zero este o convenție care semnalează procesului ce a invocat programul nostru că acesta s-a terminat cu o stare de eroare.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-10/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 12-10: Exiting with an error code if building a
-`Config` fails</span>
+<span class="caption">Listarea 12-10: Terminarea execuției cu un cod de eroare dacă inițializarea unui `Config` nu reușește</span>
 
-In this listing, we’ve used a method we haven’t covered in detail yet:
-`unwrap_or_else`, which is defined on `Result<T, E>` by the standard library.
-Using `unwrap_or_else` allows us to define some custom, non-`panic!` error
-handling. If the `Result` is an `Ok` value, this method’s behavior is similar
-to `unwrap`: it returns the inner value `Ok` is wrapping. However, if the value
-is an `Err` value, this method calls the code in the *closure*, which is an
-anonymous function we define and pass as an argument to `unwrap_or_else`. We’ll
-cover closures in more detail in [Chapter 13][ch13]<!-- ignore -->. For now,
-you just need to know that `unwrap_or_else` will pass the inner value of the
-`Err`, which in this case is the static string `"not enough arguments"` that we
-added in Listing 12-9, to our closure in the argument `err` that appears
-between the vertical pipes. The code in the closure can then use the `err`
-value when it runs.
+În această listare am folosit metoda `unwrap_or_else`, care nu a fost încă detaliată: `unwrap_or_else` este definită pentru `Result<T, E>` de către biblioteca standard. Prin utilizarea `unwrap_or_else`, definim un comportament personalizat pentru gestionarea erorilor, care nu recurge la `panic!`. Dacă `Result` este o valoare `Ok`, metoda funcționează similar cu `unwrap`, returnând valoarea din interiorul `Ok`. În schimb, dacă avem o valoare de tip `Err`, metoda invocă codul specificat într-o *închidere* (closure), adică o funcție anonimă definită de noi și pasată ca argument la `unwrap_or_else`. Vom aborda închiderile în detaliu în [Capitolul 13][ch13]<!-- ignore -->. Deocamdată, este suficient să înțelegeți că `unwrap_or_else` va trimite valoarea internă a erorii `Err`, în acest caz șirul static `"not enough arguments"`, către închiderea noastră prin intermediul argumentului `err`, care este plasat între barele verticale. Astfel, închiderea poate folosi variabila `err` atunci când se execută.
 
-We’ve added a new `use` line to bring `process` from the standard library into
-scope. The code in the closure that will be run in the error case is only two
-lines: we print the `err` value and then call `process::exit`. The
-`process::exit` function will stop the program immediately and return the
-number that was passed as the exit status code. This is similar to the
-`panic!`-based handling we used in Listing 12-8, but we no longer get all the
-extra output. Let’s try it:
+Am adăugat un nou rând `use` pentru a include `process` din biblioteca standard în domeniul de vizibilitate. Codul din închidere care va fi executat în caz de eroare conține doar două linii: afișăm valoarea `err` și invocăm `process::exit`. Funcția `process::exit` oprește programul imediat și returnează numărul care a fost specificat ca cod de ieșire. Acesta este un comportament similar cu cel din gestionarea bazată pe `panic!` prezentată în Listarea 12-8, însă de data aceasta fără output-ul adițional. Acum să testăm:
 
 ```console
 {{#include ../listings/ch12-an-io-project/listing-12-10/output.txt}}
 ```
 
-Great! This output is much friendlier for our users.
+Excelent! Acest mesaj este mult mai accesibil utilizatorilor noștri.
 
-### Extracting Logic from `main`
+### Extragerea logicii din `main`
 
-Now that we’ve finished refactoring the configuration parsing, let’s turn to
-the program’s logic. As we stated in [“Separation of Concerns for Binary
-Projects”](#separation-of-concerns-for-binary-projects)<!-- ignore -->, we’ll
-extract a function named `run` that will hold all the logic currently in the
-`main` function that isn’t involved with setting up configuration or handling
-errors. When we’re done, `main` will be concise and easy to verify by
-inspection, and we’ll be able to write tests for all the other logic.
+Odată finalizată refactorizarea analizei configurației, ne îndreptăm acum spre logica programului. Conform celor stabilite în [„Separarea problemelor pentru proiectele binare”](separation-of-concerns-for-binary-projects)<!-- ignore -->, extragem o funcție denumită `run` care va cuprinde toată logica existentă în funcția `main`, cu excepția părților care se ocupă de configurarea inițială sau de gestionarea erorilor. La finalizare, `main` va fi concisă și ușor de verificat printr-o simplă inspecție, iar noi vom fi capabili să scriem teste pentru întreaga logică restantă.
 
-Listing 12-11 shows the extracted `run` function. For now, we’re just making
-the small, incremental improvement of extracting the function. We’re still
-defining the function in *src/main.rs*.
+Listarea 12-11 ilustrează procesul de extracție a funcției `run`. Pentru moment, aceasta reprezintă un pas mic și gradual în îmbunătățirea codului. Funcția continuă să fie definită în *src/main.rs*.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-11/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 12-11: Extracting a `run` function containing the
-rest of the program logic</span>
+<span class="caption">Listarea 12-11: Extragerea funcției `run`, care conține restul logicii din program</span>
 
-The `run` function now contains all the remaining logic from `main`, starting
-from reading the file. The `run` function takes the `Config` instance as an
-argument.
+Funcția `run` încorporează acum toată logica rămasă din `main`, începând de la etapa de citire a fișierului. Aceasta primește o instanță de `Config` ca parametru.
 
-#### Returning Errors from the `run` Function
+#### Returnarea erorilor de către funcția `run`
 
-With the remaining program logic separated into the `run` function, we can
-improve the error handling, as we did with `Config::build` in Listing 12-9.
-Instead of allowing the program to panic by calling `expect`, the `run`
-function will return a `Result<T, E>` when something goes wrong. This will let
-us further consolidate the logic around handling errors into `main` in a
-user-friendly way. Listing 12-12 shows the changes we need to make to the
-signature and body of `run`.
+Cu partea rămasă de logică a programului separată acum în funcția `run`, avem oportunitatea de a îmbunătăți gestionarea erorilor, așa cum am procedat pentru `Config::build` în Listarea 12-9. În loc să lăsăm programul să genereze panică prin apelarea `expect`, funcția `run` va returna un `Result<T, E>` când ceva nu funcționează corect. Aceasta ne va da posibilitatea de a centraliza mai eficient gestionarea erorilor în `main`, într-un mod accesibil utilizatorului. Listarea 12-12 prezintă modificările necesare la semnătura și corpul funcției `run`.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-12/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 12-12: Changing the `run` function to return
-`Result`</span>
+<span class="caption">Listarea 12-12: Modificarea funcției `run` pentru a returna `Result`</span>
 
-We’ve made three significant changes here. First, we changed the return type of
-the `run` function to `Result<(), Box<dyn Error>>`. This function previously
-returned the unit type, `()`, and we keep that as the value returned in the
-`Ok` case.
+Am realizat trei schimbări importante aici. Prima, schimbarea tipului de retur pentru funcția `run` în `Result<(), Box<dyn Error>>`. Inițial, această funcție returna tipul unit `()`, pe care acum îl păstrăm ca valoare returnată în cazul de succes `Ok`.
 
-For the error type, we used the *trait object* `Box<dyn Error>` (and we’ve
-brought `std::error::Error` into scope with a `use` statement at the top).
-We’ll cover trait objects in [Chapter 17][ch17]<!-- ignore -->. For now, just
-know that `Box<dyn Error>` means the function will return a type that
-implements the `Error` trait, but we don’t have to specify what particular type
-the return value will be. This gives us flexibility to return error values that
-may be of different types in different error cases. The `dyn` keyword is short
-for “dynamic.”
+Ca tip de eroare, am utilizat *obiectul-trăsătură* `Box<dyn Error>` (și am importat `std::error::Error` în context cu o directivă `use` la începutul fișierului). Vom discuta despre obiecte-trăsătură în [Capitolul 17][ch17]<!-- ignore -->. Deocamdată, e de ajuns să știm că `Box<dyn Error>` înseamnă că funcția va returna un tip care implementează trăsătura `Error`, fără a specifica tipul exact al valorii de retur. Aceasta oferă flexibilitatea de a returna diferite valori ale erorilor în diferite scenarii de eroare. Cuvântul `dyn` este o abreviere pentru „dinamic” (dynamic).
 
-Second, we’ve removed the call to `expect` in favor of the `?` operator, as we
-talked about in [Chapter 9][ch9-question-mark]<!-- ignore -->. Rather than
-`panic!` on an error, `?` will return the error value from the current function
-for the caller to handle.
+În al doilea rând, am înlocuit apelul la `expect` cu operatorul `?`, despre care am discutat în [Capitolul 9][ch9-question-mark]<!-- ignore -->. În loc să provoace `panic!` atunci când întâlnește o eroare, `?` va returna valoarea erorii din funcția actuală pentru ca apelantul să o poată gestiona.
 
-Third, the `run` function now returns an `Ok` value in the success case.
-We’ve declared the `run` function’s success type as `()` in the signature,
-which means we need to wrap the unit type value in the `Ok` value. This
-`Ok(())` syntax might look a bit strange at first, but using `()` like this is
-the idiomatic way to indicate that we’re calling `run` for its side effects
-only; it doesn’t return a value we need.
+În al treilea rând, funcția `run` returnează acum o valoare `Ok` în caz de reușită. În semnătura ei, am declarat tipul de succes al funcției `run` ca fiind `()`, ceea ce ne obligă să închidem valoarea tipului unit într-o valoare `Ok`. Sintagma `Ok(())` poate părea inițial ciudată, dar utilizarea `()` în acest fel este modul convențional de a semnala că apelăm `run` doar pentru efectele sale secundare; nu are o valoare de retur relevantă pentru noi.
 
-When you run this code, it will compile but will display a warning:
+La rularea acestui cod, compilarea se va efectua, dar va afișa un avertisment:
 
 ```console
 {{#include ../listings/ch12-an-io-project/listing-12-12/output.txt}}
 ```
 
-Rust tells us that our code ignored the `Result` value and the `Result` value
-might indicate that an error occurred. But we’re not checking to see whether or
-not there was an error, and the compiler reminds us that we probably meant to
-have some error-handling code here! Let’s rectify that problem now.
+Rust ne avertizează că am ignorat valoarea `Result` și că această valoare `Result` ar putea semnala că s-a produs o eroare. Nu am verificat însă dacă există sau nu o astfel de eroare, iar compilatorul ne atenționează că, probabil, intenționăm să adăugăm ceva cod pentru gestionarea erorilor! Să corectăm acum acest aspect.
 
-#### Handling Errors Returned from `run` in `main`
+#### Tratarea erorilor returnate de `run` în funcția `main`
 
-We’ll check for errors and handle them using a technique similar to one we used
-with `Config::build` in Listing 12-10, but with a slight difference:
+Detectăm erorile și le gestionăm printr-o metodă similară cu cea utilizată anterior pentru `Config::build`, în Listarea 12-10, dar cu o subtilă deosebire:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch12-an-io-project/no-listing-01-handling-errors-in-main/src/main.rs:here}}
 ```
 
-We use `if let` rather than `unwrap_or_else` to check whether `run` returns an
-`Err` value and call `process::exit(1)` if it does. The `run` function doesn’t
-return a value that we want to `unwrap` in the same way that `Config::build`
-returns the `Config` instance. Because `run` returns `()` in the success case,
-we only care about detecting an error, so we don’t need `unwrap_or_else` to
-return the unwrapped value, which would only be `()`.
+Optăm pentru `if let` în defavoarea lui `unwrap_or_else` atunci când verificăm dacă `run` dă o valoare de tip `Err` și invocăm `process::exit(1)` în acest caz. Funcția `run` nu returnează o valoare pe care am vrea să-i facem `unwrap`, spre deosebire de ceea ce se întâmplă cu `Config::build`, care ne oferă instanța `Config`. Deoarece `run` returnează `()` când operează cu succes, suntem interesați exclusiv de depistarea unei erori și, prin urmare, nu avem nevoie de `unwrap_or_else` pentru a extrage valoarea neîmpachetată, care ar fi de altfel doar `()`.
 
-The bodies of the `if let` and the `unwrap_or_else` functions are the same in
-both cases: we print the error and exit.
+Procedura funcțiilor `if let` și `unwrap_or_else` este la fel în ambele contexte: afișăm mesajul de eroare și terminăm execuția.
 
-### Splitting Code into a Library Crate
+### Divizarea codului într-un crate de tip bibliotecă
 
-Our `minigrep` project is looking good so far! Now we’ll split the
-*src/main.rs* file and put some code into the *src/lib.rs* file. That way we
-can test the code and have a *src/main.rs* file with fewer responsibilities.
+Proiectul nostru `minigrep` se prezintă excelent până acum! Urmează să împărțim conținutul fișierului *src/main.rs* și să transferăm unele porțiuni de cod în fișierul *src/lib.rs*. Astfel, vom putea testa codul și vom avea un fișier *src/main.rs* cu responsabilități reduse.
 
-Let’s move all the code that isn’t the `main` function from *src/main.rs* to
-*src/lib.rs*:
+Să transferăm toate părțile de cod care nu sunt funcția `main` din *src/main.rs* în *src/lib.rs*:
 
-* The `run` function definition
-* The relevant `use` statements
-* The definition of `Config`
-* The `Config::build` function definition
+* Definiția funcției `run`
+* Declarațiile `use` aplicabile
+* Definiția structurii `Config`
+* Definiția metodei `Config::build`
 
-The contents of *src/lib.rs* should have the signatures shown in Listing 12-13
-(we’ve omitted the bodies of the functions for brevity). Note that this won’t
-compile until we modify *src/main.rs* in Listing 12-14.
+Fișierul *src/lib.rs* ar trebui să conțină semnăturile ilustrate în Listarea 12-13 (am omis corpurile funcțiilor pentru rezum). Atenție, acest cod nu va compila până nu facem modificările necesare în *src/main.rs*, așa cum este indicat în Listarea 12-14.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-13/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 12-13: Moving `Config` and `run` into
-*src/lib.rs*</span>
+<span class="caption">Listarea 12-13: Transferul lui `Config` și `run` în *src/lib.rs*</span>
 
-We’ve made liberal use of the `pub` keyword: on `Config`, on its fields and its
-`build` method, and on the `run` function. We now have a library crate that has
-a public API we can test!
+Am folosit generos cuvântul `pub`: la structura `Config`, la câmpurile și metoda sa `build`, precum și la funcția `run`. De acum, dispunem de un crate de tip bibliotecă cu un API public ce poate fi testat!
 
-Now we need to bring the code we moved to *src/lib.rs* into the scope of the
-binary crate in *src/main.rs*, as shown in Listing 12-14.
+Trebuie acum să aducem în domeniul de vizibilitate al crate-ului binar din *src/main.rs* codul pe care l-am mutat în *src/lib.rs*, după cum este ilustrat în Listarea 12-14.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-14/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 12-14: Using the `minigrep` library crate in
-*src/main.rs*</span>
+<span class="caption">Listarea 12-14: Folosirea crate-ului de tip bibliotecă `minigrep` în *src/main.rs*</span>
 
-We add a `use minigrep::Config` line to bring the `Config` type from the
-library crate into the binary crate’s scope, and we prefix the `run` function
-with our crate name. Now all the functionality should be connected and should
-work. Run the program with `cargo run` and make sure everything works
-correctly.
+Introducem linia `use minigrep::Config` pentru a aduce tipul `Config` din crate-ul de tip bibliotecă în sfera de accesibilitate a crate-ului binar și prefixăm funcția `run` cu numele crate-ului nostru. Tot ansamblul de funcționalități ar trebui să fie acum interconectat și să funcționeze corect. Execută programul cu `cargo run` pentru a te asigura că totul merge bine.
 
-Whew! That was a lot of work, but we’ve set ourselves up for success in the
-future. Now it’s much easier to handle errors, and we’ve made the code more
-modular. Almost all of our work will be done in *src/lib.rs* from here on out.
+Ce muncă intensivă! Dar prin aceasta ne-am pregătit pentru succes pe termen lung. Acum este considerabil mai simplu să gestionăm erorile și am modularizat codul. De acum înainte, majoritatea activității noastre se va concentra în *src/lib.rs*.
 
-Let’s take advantage of this newfound modularity by doing something that would
-have been difficult with the old code but is easy with the new code: we’ll
-write some tests!
+Să profităm de această modularitate nou dobândită prin executarea unei sarcini care ar fi fost complicată cu codul vechi dar este simplă cu noul cod: să scriem niște teste!
 
 [ch13]: ch13-00-functional-features.html
 [ch9-custom-types]: ch09-03-to-panic-or-not-to-panic.html#creating-custom-types-for-validation

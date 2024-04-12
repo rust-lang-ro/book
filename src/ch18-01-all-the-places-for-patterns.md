@@ -1,15 +1,10 @@
-## All the Places Patterns Can Be Used
+## Toate locurile unde pattern-urile pot fi utilizate
 
-Patterns pop up in a number of places in Rust, and you’ve been using them a lot
-without realizing it! This section discusses all the places where patterns are
-valid.
+Pattern-urile pot fi întâlnite în mai multe locuri în Rust, fiind utilizate frecvent fără a ne da seama! În această secțiune, vom vedea toate locurile unde aceste pattern-uri sunt valide.
 
-### `match` Arms
+### Ramurile `match`
 
-As discussed in Chapter 6, we use patterns in the arms of `match` expressions.
-Formally, `match` expressions are defined as the keyword `match`, a value to
-match on, and one or more match arms that consist of a pattern and an
-expression to run if the value matches that arm’s pattern, like this:
+După cum am explicat în Capitolul 6, pattern-urile sunt utilizate în ramurile expresiilor `match`. Formal, expresiile `match` sunt definite prin cuvântul cheie `match`, o valoare cu care se face potrivirea, și unul sau mai multe ramuri de `match` care conțin un pattern și o expresie ce va fi executată dacă valoarea se potrivește cu pattern-ul respectivului ram, astfel:
 
 ```text
 match VALUE {
@@ -19,8 +14,7 @@ match VALUE {
 }
 ```
 
-For example, here's the `match` expression from Listing 6-5 that matches on an
-`Option<i32>` value in the variable `x`:
+De exemplu, aceasta este expresia `match` din Listarea 6-5 care face potrivirea pe o valoare `Option<i32>` în variabila `x`:
 
 ```rust,ignore
 match x {
@@ -29,222 +23,132 @@ match x {
 }
 ```
 
-The patterns in this `match` expression are the `None` and `Some(i)` on the
-left of each arrow.
+Pattern-urile din această expresie `match` sunt `None` și `Some(i)`, care se află în partea stângă a fiecărei săgeți.
 
-One requirement for `match` expressions is that they need to be *exhaustive* in
-the sense that all possibilities for the value in the `match` expression must
-be accounted for. One way to ensure you’ve covered every possibility is to have
-a catchall pattern for the last arm: for example, a variable name matching any
-value can never fail and thus covers every remaining case.
+O cerință pentru expresiile `match` este ca acestea să fie *exhaustive*, adică toate posibilitățile pentru valoarea subiect a expresiei `match` să fie acoperite. Una dintre metodele de a asigura că toate posibilitățile sunt cuprinse este de a include un pattern universal pentru ultimul ram: de exemplu, folosirea unui nume de variabilă care se potrivește cu orice valoare nu va da greș niciodată, cuprinzând astfel fiecare caz nemenționat anterior.
 
-The particular pattern `_` will match anything, but it never binds to a
-variable, so it’s often used in the last match arm. The `_` pattern can be
-useful when you want to ignore any value not specified, for example. We’ll
-cover the `_` pattern in more detail in the [“Ignoring Values in a
-Pattern”][ignoring-values-in-a-pattern]<!-- ignore --> section later in this
-chapter.
+Pattern-ul specific `_` va potrivi orice, însă nu se va lega de vreo variabilă, așa că deseori este utilizat în ultimul ram de `match`. Pattern-ul `_` poate fi folositor atunci când dorim să ignorăm orice valoare care nu a fost specificată anterior, de exemplu. Vom analiza pattern-ul `_` în mai multe detalii în secțiunea [„Ignorarea valorilor într-un pattern”][ignoring-values-in-a-pattern]<!-- ignore -->, mai târziu în acest capitol.
 
-### Conditional `if let` Expressions
+### Expresii condiționale `if let`
 
-In Chapter 6 we discussed how to use `if let` expressions mainly as a shorter
-way to write the equivalent of a `match` that only matches one case.
-Optionally, `if let` can have a corresponding `else` containing code to run if
-the pattern in the `if let` doesn’t match.
+În Capitolul 6, am discutat utilizarea expresiilor `if let` ca o formă mai concisă pentru a scrie echivalentul unei expresii `match` care se potrivește doar cu un singur caz. Opțional, `if let` poate include și un bloc `else`, care conține codul ce va fi executat dacă pattern-ul din `if let` nu se potrivește.
 
-Listing 18-1 shows that it’s also possible to mix and match `if let`, `else
-if`, and `else if let` expressions. Doing so gives us more flexibility than a
-`match` expression in which we can express only one value to compare with the
-patterns. Also, Rust doesn't require that the conditions in a series of `if
-let`, `else if`, `else if let` arms relate to each other.
+Listarea 18-1 demonstrează că este posibil să combinăm și să alternăm expresiile `if let`, `else if`, și `else if let`. Aceasta ne oferă o flexibilitate sporită în comparație cu o expresie `match`, unde putem compara o singură valoare cu pattern-urile. Mai mult, Rust nu solicită ca condițiile dintr-o serie de verificări `if let`, `else if`, `else if let` să fie interconectate.
 
-The code in Listing 18-1 determines what color to make your background based on
-a series of checks for several conditions. For this example, we’ve created
-variables with hardcoded values that a real program might receive from user
-input.
-
-<span class="filename">Filename: src/main.rs</span>
+Codul prezentat în Listarea 18-1 stabilește ce culoare să folosim pentru fond bazat pe o serie de condiții multiple. În acest exemplu, am definit variabile cu valori prestabilite, așa cum într-un program real acestea ar putea fi primite din intrările utilizatorilor.
 
 ```rust
 {{#rustdoc_include ../listings/ch18-patterns-and-matching/listing-18-01/src/main.rs}}
 ```
 
-<span class="caption">Listing 18-1: Mixing `if let`, `else if`, `else if let`,
-and `else`</span>
+<span class="caption">Listarea 18-1: Alternanța expresiilor `if let`, `else if`, `else if let`, și `else`</span>
 
-If the user specifies a favorite color, that color is used as the background.
-If no favorite color is specified and today is Tuesday, the background color is
-green. Otherwise, if the user specifies their age as a string and we can parse
-it as a number successfully, the color is either purple or orange depending on
-the value of the number. If none of these conditions apply, the background
-color is blue.
+Dacă utilizatorul indică o culoare preferată, aceasta este utilizată ca fond. Dacă nu este specificată nicio culoare preferată și astăzi e marți, culoarea de fond va fi verde. În caz contrar, dacă utilizatorul specifică vârsta sa ca string și putem să o convertim cu succes într-un număr, culoarea va fi ori mov, ori portocaliu, în funcție de valoarea numărului. Dacă niciuna dintre aceste condiții nu este îndeplinită, culoarea de fond va fi albastru.
 
-This conditional structure lets us support complex requirements. With the
-hardcoded values we have here, this example will print `Using purple as the
-background color`.
+Structura condițională descrisă ne permite gestionarea unor cerințe complexe. Având în vedere valorile prestabilite din acest exemplu, rezultatul va fi afișarea mesajului `Using purple as the background color`.
 
-You can see that `if let` can also introduce shadowed variables in the same way
-that `match` arms can: the line `if let Ok(age) = age` introduces a new
-shadowed `age` variable that contains the value inside the `Ok` variant. This
-means we need to place the `if age > 30` condition within that block: we can’t
-combine these two conditions into `if let Ok(age) = age && age > 30`. The
-shadowed `age` we want to compare to 30 isn’t valid until the new scope starts
-with the curly bracket.
+Reiese că expresiile `if let` pot introduce variabile umbrite în aceeași manieră ca brațele unui `match`: linia cu `if let Ok(age) = age` introduce o nouă variabilă umbrită `age`, care stochează valoarea din varianta `Ok`. De aceea, condiția `if age > 30` trebuie să se afle în blocul respectiv de cod: nu putem combina aceste două condiții în `if let Ok(age) = age && age > 30`, căci variabila umbrită `age` pe care dorim să o comparăm cu 30 nu devine validă decât în momentul inițierii noului domeniu de vizibilitate cu acolada.
 
-The downside of using `if let` expressions is that the compiler doesn’t check
-for exhaustiveness, whereas with `match` expressions it does. If we omitted the
-last `else` block and therefore missed handling some cases, the compiler would
-not alert us to the possible logic bug.
+Un dezavantaj al folosirii `if let` este că compilatorul nu verifică exhaustivitatea, spre deosebire de expresiile `match`, care sunt verificate. Dacă am omite blocul `else` final, ratând astfel tratarea unor cazuri, compilatorul nu ne-ar semnala posibila greșeală de logică.
 
-### `while let` Conditional Loops
+### Bucle condiționale `while let`
 
-Similar in construction to `if let`, the `while let` conditional loop allows a
-`while` loop to run for as long as a pattern continues to match. In Listing
-18-2 we code a `while let` loop that uses a vector as a stack and prints the
-values in the vector in the opposite order in which they were pushed.
+Asemenea construcției `if let`, bucla condițională `while let` permite buclei `while` să fie executată cât timp un pattern continuă să fie potrivit. În Listarea 18-2, implementăm o buclă `while let` care folosește un vector ca stivă și afișează valorile din vector în ordinea inversă în care au fost introduse.
 
 ```rust
 {{#rustdoc_include ../listings/ch18-patterns-and-matching/listing-18-02/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 18-2: Using a `while let` loop to print values
-for as long as `stack.pop()` returns `Some`</span>
+<span class="caption">Listarea 18-2: Utilizarea unei bucle `while let` pentru a afișa valori atâta timp cât `stack.pop()` returnează `Some`</span>
 
-This example prints 3, 2, and then 1. The `pop` method takes the last element
-out of the vector and returns `Some(value)`. If the vector is empty, `pop`
-returns `None`. The `while` loop continues running the code in its block as
-long as `pop` returns `Some`. When `pop` returns `None`, the loop stops. We can
-use `while let` to pop every element off our stack.
+Acest exemplu afișează 3, 2 și apoi 1. Metoda `pop` înlătură ultimul element din vector și returnează `Some(value)`. Dacă vectorul este gol, `pop` returnează `None`. Bucala `while` continuă execuția codului din blocul său cât timp `pop` returnează `Some`. Când `pop` returnează `None`, bucla se oprește. Utilizăm `while let` pentru a elimina pe rând fiecare element din stiva noastră.
 
-### `for` Loops
+### Buclele `for`
 
-In a `for` loop, the value that directly follows the keyword `for` is a
-pattern. For example, in `for x in y` the `x` is the pattern. Listing 18-3
-demonstrates how to use a pattern in a `for` loop to destructure, or break
-apart, a tuple as part of the `for` loop.
+Într-o buclă `for`, valoarea care urmează imediat după cuvântul cheie `for` este un pattern. De exemplu, în `for x in y`, `x` este pattern-ul. Listarea 18-3 ne arată cum folosim un pattern într-o buclă `for` pentru a destructura o tuplă ca parte a execuției buclei `for`.
 
 ```rust
 {{#rustdoc_include ../listings/ch18-patterns-and-matching/listing-18-03/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 18-3: Using a pattern in a `for` loop to
-destructure a tuple</span>
+<span class="caption">Listarea 18-3: Utilizarea unui pattern într-o buclă `for` pentru a destrucura o tuplă</span>
 
-The code in Listing 18-3 will print the following:
+Codul din Listarea 18-3 va afișa următorul output:
 
 ```console
 {{#include ../listings/ch18-patterns-and-matching/listing-18-03/output.txt}}
 ```
 
-We adapt an iterator using the `enumerate` method so it produces a value and
-the index for that value, placed into a tuple. The first value produced is the
-tuple `(0, 'a')`. When this value is matched to the pattern `(index, value)`,
-`index` will be `0` and `value` will be `'a'`, printing the first line of the
-output.
+Modificăm un iterator cu metoda `enumerate` pentru ca acesta să ofere o valoare și indicele acelei valori într-o tuplă. Prima valoare generată este tupla `(0, 'a')`. Când această valoare potrivește cu pattern-ul `(index, value)`, `index` va fi `0`, iar `value` va fi `'a'`, ceea ce rezultă în afișarea primei linii a output-ului.
 
-### `let` Statements
+### Declarațiile `let`
 
-Prior to this chapter, we had only explicitly discussed using patterns with
-`match` and `if let`, but in fact, we’ve used patterns in other places as well,
-including in `let` statements. For example, consider this straightforward
-variable assignment with `let`:
+Până la acest capitol, am discutat explicit despre utilizarea pattern-urilor doar cu `match` și `if let`, dar de fapt, am aplicat pattern-uri și în alte contexte, inclusiv în declarațiile `let`. De exemplu, să luăm în considerare această atribuire simplă de variabilă cu `let`:
 
 ```rust
 let x = 5;
 ```
 
-Every time you've used a `let` statement like this you've been using patterns,
-although you might not have realized it! More formally, a `let` statement looks
-like this:
+De fiecare dată când ai utilizat o declarație `let` cum este aceasta, ai folosit pattern-uri, chiar dacă poate nu ai realizat acest lucru! Mai formal, o declarație `let` se prezintă în felul următor:
 
 ```text
 let PATTERN = EXPRESSION;
 ```
 
-In statements like `let x = 5;` with a variable name in the `PATTERN` slot, the
-variable name is just a particularly simple form of a pattern. Rust compares
-the expression against the pattern and assigns any names it finds. So in the
-`let x = 5;` example, `x` is a pattern that means “bind what matches here to
-the variable `x`.” Because the name `x` is the whole pattern, this pattern
-effectively means “bind everything to the variable `x`, whatever the value is.”
+În declarații precum `let x = 5;` cu un nume de variabilă în poziția `PATTERN`, numele variabilei este de fapt o formă extrem de simplificată de pattern. Rust corespunde expresia cu pattern-ul și atribuie orice nume identifică. Așadar, în exemplul `let x = 5;`, `x` este un pattern care înseamnă “asociază ce se potrivește aici variabilei `x`.” Întrucât `x` reprezintă întregul pattern, acesta de fapt înseamnă “asociază orice valoare variabilei `x`, indiferent de aceasta.”
 
-To see the pattern matching aspect of `let` more clearly, consider Listing
-18-4, which uses a pattern with `let` to destructure a tuple.
+Pentru a înțelege mai clar aspectul de potrivire de pattern într-o declarație `let`, să ne referim la Listarea 18-4, unde se utilizează un pattern cu `let` pentru a destructura o tuplă.
 
 ```rust
 {{#rustdoc_include ../listings/ch18-patterns-and-matching/listing-18-04/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 18-4: Using a pattern to destructure a tuple and
-create three variables at once</span>
 
-Here, we match a tuple against a pattern. Rust compares the value `(1, 2, 3)`
-to the pattern `(x, y, z)` and sees that the value matches the pattern, so Rust
-binds `1` to `x`, `2` to `y`, and `3` to `z`. You can think of this tuple
-pattern as nesting three individual variable patterns inside it.
+<span class="caption">Listarea 18-4: Utilizând un pattern pentru a destrucura o tuplă și a crea trei variabile simultan</span>
 
-If the number of elements in the pattern doesn’t match the number of elements
-in the tuple, the overall type won’t match and we’ll get a compiler error. For
-example, Listing 18-5 shows an attempt to destructure a tuple with three
-elements into two variables, which won’t work.
+În acest caz, se face un match între o tuplă și un pattern. Rust compară valoarea `(1, 2, 3)` cu pattern-ul `(x, y, z)` și observă că valoarea se potrivește cu pattern-ul, astfel Rust leagă `1` la `x`, `2` la `y`, și `3` la `z`. Acest pattern de tuplă poate fi văzut ca o compoziție a trei pattern-uri individuale de variabila.
+
+Dacă numărul elementelor din pattern nu se potrivește cu numărul elementelor din tuplă, tipul total nu va corespunde și vom întâlni o eroare de compilare. De exemplu, Listarea 18-5 prezintă o tentativă de a destructura o tuplă cu trei elemente în doar două variabile, ceea ce nu va funcționa.
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch18-patterns-and-matching/listing-18-05/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 18-5: Incorrectly constructing a pattern whose
-variables don’t match the number of elements in the tuple</span>
+<span class="caption">Listarea 18-5: Crearea incorectă a unui pattern în care variabilele nu corespund cu numărul de elemente din tuplă</span>
 
-Attempting to compile this code results in this type error:
+Încercarea de a compila acest cod rezultă în următoarea eroare de tip:
 
 ```console
 {{#include ../listings/ch18-patterns-and-matching/listing-18-05/output.txt}}
 ```
 
-To fix the error, we could ignore one or more of the values in the tuple using
-`_` or `..`, as you’ll see in the [“Ignoring Values in a
-Pattern”][ignoring-values-in-a-pattern]<!-- ignore --> section. If the problem
-is that we have too many variables in the pattern, the solution is to make the
-types match by removing variables so the number of variables equals the number
-of elements in the tuple.
+Pentru a rezolva eroarea, putem omite una sau mai multe valori ale tuplei folosind `_` sau `..`, cum vom vedea în secțiunea [„Ignorarea valorilor într-un pattern”][ignoring-values-in-a-pattern]<!-- ignore -->. Dacă problema este că avem prea multe variabile în pattern, soluția constă în a ajusta tipurile prin eliminarea variabilelor până când numărul de variabile este egal cu numărul elementelor din tuplă.
 
-### Function Parameters
+### Parametrii funcțiilor
 
-Function parameters can also be patterns. The code in Listing 18-6, which
-declares a function named `foo` that takes one parameter named `x` of type
-`i32`, should by now look familiar.
+Parametrii funcțiilor pot de asemenea să fie pattern-uri. Codul din Listarea 18-6, care declară o funcție denumită `foo` ce primește un parametru numit `x` de tip `i32`, ar trebui să ne fie acum cunoscut.
 
 ```rust
 {{#rustdoc_include ../listings/ch18-patterns-and-matching/listing-18-06/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 18-6: A function signature uses patterns in the
-parameters</span>
+<span class="caption">Listarea 18-6: O semnătură de funcție utilizează pattern-uri în parametri</span>
 
-The `x` part is a pattern! As we did with `let`, we could match a tuple in a
-function’s arguments to the pattern. Listing 18-7 splits the values in a tuple
-as we pass it to a function.
+Partea cu `x` reprezintă un pattern! Așa cum am procedat cu `let`, se poate potrivi o tuplă cu un pattern în argumentele unei funcții. Listarea 18-7 demonstrează despărțirea valorilor dintr-o tuplă pe când sunt transmise unei funcții.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch18-patterns-and-matching/listing-18-07/src/main.rs}}
 ```
 
-<span class="caption">Listing 18-7: A function with parameters that destructure
-a tuple</span>
+<span class="caption">Listarea 18-7: O funcție cu parametri ce destructurează o tuplă</span>
 
-This code prints `Current location: (3, 5)`. The values `&(3, 5)` match the
-pattern `&(x, y)`, so `x` is the value `3` and `y` is the value `5`.
+Acest fragment de cod afișează `Current location: (3, 5)`. Valorile `&(3, 5)` se potrivesc cu pattern-ul `&(x, y)`, astfel `x` devine valoarea `3` iar `y`, valoarea `5`.
 
-We can also use patterns in closure parameter lists in the same way as in
-function parameter lists, because closures are similar to functions, as
-discussed in Chapter 13.
+Putem folosi de asemenea și pattern-uri în listele de parametri ale închiderilor în mod similar cu listele de parametri ale funcțiilor, având în vedere că închiderile sunt asemănătoare cu funcțiile, așa cum am discutat în Capitolul 13.
 
-At this point, you’ve seen several ways of using patterns, but patterns don’t
-work the same in every place we can use them. In some places, the patterns must
-be irrefutable; in other circumstances, they can be refutable. We’ll discuss
-these two concepts next.
+Ajuns aici, am avut ocazia să vedem câteva metode de utilizare a pattern-urilor, însă acestea nu funcționează identic în toate locurile în care le putem folosi. În unele situații, pattern-urile trebuie să fie irefutabile, în timp ce în altele pot fi refutabile. Vom explora aceste două concepte în detaliu în continuare.
 
 [ignoring-values-in-a-pattern]:
 ch18-03-pattern-syntax.html#ignoring-values-in-a-pattern

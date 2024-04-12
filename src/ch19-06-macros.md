@@ -1,136 +1,61 @@
-## Macros
+## Macrocomenzi
 
-We’ve used macros like `println!` throughout this book, but we haven’t fully
-explored what a macro is and how it works. The term *macro* refers to a family
-of features in Rust: *declarative* macros with `macro_rules!` and three kinds
-of *procedural* macros:
+Pe parcursul acestei cărți, am utilizat macrocomenzi precum `println!`, dar nu am examinat îndeaproape ce reprezintă o macrocomandă și cum funcționează. Termenul *macrocomandă* se referă la o clasă de caracteristici în Rust: macrocomenzi *declarative* cu `macro_rules!` și trei tipuri de macrocomenzi *procedurale*:
 
-* Custom `#[derive]` macros that specify code added with the `derive` attribute
-  used on structs and enums
-* Attribute-like macros that define custom attributes usable on any item
-* Function-like macros that look like function calls but operate on the tokens
-  specified as their argument
+* Macrocomenzi `#[derive]` personalizate care specifică cod adăugat cu atributul `derive` utilizat la structuri și enumerări
+* Macrocomenzi similare atributelor ce definesc atribute personalizate aplicabile pe orice element
+* Macrocomenzi ce semănă cu funcțiile, care par a fi apeluri de funcții, dar operează pe token-uri specificate ca argumente
 
-We’ll talk about each of these in turn, but first, let’s look at why we even
-need macros when we already have functions.
+Vom discuta despre fiecare în parte, dar înainte de asta, să explorăm motivul pentru care avem nevoie de macrocomenzi, chiar dacă dispunem deja de funcții.
 
-### The Difference Between Macros and Functions
+### Diferența dintre macrocomenzi și funcții
 
-Fundamentally, macros are a way of writing code that writes other code, which
-is known as *metaprogramming*. In Appendix C, we discuss the `derive`
-attribute, which generates an implementation of various traits for you. We’ve
-also used the `println!` and `vec!` macros throughout the book. All of these
-macros *expand* to produce more code than the code you’ve written manually.
+La baza lor, macrocomenzile sunt un mod de a scrie cod ce generează alt cod, proces cunoscut ca *metaprogramare*. În Anexa C, discutăm atributul `derive`, care produce implementări automatizate pentru diferite trăsături. De asemenea, am folosit macrocomenzile `println!` și `vec!` prin întreaga carte. Toate aceste macrocomenzi *se desfășoară* pentru a crea mai mult cod decât cel scris de tine manual.
 
-Metaprogramming is useful for reducing the amount of code you have to write and
-maintain, which is also one of the roles of functions. However, macros have
-some additional powers that functions don’t.
+Metaprogramarea este eficientă în reducerea cantității de cod pe care trebuie să o scrii și să o menții, un rol pe care îl joacă și funcțiile. Totuși, macrocomenzile au anumite capabilități suplimentare față de funcții.
 
-A function signature must declare the number and type of parameters the
-function has. Macros, on the other hand, can take a variable number of
-parameters: we can call `println!("hello")` with one argument or
-`println!("hello {}", name)` with two arguments. Also, macros are expanded
-before the compiler interprets the meaning of the code, so a macro can, for
-example, implement a trait on a given type. A function can’t, because it gets
-called at runtime and a trait needs to be implemented at compile time.
+Semnătura unei funcții trebuie să indice numărul și tipurile de parametrii pe care funcția îi acceptă. Macrocomenzile, în schimb, pot accepta un număr variabil de parametri: putem invoca `println!("hello")` cu un singur argument sau `println!("hello {}", name)` cu două argumente. Mai mult, macrocomenzile sunt desfășurate înaintea interpretării codului de către compilator, așa că o macrocomandă poate să implementeze o trăsătură pentru un anumit tip, spre deosebire de funcții, care sunt apelate în timpul execuției și nu pot implementa trăsături, ce trebuie definite în timpul compilării.
 
-The downside to implementing a macro instead of a function is that macro
-definitions are more complex than function definitions because you’re writing
-Rust code that writes Rust code. Due to this indirection, macro definitions are
-generally more difficult to read, understand, and maintain than function
-definitions.
+Un dezavantaj al utilizării macrocomenzilor în locul funcțiilor este că definițiile de macrocomenzi pot fi mai complexe decât cele ale funcțiilor, deoarece scrim cod Rust care generează cod Rust. Acest nivel suplimentar de abstractizare face ca definițiile de macrocomenzi să fie mai greu de citit, de înțeles și de întreținut decât cele ale funcțiilor.
 
-Another important difference between macros and functions is that you must
-define macros or bring them into scope *before* you call them in a file, as
-opposed to functions you can define anywhere and call anywhere.
+O altă diferență semnificativă între macrocomenzi și funcții este că macrocomenzile trebuie definite sau aduse în domeniul de vizibilitate *înaintea* utilizării lor într-un fișier, spre deosebire de funcții, care pot fi definite oriunde și apelate în orice loc din cod.
 
-### Declarative Macros with `macro_rules!` for General Metaprogramming
+### Macrocomenzi declarative cu `macro_rules!` pentru metaprogramare generală
 
-The most widely used form of macros in Rust is the *declarative macro*. These
-are also sometimes referred to as “macros by example,” “`macro_rules!` macros,”
-or just plain “macros.” At their core, declarative macros allow you to write
-something similar to a Rust `match` expression. As discussed in Chapter 6,
-`match` expressions are control structures that take an expression, compare the
-resulting value of the expression to patterns, and then run the code associated
-with the matching pattern. Macros also compare a value to patterns that are
-associated with particular code: in this situation, the value is the literal
-Rust source code passed to the macro; the patterns are compared with the
-structure of that source code; and the code associated with each pattern, when
-matched, replaces the code passed to the macro. This all happens during
-compilation.
+Forma de macrocomandă cea mai des utilizată în Rust este *macrocomanda declarativă*. Acestea sunt cunoscute și ca „macrocomenzi prin exemplu”, „macrocomenzi `macro_rules!`”, sau simplu, „macrocomenzi”. La baza lor, macrocomenzile declarative ne permit să scrim ceva similar unei expresii Rust `match`. După cum am discutat în Capitolul 6, expresiile `match` sunt structuri de control care evaluează o expresie, compară valoarea rezultată cu pattern-uri, și execută codul asociat cu pattern-ul corespunzător. Macrocomenzile compară, de asemenea, o valoare cu pattern-uri ce sunt asociate cu anumite secțiuni de cod: în această situație, valoarea este codul sursă Rust literal transmis macrocomenzii; pattern-urile sunt comparate cu structura acelui cod sursă, iar codul asociat fiecărui pattern corespunzător înlocuiește codul inițial transmis macrocomenzii. Tot acest proces are loc în timpul compilării.
 
-To define a macro, you use the `macro_rules!` construct. Let’s explore how to
-use `macro_rules!` by looking at how the `vec!` macro is defined. Chapter 8
-covered how we can use the `vec!` macro to create a new vector with particular
-values. For example, the following macro creates a new vector containing three
-integers:
+Pentru a defini o macrocomandă, folosim construcția `macro_rules!`. Să explorăm cum se utilizează `macro_rules!`, prin a examina cum este definită macrocomanda `vec!`. Capitolul 8 a discutat cum putem folosi macrocomanda `vec!` pentru a inițializa un vector nou cu valori specifice. Spre exemplu, macrocomanda următoare creează un vector nou ce conține trei numere întregi de tip `u32`:
 
 ```rust
 let v: Vec<u32> = vec![1, 2, 3];
 ```
 
-We could also use the `vec!` macro to make a vector of two integers or a vector
-of five string slices. We wouldn’t be able to use a function to do the same
-because we wouldn’t know the number or type of values up front.
+Macrocomanda `vec!` poate fi folosită de asemenea pentru a crea un vector cu două numere întregi sau un vector cu cinci secțiuni de string. Nu am putea realiza aceeași funcționalitate folosind o funcție, deoarece nu am ști numărul sau tipurile valorilor dinainte.
 
-Listing 19-28 shows a slightly simplified definition of the `vec!` macro.
-
+Listarea 19-28 prezintă o variantă simplificată a definiției macrocomenzii `vec!`.
 <span class="filename">Filename: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-28/src/lib.rs}}
 ```
 
-<span class="caption">Listing 19-28: A simplified version of the `vec!` macro
-definition</span>
+<span class="caption">Listarea 19-28: O versiune simplificată a definiției macrocomenzii `vec!`</span>
 
-> Note: The actual definition of the `vec!` macro in the standard library
-> includes code to preallocate the correct amount of memory up front. That code
-> is an optimization that we don’t include here to make the example simpler.
+Adnotarea `#[macro_export]` indică faptul că această macrocomandă trebuie să fie disponibilă de îndată ce crate-ul în care a fost definită este adus în domeniul de vizibilitate. În lipsa acestei adnotări, macrocomanda nu ar putea fi adusă în domeniul de vizibilitate.
 
-The `#[macro_export]` annotation indicates that this macro should be made
-available whenever the crate in which the macro is defined is brought into
-scope. Without this annotation, the macro can’t be brought into scope.
+Inițiem definiția de macrocomandă cu `macro_rules!` și numele macrocomenzii care se definește *fără* semnul de exclamare. În exemplul nostru, numele este `vec`, și este urmat de acolade care trasează granițele corpului definiției macrocomenzii.
 
-We then start the macro definition with `macro_rules!` and the name of the
-macro we’re defining *without* the exclamation mark. The name, in this case
-`vec`, is followed by curly brackets denoting the body of the macro definition.
+Structura din corpul `vec!` seamănă cu cea a unei expresii `match`. În acest caz, avem o singură ramură cu pattern-ul `( $( $x:expr ),* )`, urmat de `=>` și blocul de cod asociat acestui pattern. Când pattern-ul corespunde, blocul de cod corespondent este generat. Deoarece acesta este singurul pattern din macrocomandă, aceasta este singura formă de pattern acceptată; orice altă formă va cauza o eroare. Macrocomenzile mai complexe pot avea mai multe ramuri.
 
-The structure in the `vec!` body is similar to the structure of a `match`
-expression. Here we have one arm with the pattern `( $( $x:expr ),* )`,
-followed by `=>` and the block of code associated with this pattern. If the
-pattern matches, the associated block of code will be emitted. Given that this
-is the only pattern in this macro, there is only one valid way to match; any
-other pattern will result in an error. More complex macros will have more than
-one arm.
+Sintaxa pattern-urilor valide în definiţiile macrocomenzilor este diferită de sintaxa pattern-urilor discutate în Capitolul 18, deoarece pattern-urile macro se potrivesc cu structura codului Rust, nu cu valorile. Să explorăm semnificația componentelor pattern-ului din Listarea 19-28; pentru ințelegerea completa a sintaxei pattern-urilor de macrocomandă, consultați [Referința Rust][ref].
 
-Valid pattern syntax in macro definitions is different than the pattern syntax
-covered in Chapter 18 because macro patterns are matched against Rust code
-structure rather than values. Let’s walk through what the pattern pieces in
-Listing 19-28 mean; for the full macro pattern syntax, see the [Rust
-Reference][ref].
+Mai întâi, folosim un set de paranteze pentru a înconjura întreg pattern-ul. Utilizăm un semn dolar (`$`) pentru a declara o variabilă în sistemul de macrocomenzi care va conține codul Rust ce corespunde pattern-ului. Semnul dolar face clară distincția că aceasta este o variabilă de macrocomandă și nu una Rust obișnuită. Apoi vine un set de paranteze care captează valorile ce se potrivesc cu pattern-ul din interiorul parantezelor pentru utilizare în codul substituit. În cadrul `$()` este `$x:expr`, care se potrivește cu orice expresie Rust și îi atribuie expresiei numele `$x`.
 
-First, we use a set of parentheses to encompass the whole pattern. We use a
-dollar sign (`$`) to declare a variable in the macro system that will contain
-the Rust code matching the pattern. The dollar sign makes it clear this is a
-macro variable as opposed to a regular Rust variable. Next comes a set of
-parentheses that captures values that match the pattern within the parentheses
-for use in the replacement code. Within `$()` is `$x:expr`, which matches any
-Rust expression and gives the expression the name `$x`.
+Virgula de după `$()` indică faptul că un caracter separator literal de virgulă poate apărea opțional după codul care se potrivește în `$()`. Simbolul `*` indică că pattern-ul se aplică de zero sau mai multe ori pentru orice precede `*`.
 
-The comma following `$()` indicates that a literal comma separator character
-could optionally appear after the code that matches the code in `$()`. The `*`
-specifies that the pattern matches zero or more of whatever precedes the `*`.
+Când apelăm această macrocomandă folosind `vec![1, 2, 3];`, pattern-ul `$x` se aplică de trei ori pentru cele trei expresii `1`, `2` și `3`.
 
-When we call this macro with `vec![1, 2, 3];`, the `$x` pattern matches three
-times with the three expressions `1`, `2`, and `3`.
-
-Now let’s look at the pattern in the body of the code associated with this arm:
-`temp_vec.push()` within `$()*` is generated for each part that matches `$()`
-in the pattern zero or more times depending on how many times the pattern
-matches. The `$x` is replaced with each expression matched. When we call this
-macro with `vec![1, 2, 3];`, the code generated that replaces this macro call
-will be the following:
+Acum să analizăm pattern-ul din corpul codului asociat cu acest segment: `temp_vec.push()` generat în `$()*` se produce pentru fiecare element care corespunde cu `$()` în pattern, de zero ori sau mai multe, în funcție de numărul de potriviri ale pattern-ului. Variabila `$x` este înlocuită cu fiecare expresie potrivită. Apelarea acestei macrocomenzi cu `vec![1, 2, 3];`, generează următorul cod care substituie apelul macrocomenzii:
 
 ```rust,ignore
 {
@@ -142,29 +67,17 @@ will be the following:
 }
 ```
 
-We’ve defined a macro that can take any number of arguments of any type and can
-generate code to create a vector containing the specified elements.
+Am definit o macrocomandă care poate accepta orice număr de argumente de orice tip și poate genera cod pentru crearea unui vector care conține elementele indicate.
 
-To learn more about how to write macros, consult the online documentation or
-other resources, such as [“The Little Book of Rust Macros”][tlborm] started by
-Daniel Keep and continued by Lukas Wirth.
+Pentru a învăța mai multe despre cum se scriu macrocomenzile, consultă documentația online sau alte resurse, precum [„The Little Book of Rust Macros”][tlborm] inițiat de Daniel Keep și continuat de Lukas Wirth.
 
-### Procedural Macros for Generating Code from Attributes
+### Macrocomenzi procedurale pentru generarea de cod din atribute
 
-The second form of macros is the *procedural macro*, which acts more like a
-function (and is a type of procedure). Procedural macros accept some code as an
-input, operate on that code, and produce some code as an output rather than
-matching against patterns and replacing the code with other code as declarative
-macros do. The three kinds of procedural macros are custom derive,
-attribute-like, and function-like, and all work in a similar fashion.
+A doua categorie de macrocomenzi este *macrocomanda procedurală*, care funcționează mai mult ca o funcție (fiind un tip de procedură). Macrocomenzile procedurale primesc un cod ca intrare, îl prelucrează și generează cod ca ieșire, spre deosebire de macrocomenzile declarative, care se bazează pe potrivirea de pattern-uri și înlocuirea codului cu altul. Există trei tipuri de macrocomenzi procedurale: "custom derive", "attribute-like" și "function-like", toate având o modalitate de operare asemănătoare.
 
-When creating procedural macros, the definitions must reside in their own crate
-with a special crate type. This is for complex technical reasons that we hope
-to eliminate in the future. In Listing 19-29, we show how to define a
-procedural macro, where `some_attribute` is a placeholder for using a specific
-macro variety.
+Când dezvoltăm macrocomenzi procedurale, acestea trebuie să fie plasate în propriul lor crate, de un tip special. Acest lucru se datorează unor motive tehnice complexe care sperăm să fie rezolvate în viitor. În Exemplul 19-29, putem vedea cum se definește o macrocomandă procedurală, unde `some_attribute` servește drept loc pentru un anumit tip de macrocomandă.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore
 use proc_macro;
@@ -174,110 +87,66 @@ pub fn some_name(input: TokenStream) -> TokenStream {
 }
 ```
 
-<span class="caption">Listing 19-29: An example of defining a procedural
-macro</span>
+<span class="caption">Exemplu 19-29: Definirea unei macrocomenzi procedurale</span>
 
-The function that defines a procedural macro takes a `TokenStream` as an input
-and produces a `TokenStream` as an output. The `TokenStream` type is defined by
-the `proc_macro` crate that is included with Rust and represents a sequence of
-tokens. This is the core of the macro: the source code that the macro is
-operating on makes up the input `TokenStream`, and the code the macro produces
-is the output `TokenStream`. The function also has an attribute attached to it
-that specifies which kind of procedural macro we’re creating. We can have
-multiple kinds of procedural macros in the same crate.
+Funcția care definește o macrocomandă procedurală primește un `TokenStream` ca intrare și returnează un `TokenStream`. Tipul `TokenStream` este definit de crate-ul `proc_macro`, inclus în Rust, și reprezintă o secvență de token-uri. Acesta este nucleul macrocomenzii: codul sursă asupra căruia operează macrocomanda constituie `TokenStream`-ul de intrare, iar codul generat de macrocomandă este `TokenStream`-ul de ieșire. Funcția are, de asemenea, un atribut atașat care specifică ce fel de macrocomandă procedurală este creată. Putem defini mai multiple varietăți de macrocomenzi procedurale în același crate.
 
-Let’s look at the different kinds of procedural macros. We’ll start with a
-custom derive macro and then explain the small dissimilarities that make the
-other forms different.
+Să explorăm diferitele feluri de macrocomenzi procedurale. Începem cu macrocomanda de tip "custom derive" și apoi vom clarifica subtilele diferențe care disting celelalte forme.
 
-### How to Write a Custom `derive` Macro
+### Cum să scrii o macrocomandă `derive` personalizată
 
-Let’s create a crate named `hello_macro` that defines a trait named
-`HelloMacro` with one associated function named `hello_macro`. Rather than
-making our users implement the `HelloMacro` trait for each of their types,
-we’ll provide a procedural macro so users can annotate their type with
-`#[derive(HelloMacro)]` to get a default implementation of the `hello_macro`
-function. The default implementation will print `Hello, Macro! My name is
-TypeName!` where `TypeName` is the name of the type on which this trait has
-been defined. In other words, we’ll write a crate that enables another
-programmer to write code like Listing 19-30 using our crate.
+Să creăm un crate numit `hello_macro` care definește o trăsătură numită `HelloMacro` cu o funcție asociată numită `hello_macro`. În loc să-i cerem fiecărui utilizator să implementeze trăsătura `HelloMacro` pentru tipurile lor, vom furniza o macrocomandă procedurală care permite utilizatorilor să adnoteze tipurile lor cu `#[derive(HelloMacro)]` și astfel să obțină o implementare implicită a funcției `hello_macro`. Această implementare implicită va afișa `Hello, Macro! Numele meu este TypeName!`, unde `TypeName` este numele tipului pentru care a fost definită trăsătura. Cu alte cuvinte, scriem un crate care permite unui alt programator să scrie codul prezentat în Listarea 19-30 folosind crate-ul nostru.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-30/src/main.rs}}
+...
 ```
 
-<span class="caption">Listing 19-30: The code a user of our crate will be able
-to write when using our procedural macro</span>
+<span class="caption">Listarea 19-30: Codul pe care un utilizator al crate-ului nostru îl poate scrie utilizând macrocomanda noastră procedurală</span>
 
-This code will print `Hello, Macro! My name is Pancakes!` when we’re done. The
-first step is to make a new library crate, like this:
+Acest cod va afișa `Hello, Macro! My name is Pancakes!` când încheiem. Primul pas este să creăm un nou crate de tip bibliotecă, așa:
 
 ```console
 $ cargo new hello_macro --lib
 ```
 
-Next, we’ll define the `HelloMacro` trait and its associated function:
+Apoi, vom defini trăsătura `HelloMacro` și funcția sa asociată:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch19-advanced-features/no-listing-20-impl-hellomacro-for-pancakes/hello_macro/src/lib.rs}}
 ```
 
-We have a trait and its function. At this point, our crate user could implement
-the trait to achieve the desired functionality, like so:
+Avem o trăsătură și funcția ei. În acest moment, utilizatorul nostru ar putea să implementeze trăsătura pentru a obține funcționalitatea dorită, în următorul mod:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch19-advanced-features/no-listing-20-impl-hellomacro-for-pancakes/pancakes/src/main.rs}}
 ```
 
-However, they would need to write the implementation block for each type they
-wanted to use with `hello_macro`; we want to spare them from having to do this
-work.
+Însă, ar trebui să redacteze blocul de implementare pentru fiecare tip pe care doresc să-l utilizeze împreună cu `hello_macro`; scopul nostru este să-i scutim de acest efort.
 
-Additionally, we can’t yet provide the `hello_macro` function with default
-implementation that will print the name of the type the trait is implemented
-on: Rust doesn’t have reflection capabilities, so it can’t look up the type’s
-name at runtime. We need a macro to generate code at compile time.
+În plus, în momentul de față nu putem oferi funcției `hello_macro` o implementare implicită care să afișeze numele tipului pe care este implementată trăsătura: Rust nu dispune de facilități de reflecție, deci nu poate determina numele tipului în timpul rulării. Avem nevoie de o macrocomandă care să genereze cod în timpul compilării.
 
-The next step is to define the procedural macro. At the time of this writing,
-procedural macros need to be in their own crate. Eventually, this restriction
-might be lifted. The convention for structuring crates and macro crates is as
-follows: for a crate named `foo`, a custom derive procedural macro crate is
-called `foo_derive`. Let’s start a new crate called `hello_macro_derive` inside
-our `hello_macro` project:
+Următorul pas este să definim macrocomanda procedurală. La momentul redactării acestei cărți, macrocomenzile procedurale trebuie să fie în propriul lor crate. Este posibil ca în viitor această restricție să fie eliminată. Convenția pentru crate-urile structurale și  crate-urile de macrocomenzi este următoarea: pentru un crate denumit `foo`, un crate de macrocomandă procedurală custom derive este denumit `foo_derive`. Să începem un nou crate numit `hello_macro_derive` în interiorul proiectului nostru `hello_macro`:
 
 ```console
 $ cargo new hello_macro_derive --lib
 ```
 
-Our two crates are tightly related, so we create the procedural macro crate
-within the directory of our `hello_macro` crate. If we change the trait
-definition in `hello_macro`, we’ll have to change the implementation of the
-procedural macro in `hello_macro_derive` as well. The two crates will need to
-be published separately, and programmers using these crates will need to add
-both as dependencies and bring them both into scope. We could instead have the
-`hello_macro` crate use `hello_macro_derive` as a dependency and re-export the
-procedural macro code. However, the way we’ve structured the project makes it
-possible for programmers to use `hello_macro` even if they don’t want the
-`derive` functionality.
+Cele două crate-uri sunt strâns legate, așadar creăm crate-ul de macrocomandă procedurală în directoriul crate-ului nostru `hello_macro`. Dacă modificăm definiția trăsăturii în `hello_macro`, va trebui să ajustăm și implementarea macrocomenzii procedurale în `hello_macro_derive`. Cele două crate-uri trebuie publicate separat, iar programatorii care utilizează aceste crate-uri trebuie să le adauge pe amândouă ca dependențe și să le includă în domeniul de vizibilitate. Totuși, am putea face ca `hello_macro` să folosească `hello_macro_derive` ca dependență și să reexporte codul macrocomenzii procedurale. Cu toate acestea, modul în care am structurat proiectul permite programatorilor să folosească `hello_macro` chiar și dacă nu doresc funcționalitatea `derive`.
 
-We need to declare the `hello_macro_derive` crate as a procedural macro crate.
-We’ll also need functionality from the `syn` and `quote` crates, as you’ll see
-in a moment, so we need to add them as dependencies. Add the following to the
-*Cargo.toml* file for `hello_macro_derive`:
+Este necesar să declarăm crate-ul `hello_macro_derive` drept un crate de macrocomandă procedurală. De asemenea, avem nevoie de funcționalități din crate-urile `syn` și `quote`, așa cum vom vedea în curând, deci trebuie să le aducem ca dependențe. Adăugăm următoarele în fișierul *Cargo.toml* pentru `hello_macro_derive`:
 
-<span class="filename">Filename: hello_macro_derive/Cargo.toml</span>
+<span class="filename">Numele fișierului: hello_macro_derive/Cargo.toml</span>
 
 ```toml
 {{#include ../listings/ch19-advanced-features/listing-19-31/hello_macro/hello_macro_derive/Cargo.toml:6:12}}
 ```
 
-To start defining the procedural macro, place the code in Listing 19-31 into
-your *src/lib.rs* file for the `hello_macro_derive` crate. Note that this code
-won’t compile until we add a definition for the `impl_hello_macro` function.
+Pentru a începe definirea macrocomenzii procedurale, introducem codul din Listarea 19-31 în fișierul nostru *src/lib.rs* pentru crate-ul `hello_macro_derive`. Acest cod nu va compila până când nu adăugăm o definiție pentru funcția `impl_hello_macro`.
 
 <span class="filename">Filename: hello_macro_derive/src/lib.rs</span>
 
@@ -285,41 +154,17 @@ won’t compile until we add a definition for the `impl_hello_macro` function.
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-31/hello_macro/hello_macro_derive/src/lib.rs}}
 ```
 
-<span class="caption">Listing 19-31: Code that most procedural macro crates
-will require in order to process Rust code</span>
+<span class="caption">Listarea 19-31: Codul necesar majorității crate-urilor de macrocomenzi procedurale pentru a prelucra cod Rust</span>
 
-Notice that we’ve split the code into the `hello_macro_derive` function, which
-is responsible for parsing the `TokenStream`, and the `impl_hello_macro`
-function, which is responsible for transforming the syntax tree: this makes
-writing a procedural macro more convenient. The code in the outer function
-(`hello_macro_derive` in this case) will be the same for almost every
-procedural macro crate you see or create. The code you specify in the body of
-the inner function (`impl_hello_macro` in this case) will be different
-depending on your procedural macro’s purpose.
+Am observat că am divizat codul în funcția `hello_macro_derive`, care este responsabilă cu analiza `TokenStream`, și în funcția `impl_hello_macro`, care gestionează transformarea arborelui sintactic: aceasta ușurează procesul de scriere a unei macrocomenzi procedurale. Codul din funcția exterioară (`hello_macro_derive`, în acest caz) va fi același pentru majoritatea crate-urilor de macrocomenzi procedurale întâlnite sau create. Însă, codul din interiorul funcției interne (`impl_hello_macro`, în acest caz) se va modifica în funcție de scopul final al macrocomenzii procedurale respective.
 
-We’ve introduced three new crates: `proc_macro`, [`syn`], and [`quote`]. The
-`proc_macro` crate comes with Rust, so we didn’t need to add that to the
-dependencies in *Cargo.toml*. The `proc_macro` crate is the compiler’s API that
-allows us to read and manipulate Rust code from our code.
+Am aflat de trei crate-uri noi: `proc_macro`, [`syn`] și [`quote`]. Crate-ul `proc_macro` este furnizat odată cu Rust, așadar nu a fost necesar să îl adăugăm în *Cargo.toml* la dependențe. Crate-ul `proc_macro` constituie API-ul compilatorului care ne permite să citim și să modificăm codul Rust din cadrul codului nostru.
 
-The `syn` crate parses Rust code from a string into a data structure that we
-can perform operations on. The `quote` crate turns `syn` data structures back
-into Rust code. These crates make it much simpler to parse any sort of Rust
-code we might want to handle: writing a full parser for Rust code is no simple
-task.
+Crate-ul `syn` transformă codul Rust dintr-un string într-o structură de date pe care putem aplica operațiuni. Crate-ul `quote` reconstruiește structuri de date `syn` în cod Rust. Utilizarea acestor crate-uri simplifică semnificativ procesul de parsare a diferitelor tipuri de cod Rust pe care dorim să le gestionăm: construirea unui parser complet pentru Rust reprezintă o provocare considerabilă.
 
-The `hello_macro_derive` function will be called when a user of our library
-specifies `#[derive(HelloMacro)]` on a type. This is possible because we’ve
-annotated the `hello_macro_derive` function here with `proc_macro_derive` and
-specified the name `HelloMacro`, which matches our trait name; this is the
-convention most procedural macros follow.
+Funcția `hello_macro_derive` este activată când un utilizator al bibliotecii noastre adaugă `#[derive(HelloMacro)]` la un tip. Posibilitatea aceasta se datorează faptului că am marcat funcția `hello_macro_derive` cu `proc_macro_derive` și i-am atribuit numele `HelloMacro`, concordând cu numele trăsăturii noastre, urmând astfel convenția adoptată de majoritatea macrocomenzilor procedurale.
 
-The `hello_macro_derive` function first converts the `input` from a
-`TokenStream` to a data structure that we can then interpret and perform
-operations on. This is where `syn` comes into play. The `parse` function in
-`syn` takes a `TokenStream` and returns a `DeriveInput` struct representing the
-parsed Rust code. Listing 19-32 shows the relevant parts of the `DeriveInput`
-struct we get from parsing the `struct Pancakes;` string:
+Funcția `hello_macro_derive` începe prin a converti `input`-ul dintr-un `TokenStream` într-o structură de date care ulterior poate fi interpretată și manipulată. Acest proces implică biblioteca `syn`. Metoda `parse` de la `syn` primește un `TokenStream` și generează o structură `DeriveInput`, care reprezintă codul Rust parsat. Listarea 19-32 ne arată părțile relevante ale structurii `DeriveInput` pe care o primim atunci când analizăm șirul `struct Pancakes;`:
 
 ```rust,ignore
 DeriveInput {
@@ -341,168 +186,86 @@ DeriveInput {
 }
 ```
 
-<span class="caption">Listing 19-32: The `DeriveInput` instance we get when
-parsing the code that has the macro’s attribute in Listing 19-30</span>
+<span class="caption">Listarea 19-32: Instanța `DeriveInput` pe care o primim în urma parsării codului ce conține atributul macrocomenzii din Listarea 19-30</span>
 
-The fields of this struct show that the Rust code we’ve parsed is a unit struct
-with the `ident` (identifier, meaning the name) of `Pancakes`. There are more
-fields on this struct for describing all sorts of Rust code; check the [`syn`
-documentation for `DeriveInput`][syn-docs] for more information.
+Câmpurile acestei structuri ne indică faptul că codul Rust analizat este un struct de tip unitar cu identificatorul `ident` având numele `Pancakes`. Structura include mai multe câmpuri pentru descrierea diverselor tipuri de coduri Rust; pentru informații suplimentare consultă documentația `syn` referitoare la `DeriveInput`.
 
-Soon we’ll define the `impl_hello_macro` function, which is where we’ll build
-the new Rust code we want to include. But before we do, note that the output
-for our derive macro is also a `TokenStream`. The returned `TokenStream` is
-added to the code that our crate users write, so when they compile their crate,
-they’ll get the extra functionality that we provide in the modified
-`TokenStream`.
+În curând, vom defini funcția `impl_hello_macro`, acolo unde vom crea noul cod Rust pe care dorim să-l integram. Însă înainte de acest pas, este important de reținut că ieșirea macrocomenzii noastre derivate este, de asemenea, un `TokenStream`. Acest `TokenStream` returnat este inclus în codul scris de utilizatorii crate-ului nostru, astfel încât, atunci când compilează crate-ul, acesta va include funcționalitățile suplimentare pe care le furnizăm noi prin intermediul `TokenStream` modificat.
 
-You might have noticed that we’re calling `unwrap` to cause the
-`hello_macro_derive` function to panic if the call to the `syn::parse` function
-fails here. It’s necessary for our procedural macro to panic on errors because
-`proc_macro_derive` functions must return `TokenStream` rather than `Result` to
-conform to the procedural macro API. We’ve simplified this example by using
-`unwrap`; in production code, you should provide more specific error messages
-about what went wrong by using `panic!` or `expect`.
+Poate ai observat că utilizăm `unwrap` care va declanșa o panică în funcția `hello_macro_derive` dacă apelul la funcția `syn::parse` nu reușește. Această abordare este necesară deoarece macrocomenzile procedurale trebuie să genereze panică în caz de erori, având în vedere că funcțiile `proc_macro_derive` trebuie să returneze `TokenStream` în loc de `Result` pentru a fi conforme cu interfața API de macrocomenzi procedurale. Acest exemplu a fost simplificat prin utilizarea lui `unwrap`; într-un cod destinat producției, ar trebui să oferim mesaje de eroare mai detaliate cu privire la natura problemei folosind `panic!` sau `expect`.
 
-Now that we have the code to turn the annotated Rust code from a `TokenStream`
-into a `DeriveInput` instance, let’s generate the code that implements the
-`HelloMacro` trait on the annotated type, as shown in Listing 19-33.
+Acum că avem codul pentru conversia codului Rust adnotat de la un `TokenStream` la o instanță de tip `DeriveInput`, să trecem la generarea codului care implementează trăsătura `HelloMacro` pe tipul adnotat, conform exemplului din Listarea 19-33.
 
-<span class="filename">Filename: hello_macro_derive/src/lib.rs</span>
+<span class="filename">Numele fișierului: hello_macro_derive/src/lib.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-33/hello_macro/hello_macro_derive/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 19-33: Implementing the `HelloMacro` trait using
-the parsed Rust code</span>
+<span class="caption">Listarea 19-33: Implementarea trăsăturii `HelloMacro` utilizând codul Rust parsat</span>
 
-We get an `Ident` struct instance containing the name (identifier) of the
-annotated type using `ast.ident`. The struct in Listing 19-32 shows that when
-we run the `impl_hello_macro` function on the code in Listing 19-30, the
-`ident` we get will have the `ident` field with a value of `"Pancakes"`. Thus,
-the `name` variable in Listing 19-33 will contain an `Ident` struct instance
-that, when printed, will be the string `"Pancakes"`, the name of the struct in
-Listing 19-30.
+Prin intermediul `ast.ident` obținem o instanță de tip `Ident` care include numele (identificatorul) tipului adnotat. Structura prezentată în Listarea 19-32 ne demonstrează că, atunci când executăm funcția `impl_hello_macro` asupra codului din Listarea 19-30, `ident`-ul obținut va avea câmpul `ident` cu valoarea `"Pancakes"`. Deci, variabila `name` din Listarea 19-33 va conține o structură de tip `Ident` care, când va fi afișată, va rezulta în string-ul `"Pancakes"`, numele structurii din Listarea 19-30.
 
-The `quote!` macro lets us define the Rust code that we want to return. The
-compiler expects something different to the direct result of the `quote!`
-macro’s execution, so we need to convert it to a `TokenStream`. We do this by
-calling the `into` method, which consumes this intermediate representation and
-returns a value of the required `TokenStream` type.
+Macrocomanda `quote!` ne facilitează definirea codului Rust pe care dorim să îl returnăm. Compilatorul așteaptă o formă diferită în comparație cu rezultatul direct al executării macrocomenzii `quote!`, astfel că este necesar să o convertim în `TokenStream`. Acest lucru se realizează apelând metoda `into`, care transformă această reprezentare intermediară într-o valoare de tipul necesar `TokenStream`.
 
-The `quote!` macro also provides some very cool templating mechanics: we can
-enter `#name`, and `quote!` will replace it with the value in the variable
-`name`. You can even do some repetition similar to the way regular macros work.
-Check out [the `quote` crate’s docs][quote-docs] for a thorough introduction.
+Macrocomanda `quote!` oferă, de asemenea, mecanisme de șabloane extrem de utile: dacă inserăm `#name`, `quote!` va substitui acesta cu valoarea din variabila `name`. Se pot realiza chiar repetiții similare cu cea a macrocomenzilor obișnuite. Pentru o înțelegere detaliată, vezi [documentația crate-ului `quote`][quote-docs].
 
-We want our procedural macro to generate an implementation of our `HelloMacro`
-trait for the type the user annotated, which we can get by using `#name`. The
-trait implementation has the one function `hello_macro`, whose body contains the
-functionality we want to provide: printing `Hello, Macro! My name is` and then
-the name of the annotated type.
+Dorim ca macrocomanda noastră procedurală să creeze o implementare a trăsăturii `HelloMacro` pentru tipul adnotat de utilizator, lucru pe care îl obținem utilizând `#name`. Implementarea respectivei trăsături conține funcția `hello_macro`, al cărei corp include funcționalitatea pe care dorim să o oferim: afișarea mesajului `Hello, Macro! My name is` urmat de numele tipului adnotat.
 
-The `stringify!` macro used here is built into Rust. It takes a Rust
-expression, such as `1 + 2`, and at compile time turns the expression into a
-string literal, such as `"1 + 2"`. This is different than `format!` or
-`println!`, macros which evaluate the expression and then turn the result into
-a `String`. There is a possibility that the `#name` input might be an
-expression to print literally, so we use `stringify!`. Using `stringify!` also
-saves an allocation by converting `#name` to a string literal at compile time.
+Macrocomanda `stringify!`, ce este utilizată aici, este integrată direct în Rust. Ea preia o expresie Rust, cum ar fi `1 + 2`, și o transformă într-un string literal la timpul de compilare, precum `"1 + 2"`. Aceasta diferă de macrocomenzile `format!` sau `println!`, care evaluează expresia și apoi convertesc rezultatul în `String`. Având în vedere că intrarea `#name` ar putea fi o expresie ce trebuie tipărită literal, folosim `stringify!`. Folosirea `stringify!` economisește de asemenea o alocare, convertind `#name` într-un string literal încă din timpul compilării.
 
-At this point, `cargo build` should complete successfully in both `hello_macro`
-and `hello_macro_derive`. Let’s hook up these crates to the code in Listing
-19-30 to see the procedural macro in action! Create a new binary project in
-your *projects* directory using `cargo new pancakes`. We need to add
-`hello_macro` and `hello_macro_derive` as dependencies in the `pancakes`
-crate’s *Cargo.toml*. If you’re publishing your versions of `hello_macro` and
-`hello_macro_derive` to [crates.io](https://crates.io/), they would be regular
-dependencies; if not, you can specify them as `path` dependencies as follows:
+În acest stadiu, comanda `cargo build` ar trebui să se execute cu succes pe crate-urile `hello_macro` și `hello_macro_derive`. Să integăm aceste crate-uri cu codul din Listarea 19-30 pentru a vedea macrocomanda procedurală în acțiune! Creează un nou proiect binar în directoriul tău *projects* folosind comanda `cargo new pancakes`. Este necesar să adăugăm `hello_macro` și `hello_macro_derive` ca dependențe în fișierul *Cargo.toml* al crate-ului `pancakes`. Dacă vei publica versiunile tale de `hello_macro` și `hello_macro_derive` pe [crates.io](https://crates.io/), acestea vor fi dependențe obișnuite; în caz contrar, poți să le specifici ca dependențe de tip `path` în modul următor:
 
 ```toml
 {{#include ../listings/ch19-advanced-features/no-listing-21-pancakes/pancakes/Cargo.toml:7:9}}
 ```
 
-Put the code in Listing 19-30 into *src/main.rs*, and run `cargo run`: it
-should print `Hello, Macro! My name is Pancakes!` The implementation of the
-`HelloMacro` trait from the procedural macro was included without the
-`pancakes` crate needing to implement it; the `#[derive(HelloMacro)]` added the
-trait implementation.
+Adaugă codul din Listarea 19-30 în fișierul *src/main.rs* și execută comanda `cargo run`: ar trebui să afișeze mesajul `Hello, Macro! My name is Pancakes!` Implementarea trăsăturii `HelloMacro`, provenită din macrocomanda procedurală, a fost inclusă fără ca librăria `pancakes` să fie nevoită să o implementeze manual; atributul `#[derive(HelloMacro)]` a adăugat automat implementarea trăsăturii.
 
-Next, let’s explore how the other kinds of procedural macros differ from custom
-derive macros.
+În pasul următor, vom descoperi în ce mod se diferențiază celelalte tipuri de macrocomenzi procedurale față de macrocomenzile custom derive.
 
-### Attribute-like macros
+### Macrocomenzile de tip atribut
 
-Attribute-like macros are similar to custom derive macros, but instead of
-generating code for the `derive` attribute, they allow you to create new
-attributes. They’re also more flexible: `derive` only works for structs and
-enums; attributes can be applied to other items as well, such as functions.
-Here’s an example of using an attribute-like macro: say you have an attribute
-named `route` that annotates functions when using a web application framework:
+Macrocomenzile tip atribut sunt similare cu macrocomenzile personalizate de derive, însă spre deosebire de generarea de cod pentru atributul `derive`, ele permit crearea de atribute noi. Acestea sunt și mai versatile: `derive` funcționează exclusiv pentru structuri și enum-uri; atributele pot fi utilizate și pentru alte elemente, cum ar fi funcții. De exemplu, să presupunem că deții un atribut denumit `route`, care adnotează funcțiile atunci când lucrezi cu un framework pentru aplicații web:
 
 ```rust,ignore
 #[route(GET, "/")]
 fn index() {
 ```
 
-This `#[route]` attribute would be defined by the framework as a procedural
-macro. The signature of the macro definition function would look like this:
+Atributul `#[route]` ar fi definit de către framework sub formă de o macrocomandă procedurală. Semnătura funcției care definește macrocomanda va arăta astfel:
 
 ```rust,ignore
 #[proc_macro_attribute]
 pub fn route(attr: TokenStream, item: TokenStream) -> TokenStream {
 ```
 
-Here, we have two parameters of type `TokenStream`. The first is for the
-contents of the attribute: the `GET, "/"` part. The second is the body of the
-item the attribute is attached to: in this case, `fn index() {}` and the rest
-of the function’s body.
+Aici avem doi parametri de tipul `TokenStream`. Primul este pentru conținutul atributului, adică partea cu `GET, "/"`. Cel de-al doilea este corpul entității căreia i s-a atașat atributul: în acest caz, `fn index() {}` și restul corpului funcției.
 
-Other than that, attribute-like macros work the same way as custom derive
-macros: you create a crate with the `proc-macro` crate type and implement a
-function that generates the code you want!
+În rest, macrocomenzile tip atribut funcționează în aceeași manieră ca și macrocomenzile de derive personalizate: creezi un crate de tip `proc-macro` și implementezi o funcție care generează codul dorit!
 
-### Function-like macros
+### Macrocomenzi de tip funcție
 
-Function-like macros define macros that look like function calls. Similarly to
-`macro_rules!` macros, they’re more flexible than functions; for example, they
-can take an unknown number of arguments. However, `macro_rules!` macros can be
-defined only using the match-like syntax we discussed in the section
-[“Declarative Macros with `macro_rules!` for General
-Metaprogramming”][decl]<!-- ignore --> earlier. Function-like macros take a
-`TokenStream` parameter and their definition manipulates that `TokenStream`
-using Rust code as the other two types of procedural macros do. An example of a
-function-like macro is an `sql!` macro that might be called like so:
+Macrocomenzile de tip funcție definesc macrocomenzi care seamănă cu apelurile de funcții. Asemenea macrocomenzilor `macro_rules!`, sunt mai flexibile decât funcțiile; spre exemplu, pot accepta un număr variabil de argumente. Însă, macrocomenzile `macro_rules!` pot fi definite doar folosind sintaxa asemănătoare match-ului despre care am discutat în secțiunea [„Macrocomenzi declarative cu `macro_rules!` pentru metaprogramare generală”][decl]<!-- ignore -->. Macrocomenzile de tip funcție primesc un parametru `TokenStream` și manipulează acest `TokenStream` folosind cod Rust, asemenea celorlalte două tipuri de macrocomenzi procedurale. Un exemplu de macrocomandă de tip funcție ar fi macrocomanda `sql!`, care ar putea fi folosită în felul următor:
 
 ```rust,ignore
 let sql = sql!(SELECT * FROM posts WHERE id=1);
 ```
 
-This macro would parse the SQL statement inside it and check that it’s
-syntactically correct, which is much more complex processing than a
-`macro_rules!` macro can do. The `sql!` macro would be defined like this:
+Această macrocomandă ar analiza instrucțiunea SQL conținută și ar verifica dacă este sintactic corectă, o complexitate de prelucrare ce depășește posibilitățile unei macrocomenzi `macro_rules!`. Macrocomanda `sql!` ar fi definită în felul următor:
 
 ```rust,ignore
 #[proc_macro]
 pub fn sql(input: TokenStream) -> TokenStream {
 ```
 
-This definition is similar to the custom derive macro’s signature: we receive
-the tokens that are inside the parentheses and return the code we wanted to
-generate.
+Această definiție prezintă similarități cu semnătura unei macrocomenzi pentru derive personalizat: primim tokenii care sunt între paranteze și returnăm codul pe care dorim să-l generăm.
 
-## Summary
+## Sumar
 
-Whew! Now you have some Rust features in your toolbox that you likely won’t use
-often, but you’ll know they’re available in very particular circumstances.
-We’ve introduced several complex topics so that when you encounter them in
-error message suggestions or in other peoples’ code, you’ll be able to
-recognize these concepts and syntax. Use this chapter as a reference to guide
-you to solutions.
+Ei bine! Acum în trusa ta de unelte ai câteva funcționalități Rust pe care nu le vei utiliza des, însă, în situații foarte specifice, vei ști că-ți sunt la dispoziție. Am abordat câteva subiecte complexe astfel încât, atunci când te vei întâlni cu ele în sugestiile de eroare ale mesajelor sau în codul altor persoane, să poți recunoaște aceste concepte și sintaxa aferentă. Utilizează acest capitol ca un ghid de referință care să te ajute să găsești soluții.
 
-Next, we’ll put everything we’ve discussed throughout the book into practice
-and do one more project!
+Următorul pas este să punem în aplicare tot ceea ce am învățat de-a lungul cărții și să lucrăm la un nou proiect!
 
 [ref]: ../reference/macros-by-example.html
 [tlborm]: https://veykril.github.io/tlborm/

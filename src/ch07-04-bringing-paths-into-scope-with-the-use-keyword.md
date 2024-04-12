@@ -1,36 +1,20 @@
-## Bringing Paths into Scope with the `use` Keyword
+## Utilizarea cuvântului cheie `use` pentru a aduce căile în domeniul de vizibilitate
 
-Having to write out the paths to call functions can feel inconvenient and
-repetitive. In Listing 7-7, whether we chose the absolute or relative path to
-the `add_to_waitlist` function, every time we wanted to call `add_to_waitlist`
-we had to specify `front_of_house` and `hosting` too. Fortunately, there’s a
-way to simplify this process: we can create a shortcut to a path with the `use`
-keyword once, and then use the shorter name everywhere else in the scope.
+Scrierea completă a căilor pentru apelarea funcțiilor poate fi incomod de repetitivă. În Listarea 7-7, indiferent dacă optăm pentru drumul absolut sau cel relativ către funcția `add_to_waitlist`, am trebuit de fiecare dată să specificăm și `front_of_house` și `hosting`. Din fericire, există o modalitate de a simplifica acest proces: putem crea o scurtătură către o cale cu ajutorul cuvântului cheie `use`. Astfel, putem folosi un nume mai scurt în restul domeniului de vizibilitate.
 
-In Listing 7-11, we bring the `crate::front_of_house::hosting` module into the
-scope of the `eat_at_restaurant` function so we only have to specify
-`hosting::add_to_waitlist` to call the `add_to_waitlist` function in
-`eat_at_restaurant`.
+În Listarea 7-11, introducem modulul `crate::front_of_house::hosting` în domeniul de vizibilitate al funcției `eat_at_restaurant`. Astfel, pentru apelarea funcției `add_to_waitlist` în contextul `eat_at_restaurant`, trebuie doar să specificăm `hosting::add_to_waitlist`.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground,test_harness
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/listing-07-11/src/lib.rs}}
 ```
 
-<span class="caption">Listing 7-11: Bringing a module into scope with
-`use`</span>
+<span class="caption">Listarea 7-11: Introducerea unui modul în domeniul de vizibilitate cu `use`</span>
 
-Adding `use` and a path in a scope is similar to creating a symbolic link in
-the filesystem. By adding `use crate::front_of_house::hosting` in the crate
-root, `hosting` is now a valid name in that scope, just as though the `hosting`
-module had been defined in the crate root. Paths brought into scope with `use`
-also check privacy, like any other paths.
+Adăugarea `use` și a unei căi într-un domeniu este similară cu operațiunea de creare a unui link simbolic în sistemul de fișiere. Prin introducerea `use crate::front_of_house::hosting` la nivelul rădăcinii crate-ului, `hosting` devine un nume valid în cadrul acestui domeniu de vizibilitate, ca și cum modulul `hosting` ar fi fost definit chiar în rădăcina crate-ului. Căile aduse în vizibilitate cu `use` au capacitatea de a verifica confidențialitatea, la fel ca toate celelalte căi.
 
-Note that `use` only creates the shortcut for the particular scope in which the
-`use` occurs. Listing 7-12 moves the `eat_at_restaurant` function into a new
-child module named `customer`, which is then a different scope than the `use`
-statement, so the function body won’t compile:
+Trebuie să ținem minte că `use` creează o scurtătură doar în cadrul specific al domeniului de vizibilitate în care este folosit. Listarea 7-12 plasează funcția `eat_at_restaurant` într-un nou submodul numit `customer`. Acesta reprezintă un domeniu diferit de cel al declarației `use`, așa că funcția nu va putea fi compilată:
 
 <span class="filename">Filename: src/lib.rs</span>
 
@@ -38,271 +22,175 @@ statement, so the function body won’t compile:
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/listing-07-12/src/lib.rs}}
 ```
 
-<span class="caption">Listing 7-12: A `use` statement only applies in the scope
-it’s in</span>
+<span class="caption">Listarea 7-12: Instrucțiunea `use` este aplicabilă doar în domeniul de vizibilitate în care se găsește</span>
 
-The compiler error shows that the shortcut no longer applies within the
-`customer` module:
+Eroarea de compilare indică faptul că scurtătura nu mai este valabilă în interiorul modulului `customer`:
 
 ```console
 {{#include ../listings/ch07-managing-growing-projects/listing-07-12/output.txt}}
 ```
 
-Notice there’s also a warning that the `use` is no longer used in its scope! To
-fix this problem, move the `use` within the `customer` module too, or reference
-the shortcut in the parent module with `super::hosting` within the child
-`customer` module.
+Este important de observat că există de asemenea un avertisment care ne informează că instrucțiunea `use` nu mai este folosită în domeniul său de vizibilitate! Pentru a remediat această problemă, putem muta instrucțiunea `use` direct în interiorul modulului `customer` sau putem face referire la scurtătură din modulul părinte folosind `super::hosting`, în interiorul modulului copil `customer`.
 
-### Creating Idiomatic `use` Paths
+### Căi `use` idiomatice
 
-In Listing 7-11, you might have wondered why we specified `use
-crate::front_of_house::hosting` and then called `hosting::add_to_waitlist` in
-`eat_at_restaurant` rather than specifying the `use` path all the way out to
-the `add_to_waitlist` function to achieve the same result, as in Listing 7-13.
+E posibil să te fi întrebat, privind Listarea 7-11, de ce am utilizat `use crate::front_of_house::hosting` și apoi am apelat funcția `hosting::add_to_waitlist` în cadrul funcției `eat_at_restaurant`. De ce nu am specificat calea completă în `use` până la funcția `add_to_waitlist` pentru a obține același rezultat? Acest ultim mod de a proceda este ilustrat în Listarea 7-13.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground,test_harness
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/listing-07-13/src/lib.rs}}
 ```
 
-<span class="caption">Listing 7-13: Bringing the `add_to_waitlist` function
-into scope with `use`, which is unidiomatic</span>
+<span class="caption">Listarea 7-13: Introducerea funcției `add_to_waitlist` în domeniul de vizibilitate cu `use`, o abordare care nu respectă normele idiomatice ale limbajului</span>
 
-Although both Listing 7-11 and 7-13 accomplish the same task, Listing 7-11 is
-the idiomatic way to bring a function into scope with `use`. Bringing the
-function’s parent module into scope with `use` means we have to specify the
-parent module when calling the function. Specifying the parent module when
-calling the function makes it clear that the function isn’t locally defined
-while still minimizing repetition of the full path. The code in Listing 7-13 is
-unclear as to where `add_to_waitlist` is defined.
+Deși ambele metode, ilustrate în Listările 7-11 și 7-13, îndeplinesc aceeași sarcină, abordarea din Listarea 7-11 este considerată a fi cea corectă, conform obiceiurilor limbajului. Utilizarea lui `use` pentru a introduce modulul părinte al funcției în domeniul de vizibilitate necesită specificarea modulului părinte când apelăm funcția. Însă, astfel, devine evident că funcția nu este definită local, minimizând în același timp repetarea căii complete. În schimb, codul din Listarea 7-13 lasă în incertitudine locul unde `add_to_waitlist` este definită.
 
-On the other hand, when bringing in structs, enums, and other items with `use`,
-it’s idiomatic to specify the full path. Listing 7-14 shows the idiomatic way
-to bring the standard library’s `HashMap` struct into the scope of a binary
-crate.
+Cu toate acestea, când introducem în domeniul de vizibilitate structuri, enumerări și alte elemente cu ajutorul lui `use`, este idiomatic să se specifice calea completă. Listarea 7-14 arată metoda adecvată de a aduce structura `HashMap` din biblioteca standard în domeniul de vizibilitate al unui crate binar.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/listing-07-14/src/main.rs}}
 ```
 
-<span class="caption">Listing 7-14: Bringing `HashMap` into scope in an
-idiomatic way</span>
+<span class="caption">Listarea 7-14: Introducerea `HashMap` în domeniu de vizibilitate în modul consecvent</span>
 
-There’s no strong reason behind this idiom: it’s just the convention that has
-emerged, and folks have gotten used to reading and writing Rust code this way.
+Această idiomă nu are o cauză anume, este doar o tradiție care a fost adoptată pentru scrierea și citirea codului Rust.
 
-The exception to this idiom is if we’re bringing two items with the same name
-into scope with `use` statements, because Rust doesn’t allow that. Listing 7-15
-shows how to bring two `Result` types into scope that have the same name but
-different parent modules and how to refer to them.
+Excepția la această convenție este dacă aducem în domeniul de vizibilitate două elemente care au același nume, folosind declarațiile `use`. Rust nu permite asta. Listarea 7-15 ilustrează cum să introducem în domeniul de vizibilitate două tipuri `Result` cu același nume, dar provenind din module părinte diferite și cum să le referim.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/listing-07-15/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 7-15: Bringing two types with the same name into
-the same scope requires using their parent modules.</span>
+<span class="caption">Listarea 7-15: Introducerea simultană a două tipuri cu același nume în același domeniu de vizibilitate impune utilizarea modulelor părinte.</span>
 
-As you can see, using the parent modules distinguishes the two `Result` types.
-If instead we specified `use std::fmt::Result` and `use std::io::Result`, we’d
-have two `Result` types in the same scope and Rust wouldn’t know which one we
-meant when we used `Result`.
+După cum poți observa, specificarea modulelor părinte ne ajută să distingem între cele două tipuri `Result`. Dacă am fi folosit `use std::fmt::Result` și `use std::io::Result`, am fi ajuns cu două tipuri `Result` în același domeniu și Rust nu ar fi putut distinge la care tip `Result` ne referim.
 
-### Providing New Names with the `as` Keyword
+### Utilizarea cuvântului cheie `as` pentru a atribui nume noi
 
-There’s another solution to the problem of bringing two types of the same name
-into the same scope with `use`: after the path, we can specify `as` and a new
-local name, or *alias*, for the type. Listing 7-16 shows another way to write
-the code in Listing 7-15 by renaming one of the two `Result` types using `as`.
+O altă soluție la problema aducerii a două tipuri cu același nume în același domeniu de vizibilitate cu `use` implică folosirea cuvântului cheie `as`. După ce specificăm calea, putem adăuga `as` și un nume local nou, sau un *alias*, pentru tipul respectiv. Listarea 7-16 ne prezintă o altă variantă de a scrie codul din Listarea 7-15 prin redenumirea unuia dintre cele două tipuri `Result` folosind `as`.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/listing-07-16/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 7-16: Renaming a type when it’s brought into
-scope with the `as` keyword</span>
+<span class="caption">Listarea 7-16: Redenumirea unui tip la momentul introducerii acestuia în domeniul de vizibilitate, folosind cuvântul cheie `as`</span>
 
-In the second `use` statement, we chose the new name `IoResult` for the
-`std::io::Result` type, which won’t conflict with the `Result` from `std::fmt`
-that we’ve also brought into scope. Listing 7-15 and Listing 7-16 are
-considered idiomatic, so the choice is up to you!
+În cel de-al doilea enunț `use`, noi am decis să alegem numele `IoResult` pentru tipul `std::io::Result`. Acesta nu va intra în conflict cu tipul `Result` din `std::fmt` pe care tot l-am adus în domeniul de vizibilitate. Atât Listarea 7-15 cât și Listarea 7-16 reprezintă abordări idiomatice, deci ai libertatea de a alege cea care ți se potrivește cel mai bine!
 
-### Re-exporting Names with `pub use`
+### Re-exportarea numelor cu `pub use`
 
-When we bring a name into scope with the `use` keyword, the name available in
-the new scope is private. To enable the code that calls our code to refer to
-that name as if it had been defined in that code’s scope, we can combine `pub`
-and `use`. This technique is called *re-exporting* because we’re bringing
-an item into scope but also making that item available for others to bring into
-their scope.
+Când aducem un nume în domeniul de vizibilitate cu ajutorul cuvântului cheie `use`, numele disponibil în noul domeniu de vizibilitate este privat. Pentru a permite codului care apelează codul nostru să se refere la acel nume ca și cum ar fi fost definit în domeniul de vizibilitate al acelui cod, putem combina `pub` și `use`. Această tehnică se numește *re-exportare* deoarece aducem un element în domeniul de vizibilitate, dar de asemenea face acel element disponibil și pentru cei ce importă codul nostru.
 
-Listing 7-17 shows the code in Listing 7-11 with `use` in the root module
-changed to `pub use`.
+Listarea 7-17 prezintă codul din Listarea 7-11 cu `use` în modulul root modificat în `pub use`.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground,test_harness
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/listing-07-17/src/lib.rs}}
 ```
 
-<span class="caption">Listing 7-17: Making a name available for any code to use
-from a new scope with `pub use`</span>
+<span class="caption">Listarea 7-17: Facem un nume disponibil pentru orice cod de utilizat dintr-un nou domeniu de vizibilitate cu `pub use`</span>
 
-Before this change, external code would have to call the `add_to_waitlist`
-function by using the path
-`restaurant::front_of_house::hosting::add_to_waitlist()`. Now that this `pub
-use` has re-exported the `hosting` module from the root module, external code
-can now use the path `restaurant::hosting::add_to_waitlist()` instead.
+Înainte de această modificare, codul extern ar trebui să apeleze funcția `add_to_waitlist` utilizând calea `restaurant::front_of_house::hosting::add_to_waitlist()`. Acum, având în vedere că `pub use` a re-exportat modulul `hosting` din modulul root, codul extern poate acum utiliza calea `restaurant::hosting::add_to_waitlist()` în schimb.
 
-Re-exporting is useful when the internal structure of your code is different
-from how programmers calling your code would think about the domain. For
-example, in this restaurant metaphor, the people running the restaurant think
-about “front of house” and “back of house.” But customers visiting a restaurant
-probably won’t think about the parts of the restaurant in those terms. With
-`pub use`, we can write our code with one structure but expose a different
-structure. Doing so makes our library well organized for programmers working on
-the library and programmers calling the library. We’ll look at another example
-of `pub use` and how it affects your crate’s documentation in the [“Exporting a
-Convenient Public API with `pub use`”][ch14-pub-use]<!-- ignore --> section of
-Chapter 14.
+Re-exportarea este utilă când structura internă a codului tău este diferită de felul în care programatorii care apelează codul tău ar gândi despre domeniu. De exemplu, în această metaforă despre restaurant, oamenii care administrează restaurantul gândesc despre "fața casei" și "spatele casei". Dar clienții care vizitează un restaurant probabil nu vor gândi despre părțile restaurantului în acești termeni. Cu `pub use`, putem scrie codul nostru cu o structură, dar expunem o structură diferită. Făcând acest lucru, biblioteca noastră este bine organizată atât pentru programatorii care lucrează în bibliotecă cât și pentru programatorii care apelează biblioteca. Vom privi un alt exemplu de `pub use` și cum acesta afectează documentația crate-ului tău în secțiunea [„Exportarea unui API public și accesibil cu `pub use`”][ch14-pub-use] din Capitolul 14.
 
-### Using External Packages
+### Utilizarea pachetelor externe
 
-In Chapter 2, we programmed a guessing game project that used an external
-package called `rand` to get random numbers. To use `rand` in our project, we
-added this line to *Cargo.toml*:
+În capitolul 2, am creat un joc de ghicit numere, care se baza pe un pachet extern numit `rand` pentru generarea numerelor aleatorii. Pentru a folosi `rand` în cadrul proiectului nostru, am inclus următoarea linie în fișierul *Cargo.toml*:
 
-<!-- When updating the version of `rand` used, also update the version of
-`rand` used in these files so they all match:
+<!-- Când actualizezi versiunea `rand` folosită, nu uita să actualizezi și versiunea `rand` din următoarele fișiere, astfel încât să fie toate sincronizate:
 * ch02-00-guessing-game-tutorial.md
 * ch14-03-cargo-workspaces.md
 -->
 
-<span class="filename">Filename: Cargo.toml</span>
+<span class="filename">Numele fișierului: Cargo.toml</span>
 
 ```toml
 {{#include ../listings/ch02-guessing-game-tutorial/listing-02-02/Cargo.toml:9:}}
 ```
 
-Adding `rand` as a dependency in *Cargo.toml* tells Cargo to download the
-`rand` package and any dependencies from [crates.io](https://crates.io/) and
-make `rand` available to our project.
+Adăugarea `rand` ca o dependență în fișierul *Cargo.toml* instruiește sistemul Cargo să descarce pachetul `rand` și orice dependențe asociate de pe [crates.io](https://crates.io/) și să-l predea la dispoziția proiectului nostru.
 
-Then, to bring `rand` definitions into the scope of our package, we added a
-`use` line starting with the name of the crate, `rand`, and listed the items
-we wanted to bring into scope. Recall that in the [“Generating a Random
-Number”][rand]<!-- ignore --> section in Chapter 2, we brought the `Rng` trait
-into scope and called the `rand::thread_rng` function:
+Ulterior, pentru a aduce definițiile din `rand` în domeniul de vizibilitate al pachetului nostru, am inclus o instrucțiune `use`. Aceasta era precedată de numele pachetului, `rand`, și continuată cu lista elementelor pe care am dorit să le aducem în vizibilitate. Îți poți aduce aminte de secțiunea [„Generarea unui număr aleator”][rand]<!-- ignore --> din capitolul 2, unde am introdus trăsătura `Rng` în domeniul de vizibilitate și am apelat funcția `rand::thread_rng`:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch02-guessing-game-tutorial/listing-02-03/src/main.rs:ch07-04}}
 ```
 
-Members of the Rust community have made many packages available at
-[crates.io](https://crates.io/), and pulling any of them into your package
-involves these same steps: listing them in your package’s *Cargo.toml* file and
-using `use` to bring items from their crates into scope.
+Membrii comunității Rust au pus la dispoziție multe pachete pe [crates.io](https://crates.io/), iar integrarea oricăruia dintre acestea în pachetul tău  presupune aceeași pași: listarea pachetelor în fișierul *Cargo.toml* și utilizarea instrucțiunii `use` pentru a introduce elemente din aceste pachete în domeniul de vizibilitate.
 
-Note that the standard `std` library is also a crate that’s external to our
-package. Because the standard library is shipped with the Rust language, we
-don’t need to change *Cargo.toml* to include `std`. But we do need to refer to
-it with `use` to bring items from there into our package’s scope. For example,
-with `HashMap` we would use this line:
+Este important de notat că și biblioteca standard `std` este de asemenea un crate extern pachetului nostru. Totuși, deoarece biblioteca standard este inclusă în setul de livrare standard al limbajului Rust, nu trebuie să modificăm *Cargo.toml* pentru a include `std`. Trebuie doar să folosim instrucțiunea `use` pentru a introduce elemente din aceasta în domeniul de vizibilitate al pachetului nostru. De exemplu, pentru a folosi `HashMap`, am utiliza următoarea linie:
 
 ```rust
 use std::collections::HashMap;
 ```
 
-This is an absolute path starting with `std`, the name of the standard library
-crate.
+Aceasta este o cale absolută care începe cu `std`, numele crate-ului bibliotecii standard.
 
-### Using Nested Paths to Clean Up Large `use` Lists
+### Utilizarea căilor îmbinate pentru a economisi spațiu în listele lungi de `use`
 
-If we’re using multiple items defined in the same crate or same module,
-listing each item on its own line can take up a lot of vertical space in our
-files. For example, these two `use` statements we had in the Guessing Game in
-Listing 2-4 bring items from `std` into scope:
+Când lucrăm cu numeroase elemente definite în același crate sau în același modul, este obositor și consumator de spațiu să le listăm pe fiecare în parte pe linii separate. Să luăm ca exemplu jocul Ghicitoarea din Listarea 2-4, unde am folosit două declarații `use` pentru a importa elemente din `std` în domeniul nostru de vizibilitate:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/no-listing-01-use-std-unnested/src/main.rs:here}}
 ```
 
-Instead, we can use nested paths to bring the same items into scope in one
-line. We do this by specifying the common part of the path, followed by two
-colons, and then curly brackets around a list of the parts of the paths that
-differ, as shown in Listing 7-18.
+În loc de aceasta, putem utiliza căi îmbinate pentru a aduce aceleași elemente în domeniul de vizibilitate într-o singură linie. Acest lucru se face prin specificarea părții comune a căii, continuată cu două puncte și cu acolade ce îngrădesc părțile diferite ale căilor. Acest concept este prezentat in Listarea 7-18.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/listing-07-18/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 7-18: Specifying a nested path to bring multiple
-items with the same prefix into scope</span>
+<span class="caption">Listarea 7-18: Utilizarea unei căi îmbinate pentru a importa mai multe
+elemente cu același prefix în domeniul de vizibilitate</span>
 
-In bigger programs, bringing many items into scope from the same crate or
-module using nested paths can reduce the number of separate `use` statements
-needed by a lot!
+În cadrul programelor mari, tehnica importării unui număr mare de elemente din același crate sau modul prin căi îmbinate poate reduce considerabil numărul de declarații `use` separate.
 
-We can use a nested path at any level in a path, which is useful when combining
-two `use` statements that share a subpath. For example, Listing 7-19 shows two
-`use` statements: one that brings `std::io` into scope and one that brings
-`std::io::Write` into scope.
+O cale îmbinată poate fi utilizată la orice nivel într-o cale, fapt util atunci când dorim să combinăm două declarații `use` care au o sub-cale comună. De exemplu, Lista 7-19 ne arată două declarații `use`: una ce aduce `std::io` în domeniul de vizibilitate și una care aduce `std::io::Write` în domeniul de vizibilitate.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/listing-07-19/src/lib.rs}}
 ```
 
-<span class="caption">Listing 7-19: Two `use` statements where one is a subpath
-of the other</span>
+<span class="caption">Listarea 7-19: Două declarații `use` cu o sub-cale comună </span>
 
-The common part of these two paths is `std::io`, and that’s the complete first
-path. To merge these two paths into one `use` statement, we can use `self` in
-the nested path, as shown in Listing 7-20.
+Pentru a combina cele două căi într-o singură declarație `use`, folosim `self` în cadrul căii îmbinate, așa cum vedem în Listarea 7-20.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/listing-07-20/src/lib.rs}}
 ```
 
-<span class="caption">Listing 7-20: Combining the paths in Listing 7-19 into
-one `use` statement</span>
+<span class="caption">Listarea 7-20: Combinarea căilor din Lista 7-19 într-o singură declarație `use`</span>
 
-This line brings `std::io` and `std::io::Write` into scope.
+În urma acestei operațiuni, `std::io` și `std::io::Write` sunt aduse în domeniul de vizibilitate.
 
-### The Glob Operator
+### Utilizarea operatorului `*` (glob) 
 
-If we want to bring *all* public items defined in a path into scope, we can
-specify that path followed by the `*` glob operator:
+Daca dorim să includem *toate* elementele publice definite printr-o anumită cale în domeniul nostru de vizibilitate, atunci trebuie sa utilizăm calea dorită completată cu operatorul `*`:
 
 ```rust
 use std::collections::*;
 ```
 
-This `use` statement brings all public items defined in `std::collections` into
-the current scope. Be careful when using the glob operator! Glob can make it
-harder to tell what names are in scope and where a name used in your program
-was defined.
+Această instrucțiune `use` face ca toate elementele publice definite în `std::collections` să fie disponibile în domeniul de vizibilitate actual. Trebuie să fim prudenți când utilizăm operatorul `*`! Ne poate face dificilă identificarea numelor care sunt în domeniul de vizibilitate și localizarea locului unde a fost definit un nume folosit în programul nostru.
 
-The glob operator is often used when testing to bring everything under test
-into the `tests` module; we’ll talk about that in the [“How to Write
-Tests”][writing-tests]<!-- ignore --> section in Chapter 11. The glob operator
-is also sometimes used as part of the prelude pattern: see [the standard
-library documentation](../std/prelude/index.html#other-preludes)<!-- ignore -->
-for more information on that pattern.
+De obicei, utilizăm operatorul `*` atunci când realizăm teste pentru a include totul în modulul `tests`. Vom aborda acest subiect în secțiunea [„Cum să scriem teste”][writing-tests]<!-- ignore --> din Capitolul 11. De asemenea, uneori operatorul `*` face parte din pattern-ul 'preludiu'. Poți accesa [documentația bibliotecii standard](../std/prelude/index.html#other-preludes)<!-- ignore --> pentru a afla mai multe detalii despre acest pattern.
 
 [ch14-pub-use]: ch14-02-publishing-to-crates-io.html#exporting-a-convenient-public-api-with-pub-use
 [rand]: ch02-00-guessing-game-tutorial.html#generating-a-random-number

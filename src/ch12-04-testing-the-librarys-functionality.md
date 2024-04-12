@@ -1,241 +1,158 @@
-## Developing the Library’s Functionality with Test-Driven Development
+## Dezvoltarea funcționalității bibliotecii cu Test-Driven Development
 
-Now that we’ve extracted the logic into *src/lib.rs* and left the argument
-collecting and error handling in *src/main.rs*, it’s much easier to write tests
-for the core functionality of our code. We can call functions directly with
-various arguments and check return values without having to call our binary
-from the command line.
+După ce am separat logica în *src/lib.rs* și ne-am limitat la colectarea argumentelor și la gestionarea erorilor în *src/main.rs*, testarea funcționalității nucleului codului nostru s-a simplificat considerabil. Acum este posibil să apelăm funcții direct cu diferiți parametri și să verificăm valorile de retur fără a necesita execuția binarului din linia de comandă.
 
-In this section, we’ll add the searching logic to the `minigrep` program
-using the test-driven development (TDD) process with the following steps:
+Vom începe această secțiune adăugând logica de căutare la programul `minigrep`, prin aplicarea principiilor test-driven development (TDD) și urmând pașii de mai jos:
 
-1. Write a test that fails and run it to make sure it fails for the reason you
-   expect.
-2. Write or modify just enough code to make the new test pass.
-3. Refactor the code you just added or changed and make sure the tests
-   continue to pass.
-4. Repeat from step 1!
+1. Redactează un test care pică și execută-l pentru a confirma că eșuează din cauza anticipată.
+2. Elaborează sau ajustează strict necesarul de cod pentru a asigura trecerea noului test.
+3. Refactorizează codul pe care l-ai introdus sau modificat și verifică dacă testele rămân valide.
+4. Reia procesul de la primul pas!
 
-Though it’s just one of many ways to write software, TDD can help drive code
-design. Writing the test before you write the code that makes the test pass
-helps to maintain high test coverage throughout the process.
+Deși reprezintă doar una dintre metodele de dezvoltare software, TDD joacă un rol cheie în structurarea codului. Abordarea de a scrie testul înaintea codului care va determina succesul acestuia contribuie la menținerea unei rate constante de acoperire a testelor de-a lungul întregului proces.
 
-We’ll test drive the implementation of the functionality that will actually do
-the searching for the query string in the file contents and produce a list of
-lines that match the query. We’ll add this functionality in a function called
-`search`.
+Urmează să testăm implementarea funcționalității care realizează căutarea expresiei de interogare în conținutul unui fișier, rezultând într-o listă cu liniile ce se potrivesc cu interogarea specificată. Vom aduce această capabilitate într-o funcție denumită `search`.
 
-### Writing a Failing Test
+### Scrierea unui test ce eșuează
 
-Because we don’t need them anymore, let’s remove the `println!` statements from
-*src/lib.rs* and *src/main.rs* that we used to check the program’s behavior.
-Then, in *src/lib.rs*, add a `tests` module with a test function, as we did in
-[Chapter 11][ch11-anatomy]<!-- ignore -->. The test function specifies the
-behavior we want the `search` function to have: it will take a query and the
-text to search, and it will return only the lines from the text that contain
-the query. Listing 12-15 shows this test, which won’t compile yet.
+Pentru că nu ne mai sunt necesare, să eliminăm instrucțiunile `println!` din
+*src/lib.rs* și *src/main.rs* pe care le-am folosit pentru a verifica comportamentul programului. Apoi, în *src/lib.rs*, adăugăm un modul `tests` cu o funcție de testare, așa cum am făcut în [Capitolul 11][ch11-anatomy]<!-- ignore -->. Funcția de testare specifică comportamentul pe care îl dorim de la funcția `search`: aceasta va prelua o interogare și textul de căutat și va returna doar liniile din text care includ interogarea. Listarea 12-15 prezintă acest test, care deocamdată nu poate fi compilat.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-15/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 12-15: Creating a failing test for the `search`
-function we wish we had</span>
+<span class="caption">Listarea 12-15: Crearea unui test ce eșuează pentru funcția `search` pe care ne dorim s-o avem</span>
 
-This test searches for the string `"duct"`. The text we’re searching is three
-lines, only one of which contains `"duct"` (Note that the backslash after the
-opening double quote tells Rust not to put a newline character at the beginning
-of the contents of this string literal). We assert that the value returned from
-the `search` function contains only the line we expect.
+Testul acesta caută string-ul `"duct"`. Textul supus căutării este din trei rânduri, dintre care doar unul îl conține pe `"duct"` (De reținut că backslash-ul după ghilimeaua de început spune compilatorului Rust să nu includă un caracter de schimbare de linie la începutul conținutului literalului de tip string). Afirmăm că valoarea returnată de funcția `search` va conține exclusiv rândul pe care îl așteptăm.
 
-We aren’t yet able to run this test and watch it fail because the test doesn’t
-even compile: the `search` function doesn’t exist yet! In accordance with TDD
-principles, we’ll add just enough code to get the test to compile and run by
-adding a definition of the `search` function that always returns an empty
-vector, as shown in Listing 12-16. Then the test should compile and fail
-because an empty vector doesn’t match a vector containing the line `"safe,
-fast, productive."`
+În prezent, nu putem să rulăm acest test și să vedem că eșuează pentru că testul nici măcar nu se compilează: funcția `search` nu există încă! Respectând principiile TDD, vom adăuga strict atât cod cât este necesar pentru a face testul să se compileze și să ruleze, prin definirea unei funcții `search` care întoarce constant un vector gol, așa cum se arată în Listarea 12-16. Apoi, testul ar trebui să se compileze și să eșueze pentru că un vector gol nu se potrivește cu un vector ce conține rândul `"safe, fast, productive."`
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-16/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 12-16: Defining just enough of the `search`
-function so our test will compile</span>
+<span class="caption">Lista 12-16: Definirea strict necesarului pentru funcția `search` astfel încât testul nostru să fie compilabil</span>
 
-Notice that we need to define an explicit lifetime `'a` in the signature of
-`search` and use that lifetime with the `contents` argument and the return
-value. Recall in [Chapter 10][ch10-lifetimes]<!-- ignore --> that the lifetime
-parameters specify which argument lifetime is connected to the lifetime of the
-return value. In this case, we indicate that the returned vector should contain
-string slices that reference slices of the argument `contents` (rather than the
-argument `query`).
+Este necesar să definim explicit durata de viață `'a` în semnatura funcției `search` și să folosim această durată de viață atât pentru argumentul `contents` cât și pentru valoarea de retur. În [Capitolul 10][ch10-lifetimes]<!-- ignore --> am învățat că parametrii duratei de viață stabilesc legătura dintre durata de viață a unui argument și durata de viață a valorii returnate. În acest exemplu, specificăm că vectorul returnat trebuie să includă secțiuni de string-uri care fac referire la secțiuni din argumentul `contents` (și nu din `query`).
 
-In other words, we tell Rust that the data returned by the `search` function
-will live as long as the data passed into the `search` function in the
-`contents` argument. This is important! The data referenced *by* a slice needs
-to be valid for the reference to be valid; if the compiler assumes we’re making
-string slices of `query` rather than `contents`, it will do its safety checking
-incorrectly.
+Cu alte cuvinte, îi comunicăm lui Rust că datele returnate de funcția `search` vor exista pentru tot atâta timp cât există datele furnizate funcției `search` prin argumentul `contents`. Acest aspect este crucial! Datele la care se referă o secțiune trebuie să fie valide pentru ca referința să fie, de asemenea, validă; dacă compilatorul crede că generăm secțiuni de string-uri din `query` în loc de `contents`, verificarea de siguranță va fi realizată greșit.
 
-If we forget the lifetime annotations and try to compile this function, we’ll
-get this error:
+Dacă uităm să adăugăm adnotările de durată de viață și încercăm să compilăm această funcție, vom întâmpina următoarea eroare:
 
 ```console
 {{#include ../listings/ch12-an-io-project/output-only-02-missing-lifetimes/output.txt}}
 ```
 
-Rust can’t possibly know which of the two arguments we need, so we need to tell
-it explicitly. Because `contents` is the argument that contains all of our text
-and we want to return the parts of that text that match, we know `contents` is
-the argument that should be connected to the return value using the lifetime
-syntax.
+Rust nu poate determina de unul singur care dintre cele două argumente este cel necesar, deci trebuie să îi specificăm în mod explicit. Deoarece `contents` este argumentul ce conține întregul nostru text și dorim să returnăm fragmentele care se potrivesc, putem deduce că `contents` este argumentul care trebuie legat de valoarea de retur prin utilizarea sintaxei pentru durate de viață.
 
-Other programming languages don’t require you to connect arguments to return
-values in the signature, but this practice will get easier over time. You might
-want to compare this example with the [“Validating References with
-Lifetimes”][validating-references-with-lifetimes]<!-- ignore --> section in
-Chapter 10.
+În alte limbaje de programare nu este necesară asocierea argumentelor cu valorile de retur în cadrul semnăturii funcției, însă cu practică, acest proces va deveni mai simplu. Poate fi util să compari acest exemplu cu secțiunea [“Validând referințe cu timpuri de viață”][validating-references-with-lifetimes]<!-- ignore --> din Capitolul 10.
 
-Now let’s run the test:
+Să executăm acum testul:
 
 ```console
 {{#include ../listings/ch12-an-io-project/listing-12-16/output.txt}}
 ```
 
-Great, the test fails, exactly as we expected. Let’s get the test to pass!
+Minunat, testul eșuează exact cum anticipam. Să facem acum testul să treacă!
 
-### Writing Code to Pass the Test
+### Scrierea codului pentru a trece testul
 
-Currently, our test is failing because we always return an empty vector. To fix
-that and implement `search`, our program needs to follow these steps:
+Testul nostru actual eșuează deoarece returnăm mereu un vector gol. Pentru a corecta asta și pentru a implementa funcția `search`, programul trebuie să urmeze acești pași:
 
-* Iterate through each line of the contents.
-* Check whether the line contains our query string.
-* If it does, add it to the list of values we’re returning.
-* If it doesn’t, do nothing.
-* Return the list of results that match.
+* Parcurge fiecare linie din conținut.
+* Verifică dacă linia conține string-ul nostru de căutare.
+* Dacă îl conține, adaugă-l la lista valorilor pe care urmează să le returnăm.
+* Dacă nu, nu întreprinde nici o acțiune.
+* Întoarce lista rezultatelor care corespund criteriului de căutare.
 
-Let’s work through each step, starting with iterating through lines.
+Să abordăm fiecare pas, începând cu parcurgerea liniilor.
 
-#### Iterating Through Lines with the `lines` Method
+#### Parcurgerea liniilor cu metoda `lines`
 
-Rust has a helpful method to handle line-by-line iteration of strings,
-conveniently named `lines`, that works as shown in Listing 12-17. Note this
-won’t compile yet.
+Rust oferă o metodă utilă pentru a efectua iterația string-ului linie cu linie, numită în mod convenabil `lines`, care funcționează așa cum este arătat în Listarea 12-17. De notat că deocamdată acest cod nu va compila.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-17/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 12-17: Iterating through each line in `contents`
-</span>
+<span class="caption">Listarea 12-17: Parcurgerea fiecărei linii din `contents` </span>
 
-The `lines` method returns an iterator. We’ll talk about iterators in depth in
-[Chapter 13][ch13-iterators]<!-- ignore -->, but recall that you saw this way
-of using an iterator in [Listing 3-5][ch3-iter]<!-- ignore -->, where we used a
-`for` loop with an iterator to run some code on each item in a collection.
+Metoda `lines` returnează un iterator. Vom discuta detalii despre iteratori în [Capitolul 13][ch13-iterators]<!-- ignore -->, însă îți amintești că ai întâlnit modul de utilizare a iteratorilor în [Listarea 3-5][ch3-iter]<!-- ignore -->, unde am folosit bucla `for` împreună cu un iterator pentru a rula codul pe fiecare element dintr-o colecție.
 
-#### Searching Each Line for the Query
+#### Căutarea interogării în fiecare linie
 
-Next, we’ll check whether the current line contains our query string.
-Fortunately, strings have a helpful method named `contains` that does this for
-us! Add a call to the `contains` method in the `search` function, as shown in
-Listing 12-18. Note this still won’t compile yet.
+Acum, să verificăm dacă fiecare linie curentă conține string-ul căutat în interogarea noastră. Din fericire, string-urile dispun de o metodă foarte utilă denumită `contains` care realizează această verificare pentru noi! Adăugăm o apelare la `contains` în funcția `search`, așa cum este prezentat în Listarea 12-18. Nu uita că la acest moment codul încă nu va compila.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-18/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 12-18: Adding functionality to see whether the
-line contains the string in `query`</span>
+<span class="caption">Listarea 12-18: Introducem funcționalitatea pentru a verifica dacă linia conține string-ul specificat în `query`</span>
 
-At the moment, we’re building up functionality. To get it to compile, we need
-to return a value from the body as we indicated we would in the function
-signature.
+În această etapă, ne concentrăm pe dezvoltarea funcționalităților. Pentru ca programul să compileze, trebuie să returnăm o valoare din corpul funcției, conform cu ceea ce am promis în semnătura funcției.
 
-#### Storing Matching Lines
+#### Salvarea liniilor potrivite
 
-To finish this function, we need a way to store the matching lines that we want
-to return. For that, we can make a mutable vector before the `for` loop and
-call the `push` method to store a `line` in the vector. After the `for` loop,
-we return the vector, as shown in Listing 12-19.
+Pentru a completa această funcție, avem nevoie de un mod de a salva liniile care se potrivesc și pe care vrem să le returnăm. Pentru asta, putem iniția un vector mutabil înainte de bucla `for` și folosim metoda `push` pentru a adăuga o `line` în vector. După bucla `for`, returnăm vectorul, așa cum se arată în Listarea 12-19.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-19/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 12-19: Storing the lines that match so we can
-return them</span>
+<span class="caption">Listarea 12-19: Salvarea liniilor care se potrivesc pentru a le putea returna</span>
 
-Now the `search` function should return only the lines that contain `query`,
-and our test should pass. Let’s run the test:
+Acum, funcția `search` ar trebui să returneze numai liniile care includ `query`, și testul nostru ar trebui să treacă. Să încercăm să rulăm testul:
 
 ```console
 {{#include ../listings/ch12-an-io-project/listing-12-19/output.txt}}
 ```
 
-Our test passed, so we know it works!
+Testul nostru a trecut cu succes, deci suntem siguri că funcționează!
 
-At this point, we could consider opportunities for refactoring the
-implementation of the search function while keeping the tests passing to
-maintain the same functionality. The code in the search function isn’t too bad,
-but it doesn’t take advantage of some useful features of iterators. We’ll
-return to this example in [Chapter 13][ch13-iterators]<!-- ignore -->, where
-we’ll explore iterators in detail, and look at how to improve it.
+În acest moment, putem lua în considerare posibilități de refactoring pentru implementarea funcției de căutare, în timp ce ne asigurăm că testele rămân trecute pentru a păstra aceeași funcționalitate. Codul din funcția de `search` nu este rău, dar nu beneficiază de unele funcționalități utile ale iteratorilor. Ne vom reîntoarce la acest exemplu în [Capitolul 13][ch13-iterators]<!-- ignore -->, când vom explora pe larg iteratorii și vom vedea cum poate fi îmbunătățit.
 
-#### Using the `search` Function in the `run` Function
+#### Utilizând funcția `search` în funcția `run`
 
-Now that the `search` function is working and tested, we need to call `search`
-from our `run` function. We need to pass the `config.query` value and the
-`contents` that `run` reads from the file to the `search` function. Then `run`
-will print each line returned from `search`:
+Acum că funcția `search` este funcțională și testată, trebuie să o apelăm din funcția `run`. Vom transmite valoarea `config.query` și conținutul pe care `run` îl extrage din fișier către funcția `search`. După aceea, `run` va afișa fiecare linie pe care `search` o returnează:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch12-an-io-project/no-listing-02-using-search-in-run/src/lib.rs:here}}
 ```
 
-We’re still using a `for` loop to return each line from `search` and print it.
-
-Now the entire program should work! Let’s try it out, first with a word that
-should return exactly one line from the Emily Dickinson poem, “frog”:
+Continuăm să utilizăm o buclă `for` pentru a prelua fiecare linie returnată de `search` și a o afișa. Acum, programul complet ar trebui să funcționeze! Să-l testăm, mai întâi cu un cuvânt care ar trebui să returneze o singură linie din poezia Emilyi Dickinson, "frog":
 
 ```console
 {{#include ../listings/ch12-an-io-project/no-listing-02-using-search-in-run/output.txt}}
 ```
 
-Cool! Now let’s try a word that will match multiple lines, like “body”:
+Excelent! Acum să încercăm un cuvânt care va potrivi mai multe linii, precum "body":
 
 ```console
 {{#include ../listings/ch12-an-io-project/output-only-03-multiple-matches/output.txt}}
 ```
 
-And finally, let’s make sure that we don’t get any lines when we search for a
-word that isn’t anywhere in the poem, such as “monomorphization”:
+Și în final, să verificăm că nu obținem nicio linie atunci când căutăm un cuvânt ce nu există în poezie, precum "monomorphization":
 
 ```console
 {{#include ../listings/ch12-an-io-project/output-only-04-no-matches/output.txt}}
 ```
 
-Excellent! We’ve built our own mini version of a classic tool and learned a lot
-about how to structure applications. We’ve also learned a bit about file input
-and output, lifetimes, testing, and command line parsing.
+Excelent! Ne-am creat propria variantă a unui instrument clasic și am învățat foarte multe despre structura aplicațiilor. Am aprofundat și noțiuni despre manipularea fișierelor, durata de viață, testare și analiza comenzilor introduse în linia de comandă.
 
-To round out this project, we’ll briefly demonstrate how to work with
-environment variables and how to print to standard error, both of which are
-useful when you’re writing command line programs.
+Pentru a completa acest proiect, vom explica pe scurt cum să interacționăm cu variabilele de mediu și cum să scriem pe eroare standard, ambele fiind importante atunci când dezvoltați aplicații pentru linia de comandă.
 
 [validating-references-with-lifetimes]:
 ch10-03-lifetime-syntax.html#validating-references-with-lifetimes

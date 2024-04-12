@@ -1,186 +1,106 @@
-## Working with Environment Variables
+## Interacționând cu variabilele de mediu
 
-We’ll improve `minigrep` by adding an extra feature: an option for
-case-insensitive searching that the user can turn on via an environment
-variable. We could make this feature a command line option and require that
-users enter it each time they want it to apply, but by instead making it an
-environment variable, we allow our users to set the environment variable once
-and have all their searches be case insensitive in that terminal session.
+Vom îmbunătăți `minigrep` prin adăugarea unei opțiuni noi: căutarea care nu face distincție între majuscule și minuscule, ce poate fi activată prin intermediul unei variabile de mediu. Deși această caracteristică ar putea fi oferită ca o opțiune de linie de comandă, ceea ce ar impune utilizatorilor să o introducă de fiecare dată, alegerea de a o configura ca variabilă de mediu le permite acestora să o seteze o singură dată, astfel toate căutările lor în cadrul sesiunii curente de terminal să fie insesibilă la majuscule.
 
-### Writing a Failing Test for the Case-Insensitive `search` Function
+### Scrierea unui test nereușit pentru funcția `search_case_insensitive`
 
-We first add a new `search_case_insensitive` function that will be called when
-the environment variable has a value. We’ll continue to follow the TDD process,
-so the first step is again to write a failing test. We’ll add a new test for
-the new `search_case_insensitive` function and rename our old test from
-`one_result` to `case_sensitive` to clarify the differences between the two
-tests, as shown in Listing 12-20.
+Adăugăm mai întâi o nouă funcție `search_case_insensitive` care va fi apelată atunci când variabila de mediu deține o valoare. Continuăm să urmăm procesul TDD, așadar primul pas este, din nou, să scriem un test nereușit. Vom adăuga un nou test pentru funcția `search_case_insensitive` și vom redenumi testul vechi din `one_result` în `case_sensitive` pentru a face distincția clară între cele două teste, după cum se arată în Listarea 12-20.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-20/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 12-20: Adding a new failing test for the
-case-insensitive function we’re about to add</span>
+<span class="caption">Listarea 12-20: Adăugarea unui test nou nereușit pentru funcția de căutare insensibilă la majuscule pe care urmează să o implementăm</span>
 
-Note that we’ve edited the old test’s `contents` too. We’ve added a new line
-with the text `"Duct tape."` using a capital D that shouldn’t match the query
-`"duct"` when we’re searching in a case-sensitive manner. Changing the old test
-in this way helps ensure that we don’t accidentally break the case-sensitive
-search functionality that we’ve already implemented. This test should pass now
-and should continue to pass as we work on the case-insensitive search.
+Observați că am editat și conținutul testului anterior. Am introdus o linie nouă cu textul `"Duct tape."` care utilizează un D majuscul și care nu ar trebui să corespundă cu interogarea `"duct"` când efectuăm căutarea în mod sensibil la majuscule. Această modificare a testului anterior ajută la asigurarea faptului că nu stricăm din greșeală funcționalitatea de căutare sensibilă la majuscule pe care am realizat-o deja. Testul actual ar trebui să fie valid acum și ar trebui să rămână așa pe măsură ce dezvoltăm căutarea insensibilă la majuscule.
 
-The new test for the case-*insensitive* search uses `"rUsT"` as its query. In
-the `search_case_insensitive` function we’re about to add, the query `"rUsT"`
-should match the line containing `"Rust:"` with a capital R and match the line
-`"Trust me."` even though both have different casing from the query. This is
-our failing test, and it will fail to compile because we haven’t yet defined
-the `search_case_insensitive` function. Feel free to add a skeleton
-implementation that always returns an empty vector, similar to the way we did
-for the `search` function in Listing 12-16 to see the test compile and fail.
+Testul nou pentru căutarea *insensibilă* la majuscule folosește interogarea `"rUsT"`. În funcția `search_case_insensitive` pe care o vom adăuga în curând, interogarea `"rUsT"` ar trebui să găsească linia ce conține `"Rust:"` cu un R majuscul și să identifice și linia `"Trust me."`, deși ambele au diferite utilizări de majuscule față de interogare. Aceasta este definiția testului nereușit, care va eșua în compilare deoarece nu am definit încă funcția `search_case_insensitive`. Nu vă abțineți de la adăugarea unei implementări schelet care să returneze mereu un vector gol, asemănător cu modul în care am procedat pentru funcția `search` în Listarea 12-16, pentru a observa compilarea nereușită a testului.
 
-### Implementing the `search_case_insensitive` Function
+### Implementarea funcției `search_case_insensitive`
 
-The `search_case_insensitive` function, shown in Listing 12-21, will be almost
-the same as the `search` function. The only difference is that we’ll lowercase
-the `query` and each `line` so whatever the case of the input arguments,
-they’ll be the same case when we check whether the line contains the query.
+Funcția `search_case_insensitive`, ilustrată în Listarea 12-21, va fi foarte similară cu funcția `search`. Unica diferență constă în faptul că vom converti atât interogarea cât și fiecare linie la litere mici, astfel încât, indiferent de cazul literelor argumentelor de intrare, ele vor fi în același format când verificăm dacă linia conține interogarea.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-21/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 12-21: Defining the `search_case_insensitive`
-function to lowercase the query and the line before comparing them</span>
+<span class="caption">Listarea 12-21: Definirea funcției `search_case_insensitive` pentru a converti interogarea și linia la litere mici înainte de a efectua comparația</span>
 
-First, we lowercase the `query` string and store it in a shadowed variable with
-the same name. Calling `to_lowercase` on the query is necessary so no
-matter whether the user’s query is `"rust"`, `"RUST"`, `"Rust"`, or `"rUsT"`,
-we’ll treat the query as if it were `"rust"` and be insensitive to the case.
-While `to_lowercase` will handle basic Unicode, it won’t be 100% accurate. If
-we were writing a real application, we’d want to do a bit more work here, but
-this section is about environment variables, not Unicode, so we’ll leave it at
-that here.
+În primul rând, convertim string-ul `query` la litere mici și îl salvăm într-o variabilă nouă, umbrită, păstrând același nume. Apelarea funcției `to_lowercase` asupra interogării este esențială astfel încât, indiferent de forma interogării utilizatorului – fie `"rust"`, fie `"RUST"`, fie `"Rust"`, fie `"rUsT"` – noi vom considera interogarea ca fiind `"rust"`, tratând-o fără să ținem cont de cazul literelor. Deși `to_lowercase` poate procesa caractere Unicode de bază, acuratețea nu va fi de 100%. Dacă am dezvolta o aplicație reală, am dori să fim mai meticuloși în această privință, însă aici ne concentrăm pe variabilele de mediu și nu pe Unicode, așa că o lăsăm așa cum este.
 
-Note that `query` is now a `String` rather than a string slice, because calling
-`to_lowercase` creates new data rather than referencing existing data. Say the
-query is `"rUsT"`, as an example: that string slice doesn’t contain a lowercase
-`u` or `t` for us to use, so we have to allocate a new `String` containing
-`"rust"`. When we pass `query` as an argument to the `contains` method now, we
-need to add an ampersand because the signature of `contains` is defined to take
-a string slice.
+Să reținem că acum `query` devine un `String` și nu o secțiune de string, deoarece aplicarea funcției `to_lowercase` generează date noi în loc să referințieze datele existente. Să luăm de exemplu interogarea `"rUsT"`: secțiunea de string originală nu include un `u` sau un `t` în litere mici la care noi să avem acces, așadar este necesar să creăm un nou `String` care să conțină `"rust"`. Când transmitem interogarea ca argument funcției `contains`, trebuie să adăugăm semnul ampersand (&) deoarece semnătura funcției `contains` necesită o secțiune de string.
 
-Next, we add a call to `to_lowercase` on each `line` to lowercase all
-characters. Now that we’ve converted `line` and `query` to lowercase, we’ll
-find matches no matter what the case of the query is.
+Acum adăugăm un apel la `to_lowercase` pentru fiecare `line` pentru a transforma toate caracterele în litere mici. După ce am convertit `line` și `query` la litere mici, vom identifica potriviri indiferent de majusculele sau minusculele interogării.
 
-Let’s see if this implementation passes the tests:
+Să verificăm dacă această implementare trece testele:
 
 ```console
 {{#include ../listings/ch12-an-io-project/listing-12-21/output.txt}}
 ```
 
-Great! They passed. Now, let’s call the new `search_case_insensitive` function
-from the `run` function. First, we’ll add a configuration option to the
-`Config` struct to switch between case-sensitive and case-insensitive search.
-Adding this field will cause compiler errors because we aren’t initializing
-this field anywhere yet:
+Excelent! Au trecut. Acum, să invocăm funcția nouă `search_case_insensitive` din cadrul funcției `run`. Pentru început, vom adăuga o opțiune de configurare în structura `Config` pentru a alege între căutarea sensibilă și căutarea insensibilă la majuscule. Adăugarea acestui câmp va cauza erori de compilare deoarece nu inițializăm acest câmp în niciun loc momentan:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-22/src/lib.rs:here}}
 ```
 
-We added the `ignore_case` field that holds a Boolean. Next, we need the `run`
-function to check the `ignore_case` field’s value and use that to decide
-whether to call the `search` function or the `search_case_insensitive`
-function, as shown in Listing 12-22. This still won’t compile yet.
+Am adăugat câmpul `ignore_case` care conține un Boolean. Acum trebuie ca funcția `run` să verifice valoarea câmpului `ignore_case` și să folosească această informație pentru a decide dacă va apela funcția `search` sau `search_case_insensitive`, după cum este indicat în Listarea 12-22. Această parte încă nu va compila.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-22/src/lib.rs:there}}
 ```
 
-<span class="caption">Listing 12-22: Calling either `search` or
-`search_case_insensitive` based on the value in `config.ignore_case`</span>
+<span class="caption">Listarea 12-22: Apelarea fie `search`, fie `search_case_insensitive` în funcție de valoarea din `config.ignore_case`</span>
 
-Finally, we need to check for the environment variable. The functions for
-working with environment variables are in the `env` module in the standard
-library, so we bring that module into scope at the top of *src/lib.rs*. Then
-we’ll use the `var` function from the `env` module to check if any value
-has been set for an environment variable named `IGNORE_CASE`, as shown in
-Listing 12-23.
+În final, avem nevoie să verificăm variabila de mediu. Funcțiile pentru interacțiunea cu variabilele de mediu se află în modulul `env` din biblioteca standard, așadar îl importăm în domeniu de vizibilitate la începutul *src/lib.rs*. Vom folosi apoi funcția `var` din modulul `env` pentru a determina dacă o valoare a fost stabilită pentru o variabilă de mediu numită `IGNORE_CASE`, așa cum se arată in Listarea 12-23.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch12-an-io-project/listing-12-23/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 12-23: Checking for any value in an environment
-variable named `IGNORE_CASE`</span>
+<span class="caption">Listarea 12-23: Căutarea pentru orice valoare într-o variabilă de mediu numită `IGNORE_CASE`</span>
 
-Here, we create a new variable `ignore_case`. To set its value, we call the
-`env::var` function and pass it the name of the `IGNORE_CASE` environment
-variable. The `env::var` function returns a `Result` that will be the
-successful `Ok` variant that contains the value of the environment variable if
-the environment variable is set to any value. It will return the `Err` variant
-if the environment variable is not set.
+Aici, definim o nouă variabilă denumită `ignore_case`. Pentru a-i aloca o valoare, apelăm funcția `env::var` pe care o furnizează modulul `env`, pasându-i ca argument numele variabilei de mediu `IGNORE_CASE`. Funcția `env::var` returnează un `Result` care în caz de succes devine varianta `Ok` și conține valoarea variabilei de mediu, dacă aceasta a fost setată. Dacă variabila de mediu nu este prezentă, funcția va returna varianta `Err`.
 
-We’re using the `is_ok` method on the `Result` to check whether the environment
-variable is set, which means the program should do a case-insensitive search.
-If the `IGNORE_CASE` environment variable isn’t set to anything, `is_ok` will
-return false and the program will perform a case-sensitive search. We don’t
-care about the *value* of the environment variable, just whether it’s set or
-unset, so we’re checking `is_ok` rather than using `unwrap`, `expect`, or any
-of the other methods we’ve seen on `Result`.
+Folosim metoda `is_ok` de pe `Result` pentru a verifica existența variabilei de mediu, semn că programul ar trebui să efectueze o căutare insensibilă la majuscule. Dacă variabila `IGNORE_CASE` nu este specificată, `is_ok` va da ca rezultat fals și, în consecință, programul va realiza o căutare sensibilă la majuscule (case-sensitive). Nu ne concentram asupra *valorii* variabilei de mediu, ci doar asupra faptului dacă aceasta este definită sau nu, prin urmare ne bazăm pe metoda `is_ok` în loc să optăm pentru `unwrap`, `expect` sau alte metode asociate cu `Result`.
 
-We pass the value in the `ignore_case` variable to the `Config` instance so the
-`run` function can read that value and decide whether to call
-`search_case_insensitive` or `search`, as we implemented in Listing 12-22.
+Valoarea din `ignore_case` este transmisă instanței `Config`, permițând astfel funcției `run` să acceseze această informație și să decidă dacă să apeleze `search_case_insensitive` sau `search`, conform implementării din Listarea 12-22.
 
-Let’s give it a try! First, we’ll run our program without the environment
-variable set and with the query `to`, which should match any line that contains
-the word “to” in all lowercase:
+Să încercăm! În primul rând, să rulăm programul fără să setăm variabila de mediu și cu interogarea `to`, care ar trebui să potrivească orice linie ce conține cuvântul „to” în litere mici:
 
 ```console
 {{#include ../listings/ch12-an-io-project/listing-12-23/output.txt}}
 ```
 
-Looks like that still works! Now, let’s run the program with `IGNORE_CASE`
-set to `1` but with the same query `to`.
+Iată că funcționează și așa! Acum, să executăm programul cu variabila `IGNORE_CASE` setată la `1`, dar păstrând aceeași interogare `to`.
 
 ```console
 $ IGNORE_CASE=1 cargo run -- to poem.txt
 ```
 
-If you’re using PowerShell, you will need to set the environment variable and
-run the program as separate commands:
+Dacă utilizezi PowerShell, va trebui să setezi variabila de mediu și să execuți programul cu două comenzi separate:
 
 ```console
 PS> $Env:IGNORE_CASE=1; cargo run -- to poem.txt
 ```
 
-This will make `IGNORE_CASE` persist for the remainder of your shell
-session. It can be unset with the `Remove-Item` cmdlet:
+Aceasta va face ca `IGNORE_CASE` să rămână activă pentru restul sesiunii de shell. Poate fi dezactivată folosind cmdlet-ul `Remove-Item`:
 
 ```console
 PS> Remove-Item Env:IGNORE_CASE
 ```
 
-We should get lines that contain “to” that might have uppercase letters:
-
-<!-- manual-regeneration
-cd listings/ch12-an-io-project/listing-12-23
-IGNORE_CASE=1 cargo run -- to poem.txt
-can't extract because of the environment variable
--->
+Ar trebui să obținem linii ce conțin „to” și care ar putea avea litere mari:
 
 ```console
 Are you nobody, too?
@@ -189,18 +109,8 @@ To tell your name the livelong day
 To an admiring bog!
 ```
 
-Excellent, we also got lines containing “To”! Our `minigrep` program can now do
-case-insensitive searching controlled by an environment variable. Now you know
-how to manage options set using either command line arguments or environment
-variables.
+Excelent, am primit și linii care conțin „To”! Programul nostru `minigrep` poate acum efectua căutări care nu țin cont de caz, controlate prin intermediul unei variabile de mediu. Acum cunoști modul în care se pot gestiona opțiunile setate fie prin argumente de linie de comandă, fie prin variabile de mediu.
 
-Some programs allow arguments *and* environment variables for the same
-configuration. In those cases, the programs decide that one or the other takes
-precedence. For another exercise on your own, try controlling case sensitivity
-through either a command line argument or an environment variable. Decide
-whether the command line argument or the environment variable should take
-precedence if the program is run with one set to case sensitive and one set to
-ignore case.
+Unele programe permit folosirea argumentelor *și* variabilelor de mediu pentru aceeași configurare. În asemenea situații, programele stabilesc care din cele două opțiuni are prioritate. Ca exercițiu suplimentar individual, încearcă să controlezi sensibilitatea la majuscule fie printr-un argument de linie de comandă, fie printr-o variabilă de mediu. Decide care dintre cele două - argumentul de linie de comandă sau variabila de mediu - ar trebui să prevaleze în cazul în care programul este executat cu unul setat pe sensibilitate la majuscule și celălalt pe ignorarea diferențelor.
 
-The `std::env` module contains many more useful features for dealing with
-environment variables: check out its documentation to see what is available.
+Modulul `std::env` include multe alte funcționalități utile legate de variabilele de mediu: verifică documentația pentru a vedea ce alte posibilități îți oferă.

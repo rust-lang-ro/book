@@ -1,119 +1,64 @@
-## Advanced Traits
+## Trăsături avansate
 
-We first covered traits in the [“Traits: Defining Shared
-Behavior”][traits-defining-shared-behavior]<!-- ignore --> section of Chapter
-10, but we didn’t discuss the more advanced details. Now that you know more
-about Rust, we can get into the nitty-gritty.
+Am abordat inițial trăsăturile în secțiunea [„Trăsături: Definirea comportamentului partajat”][traits-defining-shared-behavior]<!-- ignore --> din Capitolul 10, fără să intrăm în complexitățile mai avansate ale acestora. Având acum o înțelegere mai profundă despre Rust, putem explora aceste detalii mai sofisticate.
 
-### Specifying Placeholder Types in Trait Definitions with Associated Types
+### Specificarea tipurilor placeholder în definițiile de trăsături prin utilizarea tipurilor asociate
 
-*Associated types* connect a type placeholder with a trait such that the trait
-method definitions can use these placeholder types in their signatures. The
-implementor of a trait will specify the concrete type to be used instead of the
-placeholder type for the particular implementation. That way, we can define a
-trait that uses some types without needing to know exactly what those types are
-until the trait is implemented.
+*Tipurile asociate* sunt folosite pentru a lega un placeholder de tip de o anume trăsătură, permițând astfel definițiilor de metode ale trăsăturii să utilizeze aceste tipuri placeholder în semnăturile lor. Cine implementează o trăsătură va specifica tipul concret care urmează să fie utilizat în locul tipului placeholder pentru implementarea specifică. În acest fel, putem defini o trăsătură care folosește anumite tipuri fără a fi nevoie să cunoaștem exact care sunt aceste tipuri până când trăsătura este implementată.
 
-We’ve described most of the advanced features in this chapter as being rarely
-needed. Associated types are somewhere in the middle: they’re used more rarely
-than features explained in the rest of the book but more commonly than many of
-the other features discussed in this chapter.
+Deși majoritatea caracteristicilor avansate prezentate în acest capitol sunt necesare doar ocazional, tipurile asociate sunt cam de mojloc: se folosesc mai rar decât funcționalitățile explicate în restul cărții, dar totuși mai frecvent decât alte caracteristici discutate aici.
 
-One example of a trait with an associated type is the `Iterator` trait that the
-standard library provides. The associated type is named `Item` and stands in
-for the type of the values the type implementing the `Iterator` trait is
-iterating over. The definition of the `Iterator` trait is as shown in Listing
-19-12.
+Un exemplu de trăsătură ce folosește un tip asociat este trăsătura `Iterator` oferită de biblioteca standard a limbajului Rust. Acest tip asociat este denumit `Item` și înlocuiește tipul valorilor pe care structura ce implementează trăsătura `Iterator` intenționează să le parcurgă. Definiția trăsăturii `Iterator` este ilustrată în Listarea 19-12.
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-12/src/lib.rs}}
 ```
 
-<span class="caption">Listing 19-12: The definition of the `Iterator` trait
-that has an associated type `Item`</span>
+<span class="caption">Listarea 19-12: Definiția trăsăturii `Iterator` cu un tip asociat `Item`</span>
 
-The type `Item` is a placeholder, and the `next` method’s definition shows that
-it will return values of type `Option<Self::Item>`. Implementors of the
-`Iterator` trait will specify the concrete type for `Item`, and the `next`
-method will return an `Option` containing a value of that concrete type.
+Tipul `Item` funcționează ca un înlocuitor, iar metoda `next` este definită astfel încât să returneze valori de tip `Option<Self::Item>`. Implementatorii trăsăturii `Iterator` vor alege un tip specific pentru `Item`, iar `next` va returna un `Option` care contine o valoare de acest tip specific.
 
-Associated types might seem like a similar concept to generics, in that the
-latter allow us to define a function without specifying what types it can
-handle. To examine the difference between the two concepts, we’ll look at an
-implementation of the `Iterator` trait on a type named `Counter` that specifies
-the `Item` type is `u32`:
+Deși tipurile asociate pot pare să fie similare cu genericii, care ne permit să definim o funcție fără a indica tipurile cu care poate lucra, există diferențe importante. Analizăm diferențele prin exemplificarea unei implementări a trăsăturii `Iterator` pe tipul `Counter`, care indică faptul că tipul `Item` este `u32`:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch19-advanced-features/no-listing-22-iterator-on-counter/src/lib.rs:ch19}}
 ```
 
-This syntax seems comparable to that of generics. So why not just define the
-`Iterator` trait with generics, as shown in Listing 19-13?
+Această formă de exprimare pare similară cu cea utilizată pentru generici. Astfel, de ce nu definim pur și simplu trăsătura `Iterator` utilizând generici, cum este ilustrat în Listarea 19-13?
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-13/src/lib.rs}}
 ```
 
-<span class="caption">Listing 19-13: A hypothetical definition of the
-`Iterator` trait using generics</span>
+<span class="caption">Listarea 19-13: O variantă ipotetică a trăsăturii `Iterator` folosind generici</span>
 
-The difference is that when using generics, as in Listing 19-13, we must
-annotate the types in each implementation; because we can also implement
-`Iterator<String> for Counter` or any other type, we could have multiple
-implementations of `Iterator` for `Counter`. In other words, when a trait has a
-generic parameter, it can be implemented for a type multiple times, changing
-the concrete types of the generic type parameters each time. When we use the
-`next` method on `Counter`, we would have to provide type annotations to
-indicate which implementation of `Iterator` we want to use.
+Folosirea genericiilor, ca în Listarea 19-13, ne obligă să adnotăm tipurile în fiecare implementare, pentru că putem, de exemplu, să implementăm `Iterator<String>` pentru `Counter` sau pentru alte tipuri. Acest lucru înseamnă că `Iterator` poate avea mai multe implementări pentru `Counter`, cu tipuri concrete diferite ale parametrilor generici la fiecare implementare. Atunci când folosim metoda `next` pentru `Counter`, este necesar să furnizăm adnotări de tip pentru a specifica ce implementare a `Iterator` dorim să utilizăm.
 
-With associated types, we don’t need to annotate types because we can’t
-implement a trait on a type multiple times. In Listing 19-12 with the
-definition that uses associated types, we can only choose what the type of
-`Item` will be once, because there can only be one `impl Iterator for Counter`.
-We don’t have to specify that we want an iterator of `u32` values everywhere
-that we call `next` on `Counter`.
+Când lucrăm cu tipuri asociate, nu este necesar să adnotăm tipuri, deoarece o trăsătură nu poate fi implementată de mai multe ori pentru un același tip. În listarea 19-12, unde se folosește definiția cu tipuri asociate, putem alege o singură dată care va fi tipul pentru `Item`, deoarece există doar una singură `impl Iterator for Counter`. Nu trebuie să indicăm că dorim un iterator ce produce valori `u32` de câte ori apelăm `next` pentru `Counter`.
 
-Associated types also become part of the trait’s contract: implementors of the
-trait must provide a type to stand in for the associated type placeholder.
-Associated types often have a name that describes how the type will be used,
-and documenting the associated type in the API documentation is good practice.
+Tipurile asociate reprezintă de asemenea o componentă centrală a contractului trăsăturii: implementatorii trăsăturii trebuie să furnizeze un tip care să servească drept înlocuitor pentru tipul asociat. Numele tipurilor asociate sunt de obicei alese pentru a reflecta modul în care vor fi folosite și este o practică bună să includem documentarea acestora în documentația API.
 
-### Default Generic Type Parameters and Operator Overloading
+### Parametrii generici de tip implicit şi supraîncărcarea operatorilor
 
-When we use generic type parameters, we can specify a default concrete type for
-the generic type. This eliminates the need for implementors of the trait to
-specify a concrete type if the default type works. You specify a default type
-when declaring a generic type with the `<PlaceholderType=ConcreteType>` syntax.
+Atunci când folosim parametri generici de tip, putem specifica un tip concret implicit pentru tipul generic. Aceasta elimină necesitatea ca cei care implementează trăsătura să aleagă un tip concret dacă tipul implicit este corespunzător. Un tip implicit este specificat în momentul declarării unui tip generic cu sintaxa `<PlaceholderType=ConcreteType>`.
 
-A great example of a situation where this technique is useful is with *operator
-overloading*, in which you customize the behavior of an operator (such as `+`)
-in particular situations.
+Un exemplu foarte bun unde această tehnică este benefică este cu *supraîncărcarea operatorilor*, unde poți personaliza comportamentul unui operator (precum `+`) în scenarii specifice.
 
-Rust doesn’t allow you to create your own operators or overload arbitrary
-operators. But you can overload the operations and corresponding traits listed
-in `std::ops` by implementing the traits associated with the operator. For
-example, in Listing 19-14 we overload the `+` operator to add two `Point`
-instances together. We do this by implementing the `Add` trait on a `Point`
-struct:
+Rust nu permite crearea unor operatori noi sau supraîncărcarea unor operatori arbitrari. Însă, poți supraîncărca operațiile și trăsăturile aferente listate în `std::ops` implementând trăsăturile asociate acelui operator. De exemplu, în Listarea 19-14 supraîncărcăm operatorul `+` pentru a aduna două instanțe ale clasei `Point`. Aceasta se realizează prin implementarea trăsăturii `Add` pentru struct-ul `Point`:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-14/src/main.rs}}
 ```
 
-<span class="caption">Listing 19-14: Implementing the `Add` trait to overload
-the `+` operator for `Point` instances</span>
+<span class="caption">Listarea 19-14: Implementarea trăsăturii `Add` pentru a realiza supraîncărcarea operatorului `+` pentru instanțele clasei `Point`</span>
 
-The `add` method adds the `x` values of two `Point` instances and the `y`
-values of two `Point` instances to create a new `Point`. The `Add` trait has an
-associated type named `Output` that determines the type returned from the `add`
-method.
+Metoda `add` adună valorile `x` și `y` din două instanțe de `Point` pentru a crea o nouă instanță `Point`. Trăsătura `Add` include un tip asociat denumit `Output` care determină tipul returnat de metoda `add`.
 
-The default generic type in this code is within the `Add` trait. Here is its
-definition:
+Tipul generic implicit din acest cod este definit în interiorul trăsăturii `Add`. Iată definiția acesteia:
 
 ```rust
 trait Add<Rhs=Self> {
@@ -123,68 +68,35 @@ trait Add<Rhs=Self> {
 }
 ```
 
-This code should look generally familiar: a trait with one method and an
-associated type. The new part is `Rhs=Self`: this syntax is called *default
-type parameters*. The `Rhs` generic type parameter (short for “right hand
-side”) defines the type of the `rhs` parameter in the `add` method. If we don’t
-specify a concrete type for `Rhs` when we implement the `Add` trait, the type
-of `Rhs` will default to `Self`, which will be the type we’re implementing
-`Add` on.
+Acest cod ar trebui să ne fie relativ familiar: o trăsătură cu o metodă unică și un tip asociat. Noutatea este `Rhs=Self`: această sintaxă este cunoscută sub numele de *parametri de tip implicit*. Parametrul de tip generic `Rhs` (abreviere pentru "right hand side", sau "partea dreaptă") definește tipul parametrului `rhs` în metoda `add`. Dacă nu specificăm un tip concret pentru `Rhs` când implementăm trăsătura `Add`, tipul lui `Rhs` va fi implicit `Self`, care este tipul la care aplicăm implementarea trăsăturii `Add`.
 
-When we implemented `Add` for `Point`, we used the default for `Rhs` because we
-wanted to add two `Point` instances. Let’s look at an example of implementing
-the `Add` trait where we want to customize the `Rhs` type rather than using the
-default.
+Când am realizat implementarea lui `Add` pentru `Point`, am optat pentru tipul implicit `Rhs` pentru că vroiam să adunăm două instanțe `Point`. Să examinăm un caz în care implementăm trăsătura `Add` personalizând tipul `Rhs` în loc să utilizăm tipul implicit.
 
-We have two structs, `Millimeters` and `Meters`, holding values in different
-units. This thin wrapping of an existing type in another struct is known as the
-*newtype pattern*, which we describe in more detail in the [“Using the Newtype
-Pattern to Implement External Traits on External Types”][newtype]<!-- ignore
---> section. We want to add values in millimeters to values in meters and have
-the implementation of `Add` do the conversion correctly. We can implement `Add`
-for `Millimeters` with `Meters` as the `Rhs`, as shown in Listing 19-15.
+Avem două structuri, `Millimeters` și `Meters`, care reprezintă valori în unități de măsură diferite. Această metodă de încapsulare a unui tip existent într-o altă structură este cunoscută drept *newtype pattern*, concept pe care îl explicăm mai amănunțit în secțiunea [“Utilizarea pattern-ului newtype pentru implementarea trăsăturilor externe pe tipuri externe”][newtype]<!-- ignore --> . Intenționăm să adunăm valori măsurate în milimetri cu cele în metri, iar implementarea `Add` trebuie să efectueze conversia corect. Avem posibilitatea de a implementa `Add` pentru `Millimeters` cu `Meters` ca tip `Rhs`, după cum este prezentat în Listarea 19-15.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-15/src/lib.rs}}
 ```
 
-<span class="caption">Listing 19-15: Implementing the `Add` trait on
-`Millimeters` to add `Millimeters` to `Meters`</span>
+<span class="caption">Listarea 19-15: Implementarea trăsăturii `Add` pentru `Millimeters` astfel încât să putem adăuga `Millimeters` la `Meters`</span>
 
-To add `Millimeters` and `Meters`, we specify `impl Add<Meters>` to set the
-value of the `Rhs` type parameter instead of using the default of `Self`.
+Pentru a aduna `Millimeters` cu `Meters`, specificăm `impl Add<Meters>` pentru a defini valoarea pentru parametrul de tip `Rhs`, în loc să folosim valoarea implicită `Self`.
 
-You’ll use default type parameters in two main ways:
+Vei utiliza parametri de tip implicit în două situații:
+* Pentru a extinde un tip fără a afecta codul existent
+* Pentru a permite personalizări în anumite cazuri pe care majoritatea utilizatorilor nu le vor necesita
 
-* To extend a type without breaking existing code
-* To allow customization in specific cases most users won’t need
+Trăsătura `Add` din biblioteca standard ilustrează acest al doilea scop: de cele mai multe ori, dorim adunarea a două tipuri identice, însă trăsătura `Add` oferă flexibilitatea de a merge dincolo de acest caz standard. Utilizarea unui parametru de tip implicit în definiția trăsăturii `Add` înseamnă că, de obicei, nu este necesar să specificăm acest parametru suplimentar. Prin urmare, nu este nevoie de scrierea unor porțiuni de cod standard pentru implementare, facilitând folosirea trăsăturii.
 
-The standard library’s `Add` trait is an example of the second purpose:
-usually, you’ll add two like types, but the `Add` trait provides the ability to
-customize beyond that. Using a default type parameter in the `Add` trait
-definition means you don’t have to specify the extra parameter most of the
-time. In other words, a bit of implementation boilerplate isn’t needed, making
-it easier to use the trait.
+Primul scop este asemănător cu cel de-al doilea, dar aplicat în sens invers: dacă dorim să adăugăm un parametru de tip unei trăsături existente, acordându-i o valoare implicită va permite extinderea funcționalității acelei trăsături fără a compromite codul implementat anterior.
 
-The first purpose is similar to the second but in reverse: if you want to add a
-type parameter to an existing trait, you can give it a default to allow
-extension of the functionality of the trait without breaking the existing
-implementation code.
+### Dezambiguizarea metodelor cu același nume prin sintaxa complet calificată
 
-### Fully Qualified Syntax for Disambiguation: Calling Methods with the Same Name
+În Rust, nu există nicio restricție care să prevină o trăsătură să aibă o metodă cu același nume ca și o metoda din altă trăsătură, nici nu se interzice implementarea ambelor trăsături pe un singur tip. Este posibil, de asemenea, să implementăm direct pe tip o metodă cu același nume ca metodele din alte trăsături.
 
-Nothing in Rust prevents a trait from having a method with the same name as
-another trait’s method, nor does Rust prevent you from implementing both traits
-on one type. It’s also possible to implement a method directly on the type with
-the same name as methods from traits.
-
-When calling methods with the same name, you’ll need to tell Rust which one you
-want to use. Consider the code in Listing 19-16 where we’ve defined two traits,
-`Pilot` and `Wizard`, that both have a method called `fly`. We then implement
-both traits on a type `Human` that already has a method named `fly` implemented
-on it. Each `fly` method does something different.
+Când dorim să apelăm metode ce poartă același nume, trebuie să informăm Rust despre care dintre acestea intenționăm să o folosim. Considerăm codul prezentat în Listarea 19-16, unde am definit două trăsături, `Pilot` și `Wizard`, fiecare având o metodă denumită `fly`. Implementăm ambele trăsături pe tipul `Human`, care are deja implementată propria sa metodă `fly`. Fiecare metoda `fly` realizează o acțiune diferită.
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -192,12 +104,9 @@ on it. Each `fly` method does something different.
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-16/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 19-16: Two traits are defined to have a `fly`
-method and are implemented on the `Human` type, and a `fly` method is
-implemented on `Human` directly</span>
+<span class="caption">Listarea 19-16: Definirea a două trăsături cu o metodă `fly` și implementarea lor pe tipul `Human`, plus o metodă `fly` implementată direct pe `Human`</span>
 
-When we call `fly` on an instance of `Human`, the compiler defaults to calling
-the method that is directly implemented on the type, as shown in Listing 19-17.
+Atunci când apelăm metoda `fly` pe o instanță de `Human`, compilatorul alege în mod standard metoda implementată direct pe tip, după cum arată Listarea 19-17.
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -205,15 +114,11 @@ the method that is directly implemented on the type, as shown in Listing 19-17.
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-17/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 19-17: Calling `fly` on an instance of
-`Human`</span>
+<span class="caption">Listarea 19-17: Apelarea metodei `fly` pe o instanță de `Human`</span>
 
-Running this code will print `*waving arms furiously*`, showing that Rust
-called the `fly` method implemented on `Human` directly.
+Execuția acestui cod va produce afișajul `*waving arms furiously*`, ceea ce indică faptul că Rust a apelat metoda `fly` implementată direct pe `Human`.
 
-To call the `fly` methods from either the `Pilot` trait or the `Wizard` trait,
-we need to use more explicit syntax to specify which `fly` method we mean.
-Listing 19-18 demonstrates this syntax.
+Dacă vrem să apelăm metodele `fly` din trăsăturile `Pilot` sau `Wizard`, trebuie să utilizăm o sintaxă diferită pentru a specifica exact metoda `fly` dorită. Listarea 19-18 ilustrează utilizarea acestei sintaxe.
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -221,33 +126,19 @@ Listing 19-18 demonstrates this syntax.
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-18/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 19-18: Specifying which trait’s `fly` method we
-want to call</span>
+<span class="caption">Listarea 19-18: Specificarea trăsăturii din care dorim să apelăm metoda `fly`</span>
 
-Specifying the trait name before the method name clarifies to Rust which
-implementation of `fly` we want to call. We could also write
-`Human::fly(&person)`, which is equivalent to the `person.fly()` that we used
-in Listing 19-18, but this is a bit longer to write if we don’t need to
-disambiguate.
+Indicând numele trăsăturii înaintea numelui metodei, facem clar pentru Rust care implementare a `fly` dorim să o apelăm. Am putea de asemenea folosi `Human::fly(&person)`, care are aceeași semnificație cu `person.fly()` utilizat în Listarea 19-18, dar aceasta sintaxă este puțin mai lungă și nu este necesară dacă nu e nevoie de dezambiguizare.
 
-Running this code prints the following:
+Executarea acestui cod generează următorul afișaj:
 
 ```console
 {{#include ../listings/ch19-advanced-features/listing-19-18/output.txt}}
 ```
 
-Because the `fly` method takes a `self` parameter, if we had two *types* that
-both implement one *trait*, Rust could figure out which implementation of a
-trait to use based on the type of `self`.
+Deoarece metoda `fly` folosește un parametru `self`, dacă am avea două *tipuri* care implementează o *trăsătură*, Rust ar putea determina ce implementare a unei trăsături să aleagă pe baza tipului parametrului `self`.
 
-However, associated functions that are not methods don’t have a `self`
-parameter. When there are multiple types or traits that define non-method
-functions with the same function name, Rust doesn't always know which type you
-mean unless you use *fully qualified syntax*. For example, in Listing 19-19 we
-create a trait for an animal shelter that wants to name all baby dogs *Spot*.
-We make an `Animal` trait with an associated non-method function `baby_name`.
-The `Animal` trait is implemented for the struct `Dog`, on which we also
-provide an associated non-method function `baby_name` directly.
+Însă, funcțiile asociate care nu sunt metode nu au un parametru `self`. Când avem mai multe tipuri sau trăsături care definesc funcții asociate non-metode cu același nume, Rust nu poate determina întotdeauna tipul pe care îl vizăm fără utilizarea *sintaxei complet calificate*. De exemplu, în Listarea 19-19 cream o trăsătură pentru un adăpost de animale care vrea să numească toți cățelușii *Spot*. Introducem trăsătura `Animal` cu o funcție asociată non-metodă `baby_name`. Structura `Dog`, care de asemenea implementează trăsătura `Animal`, definește propria funcție asociată non-metodă `baby_name`.
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -255,28 +146,17 @@ provide an associated non-method function `baby_name` directly.
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-19/src/main.rs}}
 ```
 
-<span class="caption">Listing 19-19: A trait with an associated function and a
-type with an associated function of the same name that also implements the
-trait</span>
+<span class="caption">Listarea 19-19: O trăsătură cu o funcție asociată și un tip cu o funcție asociată cu același nume care mai și implementează trăsătura</span>
 
-We implement the code for naming all puppies Spot in the `baby_name` associated
-function that is defined on `Dog`. The `Dog` type also implements the trait
-`Animal`, which describes characteristics that all animals have. Baby dogs are
-called puppies, and that is expressed in the implementation of the `Animal`
-trait on `Dog` in the `baby_name` function associated with the `Animal` trait.
+Implementăm codul pentru numirea tuturor cățelușilor în funcția `baby_name` asociată structurii `Dog`. Tipul `Dog` implementează, de asemenea, trăsătura `Animal`, care descrie caracteristici comune tuturor animalelor. Termenul pentru cățel este `puppy`, și acest lucru este exprimat în implementarea trăsăturii `Animal` pentru `Dog` în funcția `baby_name` ce aparține trăsăturii `Animal`.
 
-In `main`, we call the `Dog::baby_name` function, which calls the associated
-function defined on `Dog` directly. This code prints the following:
+În funcția `main`, invocăm funcția `Dog::baby_name`, care apelează funcția asociată definită direct în cadrul `Dog`. Acest cod produce următorul afișaj:
 
 ```console
 {{#include ../listings/ch19-advanced-features/listing-19-19/output.txt}}
 ```
 
-This output isn’t what we wanted. We want to call the `baby_name` function that
-is part of the `Animal` trait that we implemented on `Dog` so the code prints
-`A baby dog is called a puppy`. The technique of specifying the trait name that
-we used in Listing 19-18 doesn’t help here; if we change `main` to the code in
-Listing 19-20, we’ll get a compilation error.
+Rezultatul nu corespunde așteptărilor noastre. Dorim să apelăm funcția `baby_name` care face parte din trăsătura `Animal` pe care am implementat-o pentru `Dog`, pentru ca astfel codul să afișeze `A baby dog is called a puppy`. Metoda de specificare a numelui trăsăturii utilizată în Listarea 19-18 nu ajută în acest caz; dacă modificăm `main` conform codului din Listarea 19-20, vom întâmpina o eroare de compilare.
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -284,22 +164,15 @@ Listing 19-20, we’ll get a compilation error.
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-20/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 19-20: Attempting to call the `baby_name`
-function from the `Animal` trait, but Rust doesn’t know which implementation to
-use</span>
+<span class="caption">Listarea 19-20: Încercarea de a invoca funcția `baby_name` din trăsătura `Animal`, însă Rust nu poate determina care implementare să o aleagă</span>
 
-Because `Animal::baby_name` doesn’t have a `self` parameter, and there could be
-other types that implement the `Animal` trait, Rust can’t figure out which
-implementation of `Animal::baby_name` we want. We’ll get this compiler error:
+Pentru că `Animal::baby_name` nu primește un parametru `self` și ar fi posibil să existe alte tipuri care implementează trăsătura `Animal`, Rust nu poate decide care implementare a `Animal::baby_name` dorim să o utilizăm. Vom primi următoarea eroare de compilare:
 
 ```console
 {{#include ../listings/ch19-advanced-features/listing-19-20/output.txt}}
 ```
 
-To disambiguate and tell Rust that we want to use the implementation of
-`Animal` for `Dog` as opposed to the implementation of `Animal` for some other
-type, we need to use fully qualified syntax. Listing 19-21 demonstrates how to
-use fully qualified syntax.
+Pentru a preciza și a informa Rust că vrem să folosim implementarea `Animal` specifică pentru `Dog` în detrimentul implementării pentru alt tip, trebuie să ne folosim de sintaxa complet calificată. Listarea 19-21 arată cum să utilizăm sintaxa complet calificată.
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -307,47 +180,27 @@ use fully qualified syntax.
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-21/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 19-21: Using fully qualified syntax to specify
-that we want to call the `baby_name` function from the `Animal` trait as
-implemented on `Dog`</span>
+<span class="caption">Listarea 19-21: Utilizarea sintaxei complet calificate pentru a indica intenția de a apela funcția `baby_name` din trăsătura `Animal` așa cum este implementată pentru `Dog`</span>
 
-We’re providing Rust with a type annotation within the angle brackets, which
-indicates we want to call the `baby_name` method from the `Animal` trait as
-implemented on `Dog` by saying that we want to treat the `Dog` type as an
-`Animal` for this function call. This code will now print what we want:
+Îi oferim lui Rust o adnotație de tip între parantezele unghiulare, semnalând că intenționăm să apelăm metoda `baby_name` din trăsătura `Animal`, așa cum este implementată pentru `Dog`. Specificăm că dorim să considerăm tipul `Dog` ca fiind un `Animal` când efectuăm acest apel de funcție. Urmată această metodă, codul nostru va afișa ceea ce intenționăm:
 
 ```console
 {{#include ../listings/ch19-advanced-features/listing-19-21/output.txt}}
 ```
 
-In general, fully qualified syntax is defined as follows:
+În general, sintaxa complet calificată se definește astfel:
 
 ```rust,ignore
 <Type as Trait>::function(receiver_if_method, next_arg, ...);
 ```
 
-For associated functions that aren’t methods, there would not be a `receiver`:
-there would only be the list of other arguments. You could use fully qualified
-syntax everywhere that you call functions or methods. However, you’re allowed
-to omit any part of this syntax that Rust can figure out from other information
-in the program. You only need to use this more verbose syntax in cases where
-there are multiple implementations that use the same name and Rust needs help
-to identify which implementation you want to call.
+Pentru funcțiile asociate care nu sunt metode, nu vom avea un `receiver`, ci doar lista celorlalte argumente. Poți folosi sintaxa complet calificată oriunde apelezi funcții sau metode. Totuși, poți să omiți orice parte a acestei sintaxe pe care Rust o poate infera din restul informațiilor din program. Această sintaxă mai detaliată este necesară numai în situațiile în care există mai multe implementări care utilizează același nume și Rust are nevoie de ajutor pentru a identifica care implementare vrei să o apelezi.
 
-### Using Supertraits to Require One Trait’s Functionality Within Another Trait
+### Utilizarea super-trăsăturilor pentru a solicita funcționalitatea unei trăsături în cadrul alte trăsături
 
-Sometimes, you might write a trait definition that depends on another trait:
-for a type to implement the first trait, you want to require that type to also
-implement the second trait. You would do this so that your trait definition can
-make use of the associated items of the second trait. The trait your trait
-definition is relying on is called a *supertrait* of your trait.
+Există cazuri când vom scrie o definiție pentru o trăsătură ce depinde de o altă trăsătură: pentru ca un tip să implementeze prima trăsătură, dorim ca acel tip să implementeze și a doua trăsătură. Acest lucru este necesar pentru ca definiția trăsăturii noastre să poată utiliza elementele asociate ale celei de-a doua trăsături. Trăsătura de care depinde trăsătura noastră se numește o *super-trăsătură*.
 
-For example, let’s say we want to make an `OutlinePrint` trait with an
-`outline_print` method that will print a given value formatted so that it's
-framed in asterisks. That is, given a `Point` struct that implements the
-standard library trait `Display` to result in `(x, y)`, when we call
-`outline_print` on a `Point` instance that has `1` for `x` and `3` for `y`, it
-should print the following:
+Să considerăm, de exemplu, că dorim să creăm o trăsătură `OutlinePrint` care include metoda `outline_print`. Aceasta va tipări o valoare astfel încât să fie încadrată în asteriscuri. De pildă, pentru un struct `Point` ce implementează trăsătura `Display` din biblioteca standard și care returnează `(x, y)`, dacă invocăm `outline_print` pe o instanță `Point` cu `x` egal cu `1` și `y` egal cu `3`, ar trebui să obținem:
 
 ```text
 **********
@@ -357,13 +210,7 @@ should print the following:
 **********
 ```
 
-In the implementation of the `outline_print` method, we want to use the
-`Display` trait’s functionality. Therefore, we need to specify that the
-`OutlinePrint` trait will work only for types that also implement `Display` and
-provide the functionality that `OutlinePrint` needs. We can do that in the
-trait definition by specifying `OutlinePrint: Display`. This technique is
-similar to adding a trait bound to the trait. Listing 19-22 shows an
-implementation of the `OutlinePrint` trait.
+Când implementăm metoda `outline_print`, dorim să facem uz de funcționalitatea oferită de trăsătura `Display`. De aceea, trebuie să specificăm că trăsătura `OutlinePrint` va funcționa numai cu tipurile ce implementează și `Display`, și care furnizează funcționalitatea necesară pentru `OutlinePrint`. Putem indica acest lucru în definiția trăsăturii, folosind notația `OutlinePrint: Display`. Această metodă este asemănătoare cu adăugarea unei delimitări de trăsătură. Listarea 19-22 ne demonstrează implementarea trăsăturii `OutlinePrint`.
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -371,18 +218,11 @@ implementation of the `OutlinePrint` trait.
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-22/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 19-22: Implementing the `OutlinePrint` trait that
-requires the functionality from `Display`</span>
+<span class="caption">Listarea 19-22: Implementarea trăsăturii `OutlinePrint` care necesită funcționalitatea trăsăturii `Display`</span>
 
-Because we’ve specified that `OutlinePrint` requires the `Display` trait, we
-can use the `to_string` function that is automatically implemented for any type
-that implements `Display`. If we tried to use `to_string` without adding a
-colon and specifying the `Display` trait after the trait name, we’d get an
-error saying that no method named `to_string` was found for the type `&Self` in
-the current scope.
+Având în vedere că am stipulat ca `OutlinePrint` să necesite trăsătura `Display`, putem folosi funcția `to_string`, care se implementează automat pentru orice tip ce respectă trăsătura `Display`. Dacă am încerca să utilizăm `to_string` fără a adăuga două puncte `:` și fără a menționa trăsătura `Display` după numele trăsăturii, am întâmpina o eroare specificând că nu se găsește nicio metodă denumită `to_string` pentru tipul `&Self` în contextul actual.
 
-Let’s see what happens when we try to implement `OutlinePrint` on a type that
-doesn’t implement `Display`, such as the `Point` struct:
+Să examinăm ce se întâmplă atunci când încercăm să aplicăm trăsătura `OutlinePrint` unui tip care nu implementează `Display`, cum ar fi structura `Point`:
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -390,14 +230,13 @@ doesn’t implement `Display`, such as the `Point` struct:
 {{#rustdoc_include ../listings/ch19-advanced-features/no-listing-02-impl-outlineprint-for-point/src/main.rs:here}}
 ```
 
-We get an error saying that `Display` is required but not implemented:
+Vom primi o eroare care indică necesitatea implementării trăsăturii `Display`, neîndeplinită în cazul de față:
 
 ```console
 {{#include ../listings/ch19-advanced-features/no-listing-02-impl-outlineprint-for-point/output.txt}}
 ```
 
-To fix this, we implement `Display` on `Point` and satisfy the constraint that
-`OutlinePrint` requires, like so:
+Pentru a rezolva problema, vom implementa `Display` pe `Point` și astfel vom îndeplini cerința impusă de `OutlinePrint`, în felul următor:
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -405,64 +244,29 @@ To fix this, we implement `Display` on `Point` and satisfy the constraint that
 {{#rustdoc_include ../listings/ch19-advanced-features/no-listing-03-impl-display-for-point/src/main.rs:here}}
 ```
 
-Then implementing the `OutlinePrint` trait on `Point` will compile
-successfully, and we can call `outline_print` on a `Point` instance to display
-it within an outline of asterisks.
+Astfel, implementarea trăsăturii `OutlinePrint` pe `Point` va compila cu succes, permițându-ne să apelăm `outline_print` pe o instanță de `Point` pentru a o afișa într-un contur de asteriscuri.
 
-### Using the Newtype Pattern to Implement External Traits on External Types
+### Aplicarea pattern-ului newtype pentru implementarea trăsăturilor externe pe tipuri externe
 
-In Chapter 10 in the [“Implementing a Trait on a
-Type”][implementing-a-trait-on-a-type]<!-- ignore --> section, we mentioned the
-orphan rule that states we’re only allowed to implement a trait on a type if
-either the trait or the type are local to our crate. It’s possible to get
-around this restriction using the *newtype pattern*, which involves creating a
-new type in a tuple struct. (We covered tuple structs in the [“Using Tuple
-Structs without Named Fields to Create Different Types”][tuple-structs]<!--
-ignore --> section of Chapter 5.) The tuple struct will have one field and be a
-thin wrapper around the type we want to implement a trait for. Then the wrapper
-type is local to our crate, and we can implement the trait on the wrapper.
-*Newtype* is a term that originates from the Haskell programming language.
-There is no runtime performance penalty for using this pattern, and the wrapper
-type is elided at compile time.
+În capitolul 10, secțiunea [„Implementarea unei trăsături pe un tip”][implementing-a-trait-on-a-type]<!-- ignore --> ne referim la regula orfanilor conform căreia putem implementa o trăsătură pe un tip doar dacă trăsătura sau tipul sunt locale crate-ului nostru. Poate fi ocolită această restricție utilizând *pattern-ul newtype*, ce presupune crearea unui nou tip în cadrul unui tuplă struct. (Această temă a fost abordată în secțiunea [„Utilizarea structurilor tuplă fără câmpuri denumite pentru a genera tipuri diferite”][tuple-structs]<!-- ignore --> din capitolul 5.) Tuple struct-ul în cauză va avea un singur câmp și va fi un înveliș subțire peste tipul căruia dorim să-i aplicăm o trăsătură. Astfel, tipul înveliș devine local crate-ului nostru, permițându-ne să implementăm trăsătura pe acesta.
 
-As an example, let’s say we want to implement `Display` on `Vec<T>`, which the
-orphan rule prevents us from doing directly because the `Display` trait and the
-`Vec<T>` type are defined outside our crate. We can make a `Wrapper` struct
-that holds an instance of `Vec<T>`; then we can implement `Display` on
-`Wrapper` and use the `Vec<T>` value, as shown in Listing 19-23.
+Termenul *Newtype* provine din limbajul de programare Haskell. Nu există penalități de performanță la rulare când se utilizează acest pattern, tipul înveliș fiind eliminat în timpul compilării.
 
-<span class="filename">Filename: src/main.rs</span>
+Spre exemplu, dacă dorim să implementăm `Display` pentru `Vec<T>`, regula orfanilor ne împiedică să o facem direct deoarece trăsătura `Display` și tipul `Vec<T>` sunt definite în afara crate-ului nostru. Putem defini un struct `Wrapper` ce encapsulează o instanță `Vec<T>`; apoi putem implementa `Display` pe `Wrapper` și să utilizăm valoarea `Vec<T>`, conform Listării 19-23.
 
 ```rust
 {{#rustdoc_include ../listings/ch19-advanced-features/listing-19-23/src/main.rs}}
 ```
 
-<span class="caption">Listing 19-23: Creating a `Wrapper` type around
-`Vec<String>` to implement `Display`</span>
+<span class="caption">Listarea 19-23: Crearea unui tip `Wrapper` peste `Vec<String>` pentru a implementa `Display`</span>
 
-The implementation of `Display` uses `self.0` to access the inner `Vec<T>`,
-because `Wrapper` is a tuple struct and `Vec<T>` is the item at index 0 in the
-tuple. Then we can use the functionality of the `Display` type on `Wrapper`.
+Implementarea `Display` accesează `Vec<T>` intern utilizând `self.0`, dat fiind că `Wrapper` este un tuple struct și `Vec<T>` este elementul de la indexul 0 în tuplă. În continuare, putem folosi funcționalitatea `Display` pentru `Wrapper`.
 
-The downside of using this technique is that `Wrapper` is a new type, so it
-doesn’t have the methods of the value it’s holding. We would have to implement
-all the methods of `Vec<T>` directly on `Wrapper` such that the methods
-delegate to `self.0`, which would allow us to treat `Wrapper` exactly like a
-`Vec<T>`. If we wanted the new type to have every method the inner type has,
-implementing the `Deref` trait (discussed in Chapter 15 in the [“Treating Smart
-Pointers Like Regular References with the `Deref`
-Trait”][smart-pointer-deref]<!-- ignore --> section) on the `Wrapper` to return
-the inner type would be a solution. If we don’t want the `Wrapper` type to have
-all the methods of the inner type—for example, to restrict the `Wrapper` type’s
-behavior—we would have to implement just the methods we do want manually.
+Principalul dezavantaj al acestei tehnici este că `Wrapper` reprezintă un tip nou și nu deține metodele valorii pe care o conține. Ar trebui să implementăm toate metodele lui `Vec<T>` pe `Wrapper`, astfel încât acestea să fie delegate către `self.0`, permițându-ne să lucrăm cu `Wrapper` ca și cum ar fi un `Vec<T>`. Pentru ca noul tip să aibă toate metodele tipului intern, o soluție ar fi implementarea trăsăturii `Deref` (discutată în capitolul 15 în secțiunea [„Utilizarea pointerilor inteligenți la fel ca referințele obișnuite cu trăsătura `Deref`”][smart-pointer-deref]<!-- ignore -->) pe `Wrapper` pentru a returna tipul intern. Dacă nu dorim ca tipul `Wrapper` să dispună de toate metodele tipului intern - de exemplu, pentru a-i restricționa comportamentul - atunci trebuie să implementăm manual doar acele metode pe care le dorim.
 
-This newtype pattern is also useful even when traits are not involved. Let’s
-switch focus and look at some advanced ways to interact with Rust’s type system.
+Pattern-ul newtype este folositor chiar și în situații care nu implică trăsături. Să ne schimbăm acum perspectiva și să explorăm modalități avansate de a interacționa cu sistemul de tipuri Rust.
 
-[newtype]: ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types
-[implementing-a-trait-on-a-type]:
-ch10-02-traits.html#implementing-a-trait-on-a-type
-[traits-defining-shared-behavior]:
-ch10-02-traits.html#traits-defining-shared-behavior
-[smart-pointer-deref]: ch15-02-deref.html#treating-smart-pointers-like-regular-references-with-the-deref-trait
+[newtype]: ch19-03-advanced-traits.html#using-the-newtype-pattern-to-implement-external-traits-on-external-types [implementing-a-trait-on-a-type]: ch10-02-traits.html#implementing-a-trait-on-a-type 
+[traits-defining-shared-behavior]: ch10-02-traits.html#traits-defining-shared-behavior 
+[smart-pointer-deref]: ch15-02-deref.html#treating-smart-pointers-like-regular-references-with-the-deref-trait 
 [tuple-structs]: ch05-01-defining-structs.html#using-tuple-structs-without-named-fields-to-create-different-types

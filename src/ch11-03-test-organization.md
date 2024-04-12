@@ -1,100 +1,50 @@
-## Test Organization
+## Organizarea testării
 
-As mentioned at the start of the chapter, testing is a complex discipline, and
-different people use different terminology and organization. The Rust community
-thinks about tests in terms of two main categories: unit tests and integration
-tests. *Unit tests* are small and more focused, testing one module in isolation
-at a time, and can test private interfaces. *Integration tests* are entirely
-external to your library and use your code in the same way any other external
-code would, using only the public interface and potentially exercising multiple
-modules per test.
+Așa cum am menționat la începutul acestui capitol, testarea reprezintă o disciplină sofisticată, iar diferite persoane aplică o varietate de terminologii și abordări organizatorice. În comunitatea Rust, testele sunt privite prin prisma a două categorii principale: *testele unitare* și *testele de integrare*. Testele unitare sunt precise și se concentrează pe testarea unui modul în izolare într-un moment dat, cu posibilitatea de a verifica interfețele private. Testele de integrare, în contrast, sunt complet externe în raport cu biblioteca ta și utilizează codul exact cum ar face-o orice alt consumator extern, limitându-se la interfața publică și explorând, adeseori, multiple module într-un singur test.
 
-Writing both kinds of tests is important to ensure that the pieces of your
-library are doing what you expect them to, separately and together.
+Elaborarea ambelor categorii de teste este crucială pentru a confirma că componentele individuale ale bibliotecii tale funcționează conform așteptărilor, atât izolat, cât și în combinație.
 
-### Unit Tests
+### Testele de unitate
 
-The purpose of unit tests is to test each unit of code in isolation from the
-rest of the code to quickly pinpoint where code is and isn’t working as
-expected. You’ll put unit tests in the *src* directory in each file with the
-code that they’re testing. The convention is to create a module named `tests`
-in each file to contain the test functions and to annotate the module with
-`cfg(test)`.
+Testele de unitate au ca scop verificarea fiecărei unități de cod în izolare de restul programului, pentru a determina rapid ce porțiuni funcționează sau nu conform așteptărilor. Aceste teste sunt amplasate în directoriul *src*, în același fișier cu codul pe care îl testează. Este o convenție uzuală să se creeze un modul cu numele `tests` în fiecare fișier, ce conține funcțiile de test, și să se adnoteze acest modul cu `cfg(test)`.
 
-#### The Tests Module and `#[cfg(test)]`
+#### Modulul de teste și adnotația `#[cfg(test)]`
 
-The `#[cfg(test)]` annotation on the tests module tells Rust to compile and run
-the test code only when you run `cargo test`, not when you run `cargo build`.
-This saves compile time when you only want to build the library and saves space
-in the resulting compiled artifact because the tests are not included. You’ll
-see that because integration tests go in a different directory, they don’t need
-the `#[cfg(test)]` annotation. However, because unit tests go in the same files
-as the code, you’ll use `#[cfg(test)]` to specify that they shouldn’t be
-included in the compiled result.
+Adnotarea `#[cfg(test)]` aplicată pe modulul de teste instruiește Rust să compileze și să ruleze codul de test atunci când folosim `cargo test`, și nu în timpul executării `cargo build`. Această abordare economisește timp la compilare când intenționăm să construim doar biblioteca și reduce dimensiunea artifactului compilat rezultat, prin omisiunea testelor. Observăm că, deoarece testele de integrare sunt stocate într-un directoriu distinct, acestea nu au nevoie de adnotația `#[cfg(test)]`. Contrar, testele unitare, fiind localizate în aceleași fișiere ca și codul, necesită utilizarea `#[cfg(test)]` pentru a indica faptul că nu trebuie incluse în versiunea compilată finală.
 
-Recall that when we generated the new `adder` project in the first section of
-this chapter, Cargo generated this code for us:
+Reamintim că atunci când am generat proiectul nou `adder` în prima parte a acestui capitol, Cargo a creat automat următorul cod pentru noi:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch11-writing-automated-tests/listing-11-01/src/lib.rs}}
 ```
 
-This code is the automatically generated test module. The attribute `cfg`
-stands for *configuration* and tells Rust that the following item should only
-be included given a certain configuration option. In this case, the
-configuration option is `test`, which is provided by Rust for compiling and
-running tests. By using the `cfg` attribute, Cargo compiles our test code only
-if we actively run the tests with `cargo test`. This includes any helper
-functions that might be within this module, in addition to the functions
-annotated with `#[test]`.
+Codul afișat constituie modulul de teste produs automat. Atributul `cfg` reprezintă o scurtătură la *configuration* și indică lui Rust că elementul care urmează să fie definit ar trebui inclus doar într-o configurație specifică. În acest caz, configurația este `test`, pusă la dispoziție de Rust pentru a compila și executa teste. Aplicând atributul `cfg`, Cargo va compila codul de test doar dacă demarăm explicit testele folosind comanda `cargo test`. Acest lucru include și orice funcții auxiliare care ar putea exista în acest modul, alături de funcțiile adnotate cu `#[test]`.
 
-#### Testing Private Functions
+#### Testarea funcțiilor private
 
-There’s debate within the testing community about whether or not private
-functions should be tested directly, and other languages make it difficult or
-impossible to test private functions. Regardless of which testing ideology you
-adhere to, Rust’s privacy rules do allow you to test private functions.
-Consider the code in Listing 11-12 with the private function `internal_adder`.
+În comunitatea de testare există un debate privind oportunitatea testării directe a funcțiilor private. Alte limbaje de programare fac dificilă sau chiar imposibilă testarea funcțiilor private. Independent de ideologia de testare pe care o urmezi, regulile de confidențialitate din Rust îți permit să testezi funcțiile private. Să analizăm codul din Listarea 11-12, care include funcția privată `internal_adder`.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch11-writing-automated-tests/listing-11-12/src/lib.rs}}
 ```
 
-<span class="caption">Listing 11-12: Testing a private function</span>
+<span class="caption">Listarea 11-12: Testarea unei funcții private</span>
 
-Note that the `internal_adder` function is not marked as `pub`. Tests are just
-Rust code, and the `tests` module is just another module. As we discussed in
-the [“Paths for Referring to an Item in the Module Tree”][paths]<!-- ignore -->
-section, items in child modules can use the items in their ancestor modules. In
-this test, we bring all of the `test` module’s parent’s items into scope with
-`use super::*`, and then the test can call `internal_adder`. If you don’t think
-private functions should be tested, there’s nothing in Rust that will compel
-you to do so.
+Observă că funcția `internal_adder` nu este etichetată ca `pub`. Testele sunt pur și simplu cod Rust, iar modulul `tests` este doar un alt modul. Așa cum am discutat în secțiunea [„Utilizarea căilor pentru a face referire la un element în structura de module”][paths]<!-- ignore -->, elementele din modulele copil au acces la elementele din modulele strămoșilor lor. În acest test, includem toate elementele modulului părinte al `test` în domeniul de aplicare cu `use super::*`, permițând testului să apeleze `internal_adder`. Dacă ești de părere că funcțiile private nu ar trebui testate, Rust nu te va forța să faci acest lucru.
 
-### Integration Tests
+### Testele de integrare
 
-In Rust, integration tests are entirely external to your library. They use your
-library in the same way any other code would, which means they can only call
-functions that are part of your library’s public API. Their purpose is to test
-whether many parts of your library work together correctly. Units of code that
-work correctly on their own could have problems when integrated, so test
-coverage of the integrated code is important as well. To create integration
-tests, you first need a *tests* directory.
+În Rust, testele de integrare sunt complet externe în raport cu biblioteca ta. Acestea utilizează biblioteca în exact aceeași manieră cum ar face orice alt segment de cod, ceea ce înseamnă că ele pot apela doar funcții care fac parte din interfața API publică a bibliotecii tale. Scopul lor este să verifice dacă diverse componente ale bibliotecii tale lucrează corect împreună. Unități de cod care funcționează corect izolat pot prezenta probleme atunci când sunt combinate, deci este important să se asigure o acoperire prin teste și pentru codul integrat. Pentru realizarea testelor de integrare, este necesar să creezi mai întâi un directoriu numit *tests*.
 
-#### The *tests* Directory
+#### Directoriul *tests*
 
-We create a *tests* directory at the top level of our project directory, next
-to *src*. Cargo knows to look for integration test files in this directory. We
-can then make as many test files as we want, and Cargo will compile each of the
-files as an individual crate.
+În structura de top a directoriului nostru de proiect, alături de *src*, creăm un directoriu *tests*. Cargo cunoaște locația acestui directoriu și va căuta aici fișierele cu testele de integrare. Aici putem adăuga oricâte fișiere de teste dorim, și Cargo le va compila individual ca pe niște crate-uri separate.
 
-Let’s create an integration test. With the code in Listing 11-12 still in the
-*src/lib.rs* file, make a *tests* directory, and create a new file named
-*tests/integration_test.rs*. Your directory structure should look like this:
+Pentru a crea un test de integrare, având codul din Listarea 11-12 în fișierul *src/lib.rs*, deschidem directoriul *tests* și creăm un fișier cu numele *tests/integration_test.rs*. Iată cum ar arăta structura directoriului:
 
 ```text
 adder
@@ -106,98 +56,61 @@ adder
     └── integration_test.rs
 ```
 
-Enter the code in Listing 11-13 into the *tests/integration_test.rs* file:
+Scriem codul din Listarea 11-13 în fișierul *tests/integration_test.rs*:
 
-<span class="filename">Filename: tests/integration_test.rs</span>
+<span class="filename">Numele fișierului: tests/integration_test.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch11-writing-automated-tests/listing-11-13/tests/integration_test.rs}}
 ```
 
-<span class="caption">Listing 11-13: An integration test of a function in the
-`adder` crate</span>
+<span class="caption">Listarea 11-13: Test de integrare pentru o funcție din crate-ul `adder`</span>
 
-Each file in the `tests` directory is a separate crate, so we need to bring our
-library into each test crate’s scope. For that reason we add `use adder` at the
-top of the code, which we didn’t need in the unit tests.
+Dat fiind că fiecare fișier din `tests` este tratat ca un crate separat, este necesar să includem în domeniul de vizibilitate al fiecărui test crate biblioteca pe care o testăm. Astfel, adăugăm `use adder` la începutul codului; aspect pe care nu l-am avut în testele unitare.
 
-We don’t need to annotate any code in *tests/integration_test.rs* with
-`#[cfg(test)]`. Cargo treats the `tests` directory specially and compiles files
-in this directory only when we run `cargo test`. Run `cargo test` now:
+Nu este necesar să adnotăm codul din *tests/integration_test.rs* cu `#[cfg(test)]`. Cargo consideră `tests` un directoriu special și compilează fișierele conținute doar când executăm `cargo test`. Să executăm `cargo test` acum:
 
 ```console
 {{#include ../listings/ch11-writing-automated-tests/listing-11-13/output.txt}}
 ```
 
-The three sections of output include the unit tests, the integration test, and
-the doc tests. Note that if any test in a section fails, the following sections
-will not be run. For example, if a unit test fails, there won’t be any output
-for integration and doc tests because those tests will only be run if all unit
-tests are passing.
+Afișajul conține trei secțiuni: testele unitare, testul de integrare și testele de documentație. Este important de reținut că dacă un test dintr-o anumită secțiune eșuează, secțiunile următoare nu vor fi executate. De exemplu, dacă un test unitar nu trece, nu vom vedea niciun output pentru testele de integrare și pentru cele de documentație, deoarece vor fi executate doar dacă testele unitare au trecut cu succes.
 
-The first section for the unit tests is the same as we’ve been seeing: one line
-for each unit test (one named `internal` that we added in Listing 11-12) and
-then a summary line for the unit tests.
+Prima secțiune, cea a testelor unitare, ne prezintă ceea ce am văzut și înainte: o linie pentru fiecare test unitar (inclusiv `internal` adăugat în Listarea 11-12) și o linie de sumar pentru toate testele unitare.
 
-The integration tests section starts with the line `Running
-tests/integration_test.rs`. Next, there is a line for each test function in
-that integration test and a summary line for the results of the integration
-test just before the `Doc-tests adder` section starts.
+Secțiunea pentru testele de integrare debutează cu `Running tests/integration_test.rs`, urmată de o linie pentru fiecare funcție de test din testul de integrare, încheind cu o linie de sumar a rezultatelor testului de integrare înainte de începerea secțiunii `Doc-tests adder`.
 
-Each integration test file has its own section, so if we add more files in the
-*tests* directory, there will be more integration test sections.
+Dacă adăugăm mai multe fișiere de test în directoriul *tests*, fiecare dintre acestea va avea propria sa secțiune de test de integrare.
 
-We can still run a particular integration test function by specifying the test
-function’s name as an argument to `cargo test`. To run all the tests in a
-particular integration test file, use the `--test` argument of `cargo test`
-followed by the name of the file:
+Putem rula o anume funcție de test de integrare direct specificând numele funcției ca argument la `cargo test`. Pentru a rula toate testele dintr-un fișier specific de test de integrare, folosim argumentul `--test` cu numele fișierului după `cargo test`:
 
 ```console
 {{#include ../listings/ch11-writing-automated-tests/output-only-05-single-integration/output.txt}}
 ```
 
-This command runs only the tests in the *tests/integration_test.rs* file.
+Această comandă execută exclusiv testele din *tests/integration_test.rs*.
 
-#### Submodules in Integration Tests
+#### Submodule în teste de integrare
 
-As you add more integration tests, you might want to make more files in the
-*tests* directory to help organize them; for example, you can group the test
-functions by the functionality they’re testing. As mentioned earlier, each file
-in the *tests* directory is compiled as its own separate crate, which is useful
-for creating separate scopes to more closely imitate the way end users will be
-using your crate. However, this means files in the *tests* directory don’t
-share the same behavior as files in *src* do, as you learned in Chapter 7
-regarding how to separate code into modules and files.
+Când adaugi tot mai multe teste de integrare, e posibil să dorești noi fișiere în directoriul *tests* pentru a le organiza mai bine; de exemplu, pOți grupa funcțiile de test după funcționalitățile pe care le verifică. După cum am menționat anterior, fiecare fișier din directoriul *tests* este compilat ca un crate separat, aspect util pentru crearea de domenii de vizibilitate separate care să imite cât mai fidel modul în care utilizatorii finali vor folosi crate-ul tău. Însă, acest lucru înseamnă că fișierele din directoriul *tests* nu se comportă la fel ca cele din *src*, așa cum am învățat în Capitolul 7 cu privire la separarea codului în module și fișiere.
 
-The different behavior of *tests* directory files is most noticeable when you
-have a set of helper functions to use in multiple integration test files and
-you try to follow the steps in the [“Separating Modules into Different
-Files”][separating-modules-into-files]<!-- ignore --> section of Chapter 7 to
-extract them into a common module. For example, if we create *tests/common.rs*
-and place a function named `setup` in it, we can add some code to `setup` that
-we want to call from multiple test functions in multiple test files:
+Diferența de comportament a fișierelor din directoriul *tests* devine evidentă atunci când avem un set de funcții ajutătoare pe care dorim să le utilizăm în diverse fișiere de teste de integrare și încercăm să urmăm pașii din secțiunea [„Separarea modulelor în fișiere diferite”][separating-modules-into-files]<!-- ignore --> din Capitolul 7 pentru a le extrage într-un modul comun. De exemplu, dacă creăm *tests/common.rs* și adăugăm în el o funcție denumită `setup`, putem include în `setup` codul pe care dorim să-l apelăm din diverse funcții de testare în multiple fișiere de test:
 
-<span class="filename">Filename: tests/common.rs</span>
+<span class="filename">Numele fișierului: tests/common.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch11-writing-automated-tests/no-listing-12-shared-test-code-problem/tests/common.rs}}
 ```
 
-When we run the tests again, we’ll see a new section in the test output for the
-*common.rs* file, even though this file doesn’t contain any test functions nor
-did we call the `setup` function from anywhere:
+La rularea testelor din nou, vom observa în afișajul testelor o nouă secțiune pentru fișierul *common.rs*, cu toate că acest fișier nu conține nicio funcție de test și nici n-am invocat funcția `setup` de undeva:
 
 ```console
 {{#include ../listings/ch11-writing-automated-tests/no-listing-12-shared-test-code-problem/output.txt}}
 ```
 
-Having `common` appear in the test results with `running 0 tests` displayed for
-it is not what we wanted. We just wanted to share some code with the other
-integration test files.
+Prezența `common` în rezultatele de test cu mențiunea `running 0 tests` nu este ceea ce intenționam. Intenția noastră era pur și simplu să partajăm codul cu alte fișiere de test de integrare.
 
-To avoid having `common` appear in the test output, instead of creating
-*tests/common.rs*, we’ll create *tests/common/mod.rs*. The project directory
-now looks like this:
+Pentru a preveni apariția secțiunii `common` în rezultatele de test, în loc de *tests/common.rs*, vom crea *tests/common/mod.rs*. Structura directorului proiectului va arăta acum astfel:
 
 ```text
 ├── Cargo.lock
@@ -210,58 +123,29 @@ now looks like this:
     └── integration_test.rs
 ```
 
-This is the older naming convention that Rust also understands that we
-mentioned in the [“Alternate File Paths”][alt-paths]<!-- ignore --> section of
-Chapter 7. Naming the file this way tells Rust not to treat the `common` module
-as an integration test file. When we move the `setup` function code into
-*tests/common/mod.rs* and delete the *tests/common.rs* file, the section in the
-test output will no longer appear. Files in subdirectories of the *tests*
-directory don’t get compiled as separate crates or have sections in the test
-output.
+Aceasta reprezintă convenția de denumire mai veche, pe care Rust o recunoaște și care a fost menționată în secțiunea [„Căi alternative pentru Fișiere”][alt-paths]<!-- ignore --> din Capitolul 7. A alege acest nume de fișier îi indică lui Rust să nu considere modulul `common` ca fiind un fișier de teste de integrare. Când mutăm codul funcției `setup` în *tests/common/mod.rs* și ștergem fișierul *tests/common.rs*, secțiunea respectivă nu va mai apărea în afișajul testelor. Fișierele din subdirectoarele directoriului *tests* nu sunt compilate în crate-uri separate și nu au secțiuni în afișajul testelor.
 
-After we’ve created *tests/common/mod.rs*, we can use it from any of the
-integration test files as a module. Here’s an example of calling the `setup`
-function from the `it_adds_two` test in *tests/integration_test.rs*:
+După ce am creat fișierul *tests/common/mod.rs*, putem să-l utilizăm ca modul din orice fișier de teste de integrare. Iată cum apelăm funcția `setup` din testul `it_adds_two` din *tests/integration_test.rs*:
 
-<span class="filename">Filename: tests/integration_test.rs</span>
+<span class="filename">Numele fișierului: tests/integration_test.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch11-writing-automated-tests/no-listing-13-fix-shared-test-code-problem/tests/integration_test.rs}}
 ```
 
-Note that the `mod common;` declaration is the same as the module declaration
-we demonstrated in Listing 7-21. Then in the test function, we can call the
-`common::setup()` function.
+Remarcăm că declarația `mod common;` este identică cu declarația de modul pe care am prezentat-o în Listarea 7-21. Acum în cadrul funcției de test, putem apela funcția `common::setup()`.
 
-#### Integration Tests for Binary Crates
+#### Teste de integrare pentru crate-uri binare
 
-If our project is a binary crate that only contains a *src/main.rs* file and
-doesn’t have a *src/lib.rs* file, we can’t create integration tests in the
-*tests* directory and bring functions defined in the *src/main.rs* file into
-scope with a `use` statement. Only library crates expose functions that other
-crates can use; binary crates are meant to be run on their own.
+Dacă proiectul nostru este un crate binar conținând numai un fișier *src/main.rs* și fără un fișier *src/lib.rs*, nu putem crea teste de integrare în directoriul *tests* și nici să aducem funcțiile definite în *src/main.rs* în domeniu de vizibilitate folosind o instrucțiune `use`. Doar crate-urile de tip bibliotecă expun funcții care pot fi folosite de alte crate-uri; crate-urile binare sunt create pentru a fi executate independent.
 
-This is one of the reasons Rust projects that provide a binary have a
-straightforward *src/main.rs* file that calls logic that lives in the
-*src/lib.rs* file. Using that structure, integration tests *can* test the
-library crate with `use` to make the important functionality available.
-If the important functionality works, the small amount of code in the
-*src/main.rs* file will work as well, and that small amount of code doesn’t
-need to be tested.
+Acesta este unul din raționamentele pentru care proiectele Rust ce oferă un binar au un fișier *src/main.rs* concis, ce apelează logica implementată în fișierul *src/lib.rs*. Având această structură, teste de integrare *pot* să testeze crate-ul bibliotecă utilizând `use` pentru a accesa funcționalitățile esențiale. Dacă aceste funcționalități esențiale funcționează corect, atunci și cantitatea mică de cod din *src/main.rs* va opera corect, iar acest segment redus de cod nu necesită testare.
 
-## Summary
+## Sumar
 
-Rust’s testing features provide a way to specify how code should function to
-ensure it continues to work as you expect, even as you make changes. Unit tests
-exercise different parts of a library separately and can test private
-implementation details. Integration tests check that many parts of the library
-work together correctly, and they use the library’s public API to test the code
-in the same way external code will use it. Even though Rust’s type system and
-ownership rules help prevent some kinds of bugs, tests are still important to
-reduce logic bugs having to do with how your code is expected to behave.
+Facilitățile de testare oferite de Rust ne permit să specificăm modul în care codul ar trebui să opereze pentru a garanta că acesta continuă să funcționeze conform așteptărilor, chiar și atunci când sunt aplicate modificări. Testele unitare verifică separat părți diferite ale unei biblioteci și pot testa detalii ale implementării private. Testele de integrare asigură că diferite componente ale bibliotecii lucrează corect împreună, utilizând API-ul public al acesteia pentru a verifica codul în același mod în care va fi folosit și de codul extern. Deși sistemul de tipizare și regulile de posesiune din Rust previn anumite categorii de defecțiuni, testele rămân esențiale pentru a diminua erorile de logică legate de comportamentul așteptat al codului.
 
-Let’s combine the knowledge you learned in this chapter and in previous
-chapters to work on a project!
+În continuare să folosim cunoștințele acumulate în acest capitol și în cele anterioare pentru a dezvolta un proiect!
 
 [paths]: ch07-03-paths-for-referring-to-an-item-in-the-module-tree.html
 [separating-modules-into-files]:

@@ -1,127 +1,93 @@
-## Separating Modules into Different Files
+## Separarea modulelor în diferite fișiere
 
-So far, all the examples in this chapter defined multiple modules in one file.
-When modules get large, you might want to move their definitions to a separate
-file to make the code easier to navigate.
+Toate exemplele prezentate până acum în acest capitol au învățat cum să definim mai multe module într-un singur fișier. Când modulele devin mai complexe, ai putea dori să separi definițiile acestora în fișiere diferite pentru a naviga mai ușor prin cod.
 
-For example, let’s start from the code in Listing 7-17 that had multiple
-restaurant modules. We’ll extract modules into files instead of having all the
-modules defined in the crate root file. In this case, the crate root file is
-*src/lib.rs*, but this procedure also works with binary crates whose crate root
-file is *src/main.rs*.
+Ca punct de plecare, vom lua codul din Listarea 7-17 care conține multiple module *restaurant*. Scopul este să extragem modulele în diferite fișiere, în loc să le păstrăm toate în fișierul rădăcină al crate-ului. În cazul de față, fișierul rădăcină este *src/lib.rs*. Cu toate acestea, același proces se aplică și crate-urilor binare, unde fișierul rădăcină este *src/main.rs*.
 
-First, we’ll extract the `front_of_house` module to its own file. Remove the
-code inside the curly brackets for the `front_of_house` module, leaving only
-the `mod front_of_house;` declaration, so that *src/lib.rs* contains the code
-shown in Listing 7-21. Note that this won’t compile until we create the
-*src/front_of_house.rs* file in Listing 7-22.
+Începem prin a delega modulul `front_of_house` în propriul fișier. Pentru asta, eliminăm codul din interiorul acoladelor modulului `front_of_house`, lăsând doar declarația `mod front_of_house;`. Astfel, *src/lib.rs* va conține codul prezentat în Listarea 7-21. Atenție: acest cod nu va putea fi compilat până când nu vom crea fișierul *src/front_of_house.rs*, așa cum este prezentat în Listarea 7-22.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
-```rust,ignore,does_not_compile
-{{#rustdoc_include ../listings/ch07-managing-growing-projects/listing-07-21-and-22/src/lib.rs}}
+```rust, nu_se_compileaza,ignore
+{{#includefile_rustdoc ../lista/ch07-gestionand-proiecte-in-crestere/listare-07-21-si-22/src/lib.rs}}
 ```
 
-<span class="caption">Listing 7-21: Declaring the `front_of_house` module whose
-body will be in *src/front_of_house.rs*</span>
+<span class="caption">Listarea 7-21: Declararea modulului `front_of_house` care va fi conținut în *src/front_of_house.rs*</span>
 
-Next, place the code that was in the curly brackets into a new file named
-*src/front_of_house.rs*, as shown in Listing 7-22. The compiler knows to look
-in this file because it came across the module declaration in the crate root
-with the name `front_of_house`.
+În etapa următoare, trebuie să mută codul din interiorul acoladelor într-un fișier nou, numit *src/front_of_house.rs*, conform Listării 7-22. Compilatorul va găsi acest fișier datorită declarației de modul din rădăcina crate-ului, unde se specifică numele `front_of_house`.
 
-<span class="filename">Filename: src/front_of_house.rs</span>
+
+<span class="filename">Numele fișierului: src/front_of_house.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/listing-07-21-and-22/src/front_of_house.rs}}
 ```
 
-<span class="caption">Listing 7-22: Definitions inside the `front_of_house`
-module in *src/front_of_house.rs*</span>
+<span class="caption">Listarea 7-22: Definim anumite aspecte în interiorul modulului `front_of_house` localizat în *src/front_of_house.rs*</span>
 
-Note that you only need to load a file using a `mod` declaration *once* in your
-module tree. Once the compiler knows the file is part of the project (and knows
-where in the module tree the code resides because of where you’ve put the `mod`
-statement), other files in your project should refer to the loaded file’s code
-using a path to where it was declared, as covered in the [“Paths for Referring
-to an Item in the Module Tree”][paths]<!-- ignore --> section. In other words,
-`mod` is *not* an “include” operation that you may have seen in other
-programming languages.
+Reține că trebuie să încarci un fișier folosind o declarație `mod` *o singură dată* în arborele tău de module. Odată ce compilatorul este informat că fișierul aparține proiectului (și cunoaște locul în care se găsește codul datorită poziției declarației `mod` ), restul fișierelor din proiect trebuie să se refere la codul fișierului încărcat utilizând o cale spre locul declarării acestuia. Această metodă este descrisă în secțiunea [„Cum să referi un element în structura modulelor”][paths]<!-- ignore -->. În cuvinte mai simple, `mod` *nu este* o comandă de "include", așa cum este utilizată în alte limbaje de programare.
 
-Next, we’ll extract the `hosting` module to its own file. The process is a bit
-different because `hosting` is a child module of `front_of_house`, not of the
-root module. We’ll place the file for `hosting` in a new directory that will be
-named for its ancestors in the module tree, in this case *src/front_of_house/*.
+Următorul pas va fi mutarea modulului `hosting` în propriul său fișier. Procesul este ușor diferit deoarece `hosting` este un submodul al `front_of_house`, nu un modul rădăcină. Noua locație a fișierului va fi un nou directoriu, care va purta numele submodulului în structura de module - în cazul nostru, *src/front_of_house/*.
 
-To start moving `hosting`, we change *src/front_of_house.rs* to contain only the
-declaration of the `hosting` module:
+Pentru mutarea `hosting`, modificăm *src/front_of_house.rs* pentru a găzdui doar declarația modulului `hosting`:
 
-<span class="filename">Filename: src/front_of_house.rs</span>
+<span class="filename">Numele fișierului: src/front_of_house.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/no-listing-02-extracting-hosting/src/front_of_house.rs}}
 ```
 
-Then we create a *src/front_of_house* directory and a file *hosting.rs* to
-contain the definitions made in the `hosting` module:
+Apoi, creăm directoriul *src/front_of_house* și fișierul *hosting.rs*, care va conține definițiile din cadrul modulului `hosting`:
 
-<span class="filename">Filename: src/front_of_house/hosting.rs</span>
+<span class="filename">Numele fișierului: src/front_of_house/hosting.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch07-managing-growing-projects/no-listing-02-extracting-hosting/src/front_of_house/hosting.rs}}
 ```
 
-If we instead put *hosting.rs* in the *src* directory, the compiler would
-expect the *hosting.rs* code to be in a `hosting` module declared in the crate
-root, and not declared as a child of the `front_of_house` module. The
-compiler’s rules for which files to check for which modules’ code means the
-directories and files more closely match the module tree.
+Daca am plasa *hosting.rs* în directoriul *src*, compilatorul s-ar aștepta ca fișierul *hosting.rs* să fie un modul rădăcină `hosting`  din structura proiectului, și nu un submodul al `front_of_house`. Regulile interne ale compilatorului referitoare la asocierea fișierelor cu modulele specifice fac ca structura de directorii și fișiere să urmeze cu exactitate structura de module.
 
-> ### Alternate File Paths
+> ### Căi alternative de fișiere
 >
-> So far we’ve covered the most idiomatic file paths the Rust compiler uses,
-> but Rust also supports an older style of file path. For a module named
-> `front_of_house` declared in the crate root, the compiler will look for the
-> module’s code in:
+> Până în prezent, am discutat despre căile de fișiere cel mai des utilizate în
+> Rust, dar trebuie să știi că acest limbaj de programare acceptă și un stil mai
+> vechi de definire a acestora. Să luăm exemplul unui modul numit
+> `front_of_house`, pe care îl avem declarat la rădăcina unui crate -
+> compilatorul Rust va căuta codul acestuia în următoarele locații:
+> * *src/front_of_house.rs* (am discutat deja despre aceasta)
+> * *src/front_of_house/mod.rs* (o variantă mai veche, care este încă acceptată)
+> 
+> Referitor la un modul numit `hosting`, definit ca submodul al
+> `front_of_house`, compilatorul va căuta codul său în:
+> * *src/front_of_house/hosting.rs* (am menționat deja acesta)
+> * *src/front_of_house/hosting/mod.rs* (încă o versiune veche, încă valabilă)
 >
-> * *src/front_of_house.rs* (what we covered)
-> * *src/front_of_house/mod.rs* (older style, still supported path)
+> Dacă alegi să utilizezi ambele stiluri pentru același modul, vei obține o
+> eroare din partea compilatorului. Deși ești liber să utilizezi o combinație a
+> celor două stiluri pentru diferite module din același proiect, aceasta ar
+> putea genera confuzii pentru cei care explorează proiectul.
 >
-> For a module named `hosting` that is a submodule of `front_of_house`, the
-> compiler will look for the module’s code in:
+> Unul dintre dezavantajele metodei care implică utilizarea de fișiere numite
+> *mod.rs* este că proiectul poate ajunge să conțină un număr mare de astfel de
+> fișiere, ceea ce poate fi confuz atunci când le avem deschise simultan în
+> editor.
 >
-> * *src/front_of_house/hosting.rs* (what we covered)
-> * *src/front_of_house/hosting/mod.rs* (older style, still supported path)
+> Noutatea este că acum avem codul fiecărui modul într-un fișier separat, dar
+> structura modulelor în sine nu s-a schimbat. Chiar dacă acum definițiile lor
+> se află în fișiere diferite, apelurile funcției în `eat_at_restaurant` vor
+> funcționa în mod normal, fără a necesita vreo modificare. Aceasta ne permite
+> să mutăm modulele în fișiere noi pe măsură ce acestea se măresc în dimensiune.
 >
-> If you use both styles for the same module, you’ll get a compiler error. Using
-> a mix of both styles for different modules in the same project is allowed, but
-> might be confusing for people navigating your project.
->
-> The main downside to the style that uses files named *mod.rs* is that your
-> project can end up with many files named *mod.rs*, which can get confusing
-> when you have them open in your editor at the same time.
+> Observăm că linia `pub use crate::front_of_house::hosting` din *src/lib.rs* nu
+> a fost afectată, la fel cum nici folosirea cuvântului cheie `use` nu
+> influențează fișierele care sunt compilate ca parte a crate-ului. Cuvântul
+> cheie `mod` este folosit pentru a declara module, iar Rust va căuta codul
+> acestora în fișiere care au același nume precum modulul în sine.
 
-We’ve moved each module’s code to a separate file, and the module tree remains
-the same. The function calls in `eat_at_restaurant` will work without any
-modification, even though the definitions live in different files. This
-technique lets you move modules to new files as they grow in size.
+## Sumar
 
-Note that the `pub use crate::front_of_house::hosting` statement in
-*src/lib.rs* also hasn’t changed, nor does `use` have any impact on what files
-are compiled as part of the crate. The `mod` keyword declares modules, and Rust
-looks in a file with the same name as the module for the code that goes into
-that module.
+Rust îți oferă posibilitatea de a diviza un pachet în crate-uri multiple și un crate în diverse module. Acest lucru permite referirea la elemente definite într-un anumit modul dintr-un altul. Această acțiune poate fi realizată prin specificarea unor căi absolute sau relative. Cu ajutorul instrucțiunii `use`, aceste căi pot fi aduse în domeniul de vizibilitate, permițând astfel un acces mai rapid și mai eficient. Deși codul unui modul este inițial privat, acesta poate fi făcut public adăugând termenul `pub`.
 
-## Summary
-
-Rust lets you split a package into multiple crates and a crate into modules
-so you can refer to items defined in one module from another module. You can do
-this by specifying absolute or relative paths. These paths can be brought into
-scope with a `use` statement so you can use a shorter path for multiple uses of
-the item in that scope. Module code is private by default, but you can make
-definitions public by adding the `pub` keyword.
-
-In the next chapter, we’ll look at some collection data structures in the
-standard library that you can use in your neatly organized code.
+În capitolul următor, vom explora unele structuri de colecție din librăria standard, pe care le vei putea folosi în codul tău bine organizat.
 
 [paths]: ch07-03-paths-for-referring-to-an-item-in-the-module-tree.html

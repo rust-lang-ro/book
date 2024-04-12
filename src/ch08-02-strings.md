@@ -1,329 +1,202 @@
-## Storing UTF-8 Encoded Text with Strings
+## Manipularea textelor codate UTF-8 utilizând string-uri
 
-We talked about strings in Chapter 4, but we’ll look at them in more depth now.
-New Rustaceans commonly get stuck on strings for a combination of three
-reasons: Rust’s propensity for exposing possible errors, strings being a more
-complicated data structure than many programmers give them credit for, and
-UTF-8. These factors combine in a way that can seem difficult when you’re
-coming from other programming languages.
+Am introdus noțiunile despre string-uri în Capitolul 4, dar acum vom aprofunda subiectul. Utilizatorii noi de Rust au adesea dificultăți cu string-urile din cauza unei combinații a trei aspecte: abordarea Rust de a evidenția posibilele greșeli, complexitatea neașteptată a string-urilor ca structură de date și particularitățile codării UTF-8. Toate acestea pot crea provocări, mai ales pentru cei veniți din alte limbaje de programare.
 
-We discuss strings in the context of collections because strings are
-implemented as a collection of bytes, plus some methods to provide useful
-functionality when those bytes are interpreted as text. In this section, we’ll
-talk about the operations on `String` that every collection type has, such as
-creating, updating, and reading. We’ll also discuss the ways in which `String`
-is different from the other collections, namely how indexing into a `String` is
-complicated by the differences between how people and computers interpret
-`String` data.
+Vorbim despre string-uri în cadrul temei colecțiilor pentru că, în esență, un string este o colecție de octeți (bytes), completată de metode care facilitează lucrul cu textul. În această secțiune, ne vom concentra pe operațiunile comune oricărui tip de colecție, care se aplică și pentru `String`: cum le creăm, le actualizăm și le citim. Vom discuta și despre caracteristicile care diferențiază `String` de alte tipuri de colecții, concentrându-ne în special pe complexitatea indexării într-un `String`, dată de modul diferit în care oamenii și calculatoarele procesează informația dintr-un `String`.
 
-### What Is a String?
+### Ce este un string?
 
-We’ll first define what we mean by the term *string*. Rust has only one string
-type in the core language, which is the string slice `str` that is usually seen
-in its borrowed form `&str`. In Chapter 4, we talked about *string slices*,
-which are references to some UTF-8 encoded string data stored elsewhere. String
-literals, for example, are stored in the program’s binary and are therefore
-string slices.
+Să clarificăm ce înțelegem noi prin "string". În limbajul Rust, există un singur tip fundamental de string, anume secțiunea de string - `str`, care de obicei apare sub forma împrumutată `&str`. În Capitolul 4, am abordat conceptul de *secțiuni de string*, care reprezintă referințe la date de tip string codificate în UTF-8 și stocate în altă parte. Spread exemplu, literalele de string sunt incluse în fișierul binar al programului, motiv pentru care sunt considerate secțiuni de string.
 
-The `String` type, which is provided by Rust’s standard library rather than
-coded into the core language, is a growable, mutable, owned, UTF-8 encoded
-string type. When Rustaceans refer to “strings” in Rust, they might be
-referring to either the `String` or the string slice `&str` types, not just one
-of those types. Although this section is largely about `String`, both types are
-used heavily in Rust’s standard library, and both `String` and string slices
-are UTF-8 encoded.
+Pe de altă parte, avem tipul `String`, oferit de biblioteca standard a limbajului Rust și nu parte integrantă a nucleului limbajului. Acesta este un tip de string extensibil, mutabil, cu proprietate asupra datelor și codificat în UTF-8. Când vorbim despre "string-uri" în Rust, ne referim atât la tipul `String`, cât și la secțiunile de string `&str`, nu exclusiv la unul dintre ele. Deși accentul acestei secțiuni este pe `String`, ambele forme sunt fundamentale în biblioteca standard și, atât `String`, cât și secțiunile de string respectă codificarea UTF-8.
 
-### Creating a New String
+### Crearea unui string nou
 
-Many of the same operations available with `Vec<T>` are available with `String`
-as well, because `String` is actually implemented as a wrapper around a vector
-of bytes with some extra guarantees, restrictions, and capabilities. An example
-of a function that works the same way with `Vec<T>` and `String` is the `new`
-function to create an instance, shown in Listing 8-11.
+Operațiunile pe care le facem cu `Vec<T>` pot fi aplicate și pe `String`, deoarece `String` este efectiv o încapsulare peste un vector de octeți, având anumite garanții suplimentare, restricții și funcționalități. Să luăm drept exemplu funcția `new`, care ne permite să creăm o nouă instanță de `String`, ilustrată în Listarea 8-11.
 
 ```rust
 {{#rustdoc_include ../listings/ch08-common-collections/listing-08-11/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 8-11: Creating a new, empty `String`</span>
+<span class="caption">Listarea 8-11: Crearea unui `String` gol</span>
 
-This line creates a new empty string called `s`, which we can then load data
-into. Often, we’ll have some initial data that we want to start the string
-with. For that, we use the `to_string` method, which is available on any type
-that implements the `Display` trait, as string literals do. Listing 8-12 shows
-two examples.
+Această linie de cod creează un `String` nou și gol, pe nume `s`, în care putem încărca date ulterior. Adesea avem date inițiale pe care dorim să le folosim pentru a popula string-ul. Pentru acest caz folosim metoda `to_string`, disponibilă pentru orice tip ce implementează trăsătura `Display`, așa cum fac literalele string. Listarea 8-12 prezintă două exemple.
 
 ```rust
 {{#rustdoc_include ../listings/ch08-common-collections/listing-08-12/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 8-12: Using the `to_string` method to create a
-`String` from a string literal</span>
+<span class="caption">Listarea 8-12: Crearea unui `String` dintr-un literal string folosind metoda `to_string`</span>
 
-This code creates a string containing `initial contents`.
+Codul de mai sus generează un string ce conține textul `initial contents`.
 
-We can also use the function `String::from` to create a `String` from a string
-literal. The code in Listing 8-13 is equivalent to the code from Listing 8-12
-that uses `to_string`.
+Putem folosi, de asemenea, funcția `String::from` pentru a crea un `String` pornind de la un literal string. Codul din Listarea 8-13 este similar celui din Listarea 8-12, care a utilizat `to_string`.
 
 ```rust
 {{#rustdoc_include ../listings/ch08-common-collections/listing-08-13/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 8-13: Using the `String::from` function to create
-a `String` from a string literal</span>
+<span class="caption">Listarea 8-13: Utilizarea funcției `String::from` pentru a obține un `String` dintr-un literal string</span>
 
-Because strings are used for so many things, we can use many different generic
-APIs for strings, providing us with a lot of options. Some of them can seem
-redundant, but they all have their place! In this case, `String::from` and
-`to_string` do the same thing, so which you choose is a matter of style and
-readability.
+Având în vedere numărul mare de aplicații ale string-urilor, există multe API-uri generice pentru lucrul cu acestea, oferindu-ne o varietate mare de opțiuni. Unele dintre acestea par redundante, dar fiecare își are rostul său! În acest caz, `String::from` și `to_string` îndeplinesc aceeași funcție, astfel alegerea dintre cele două este bazată mai mult pe preferințe de stil și claritate.
 
-Remember that strings are UTF-8 encoded, so we can include any properly encoded
-data in them, as shown in Listing 8-14.
+Rețineți că string-urile sunt codate în UTF-8, astfel orice date codate adecvat pot fi inclusă în acestea, așa cum este demonstrat în Listarea 8-14.
 
 ```rust
 {{#rustdoc_include ../listings/ch08-common-collections/listing-08-14/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 8-14: Storing greetings in different languages in
-strings</span>
+<span class="caption">Listarea 8-14: Salvarea mesajelor de salut în diferite limbi în string-uri</span>
 
-All of these are valid `String` values.
+Toate acestea reprezintă valori `String` corecte.
 
-### Updating a String
+### Actualizarea unui string
 
-A `String` can grow in size and its contents can change, just like the contents
-of a `Vec<T>`, if you push more data into it. In addition, you can conveniently
-use the `+` operator or the `format!` macro to concatenate `String` values.
+Un `String` poate să se extindă și să-și schimbe conținutul, similar cu `Vec<T>`, atunci când adaugi mai multe date. De asemenea, e simplu să concatenezi valori `String` folosind operatorul `+` sau macro-ul `format!`.
 
-#### Appending to a String with `push_str` and `push`
+#### Adăugând la un string cu `push_str` și `push`
 
-We can grow a `String` by using the `push_str` method to append a string slice,
-as shown in Listing 8-15.
+Un `String` poate fi mărit adăugând o secțiune de string cu ajutorul metodei `push_str`, așa cum vedem în Listarea 8-15.
 
 ```rust
 {{#rustdoc_include ../listings/ch08-common-collections/listing-08-15/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 8-15: Appending a string slice to a `String`
-using the `push_str` method</span>
+<span class="caption">Listarea 8-15: Adăugarea unei secțiuni de string la un `String` cu `push_str`</span>
 
-After these two lines, `s` will contain `foobar`. The `push_str` method takes a
-string slice because we don’t necessarily want to take ownership of the
-parameter. For example, in the code in Listing 8-16, we want to be able to use
-`s2` after appending its contents to `s1`.
+După aceste operațiuni, `s` va conține `foobar`. Metoda `push_str` primește o secțiune de string pentru că nu dorește, de obicei, să preia controlul acestuia. De exemplu, în exemplul din Listarea 8-16, vrem ca `s2` să fie utilizabil și după ce l-am concatenat cu `s1`.
 
 ```rust
 {{#rustdoc_include ../listings/ch08-common-collections/listing-08-16/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 8-16: Using a string slice after appending its
-contents to a `String`</span>
+<span class="caption">Listarea 8-16: Utilizarea unei secțiuni de string după ce a fost adăugată la un `String`</span>
 
-If the `push_str` method took ownership of `s2`, we wouldn’t be able to print
-its value on the last line. However, this code works as we’d expect!
+Dacă metoda `push_str` ar fi solicitat posesiunea asupra lui `s2`, nu am fi putut afișa valoarea acestuia la sfârșit. Însă, codul funcționează cum ne-am așteptat!
 
-The `push` method takes a single character as a parameter and adds it to the
-`String`. Listing 8-17 adds the letter “l” to a `String` using the `push`
-method.
+Metoda `push` acceptă un caracter și îl adaugă la `String`. În Listarea 8-17, adăugăm litera "l" la un `String` folosind `push`.
 
 ```rust
 {{#rustdoc_include ../listings/ch08-common-collections/listing-08-17/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 8-17: Adding one character to a `String` value
-using `push`</span>
+<span class="caption">Listarea 8-17: Adăugarea unui caracter la un `String` cu `push`</span>
 
-As a result, `s` will contain `lol`.
+Rezultatul va fi că `s` va conține `lol`.
 
-#### Concatenation with the `+` Operator or the `format!` Macro
+#### Concatenarea cu operatorul `+` sau macro-ul `format!`
 
-Often, you’ll want to combine two existing strings. One way to do so is to use
-the `+` operator, as shown in Listing 8-18.
+Adesea, ai nevoie să unifici două string-uri existente. Poți face asta folosind operatorul `+`, cum este arătat în Listarea 8-18.
 
 ```rust
 {{#rustdoc_include ../listings/ch08-common-collections/listing-08-18/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 8-18: Using the `+` operator to combine two
-`String` values into a new `String` value</span>
+<span class="caption">Listarea 8-18: Utilizarea operatorului `+` pentru a concatena două valori de tip `String` într-una nouă</span>
 
-The string `s3` will contain `Hello, world!`. The reason `s1` is no longer
-valid after the addition, and the reason we used a reference to `s2`, has to do
-with the signature of the method that’s called when we use the `+` operator.
-The `+` operator uses the `add` method, whose signature looks something like
-this:
+`String`-ul `s3` va conține textul `Hello, world!`. După această operație, `s1` nu mai este valid, iar motivul pentru care am utilizat o referință la `s2` este legat de semnătura metodei `add`, apelată prin operatorul `+`. Iată cum arată semnătura:
 
 ```rust,ignore
 fn add(self, s: &str) -> String {
 ```
 
-In the standard library, you'll see `add` defined using generics and associated
-types. Here, we’ve substituted in concrete types, which is what happens when we
-call this method with `String` values. We’ll discuss generics in Chapter 10.
-This signature gives us the clues we need to understand the tricky bits of the
-`+` operator.
+Deși în biblioteca standard `add` este definit cu generice, noi am folosit tipuri specifice pentru a putea explica. Acest lucru se întâmplă automat când invoci metoda cu valori de tip `String`. Vom detalia genericele în Capitolul 10. Semnătura ne oferă indicii pentru a demistifica operatorul `+`.
 
-First, `s2` has an `&`, meaning that we’re adding a *reference* of the second
-string to the first string. This is because of the `s` parameter in the `add`
-function: we can only add a `&str` to a `String`; we can’t add two `String`
-values together. But wait—the type of `&s2` is `&String`, not `&str`, as
-specified in the second parameter to `add`. So why does Listing 8-18 compile?
+Mai întâi, observăm că `s2` este precedat de `&`, ceea ce indică faptul că adăugăm o referință la al doilea string. Aceasta este necesar, deoarece funcția `add` acceptă doar o referință `&str` pentru concatenare, nu două valori de tip `String`. Dar de ce funcționează codul din Listarea 8-18, având în vedere că `&s2` este de fapt de tip `&String` şi nu `&str`?
 
-The reason we’re able to use `&s2` in the call to `add` is that the compiler
-can *coerce* the `&String` argument into a `&str`. When we call the `add`
-method, Rust uses a *deref coercion*, which here turns `&s2` into `&s2[..]`.
-We’ll discuss deref coercion in more depth in Chapter 15. Because `add` does
-not take ownership of the `s` parameter, `s2` will still be a valid `String`
-after this operation.
+Explicația este că compilatorul poate converti `&String` la `&str` prin intermediul unei coerciții de dereferențiere. Când apelăm metoda `add`, `&s2` este convertit la `&s2[..]`. Aflăm mai multe despre aceasta în Capitolul 15. Deoarece `add` nu preia posesiunea parametrului `s`, `s2` rămâne un `String` valid după operație.
 
-Second, we can see in the signature that `add` takes ownership of `self`,
-because `self` does *not* have an `&`. This means `s1` in Listing 8-18 will be
-moved into the `add` call and will no longer be valid after that. So although
-`let s3 = s1 + &s2;` looks like it will copy both strings and create a new one,
-this statement actually takes ownership of `s1`, appends a copy of the contents
-of `s2`, and then returns ownership of the result. In other words, it looks
-like it’s making a lot of copies but isn’t; the implementation is more
-efficient than copying.
+În al doilea rând, `add` preia posesiunea lui `self`, care nu este marcat cu un `&`. Acest lucru înseamnă că `s1` va fi consumat de apelul `add` și nu va mai putea fi folosit în continuare. Prin urmare, instrucțiunea `let s3 = s1 + &s2;` poate părea că doar copiază string-urile pentru a crea unul nou, dar, de fapt, preia `s1`, adaugă la el conținutul copiat din `s2`, și returnează noua valoare. Astfel, în loc să efectueze multe copieri inutile, operația este de fapt mai eficientă.
 
-If we need to concatenate multiple strings, the behavior of the `+` operator
-gets unwieldy:
+Pentru concatenarea mai multor string-uri, folosirea operatorului `+` poate deveni incomodă:
 
 ```rust
 {{#rustdoc_include ../listings/ch08-common-collections/no-listing-01-concat-multiple-strings/src/main.rs:here}}
 ```
 
-At this point, `s` will be `tic-tac-toe`. With all of the `+` and `"`
-characters, it’s difficult to see what’s going on. For more complicated string
-combining, we can instead use the `format!` macro:
+Aici, `s` va fi `tic-tac-toe`. Însă, cu atâtea `+` și `"`, codul devine încărcat și greu de urmărit. Pentru cazuri mai complexe, putem apela la macro-ul `format!`:
 
 ```rust
 {{#rustdoc_include ../listings/ch08-common-collections/no-listing-02-format/src/main.rs:here}}
 ```
 
-This code also sets `s` to `tic-tac-toe`. The `format!` macro works like
-`println!`, but instead of printing the output to the screen, it returns a
-`String` with the contents. The version of the code using `format!` is much
-easier to read, and the code generated by the `format!` macro uses references
-so that this call doesn’t take ownership of any of its parameters.
+Acest fragment de cod atribuie tot `tic-tac-toe` pentru `s`. Macro-ul `format!`, similar cu `println!`, nu afișează rezultatul pe ecran, ci returnează un `String` cu conținutul formatat. Varianta cu `format!` este clar mai lizibilă și nu preia posesiunea niciunui parametru, lucru de preferat în anumite contexte.
 
-### Indexing into Strings
+### Accesarea elementelor unui string prin index
 
-In many other programming languages, accessing individual characters in a
-string by referencing them by index is a valid and common operation. However,
-if you try to access parts of a `String` using indexing syntax in Rust, you’ll
-get an error. Consider the invalid code in Listing 8-19.
+Accesul la caracterele unui string folosind indexul lor este o practică obișnuită în multe limbaje de programare. Cu toate acestea, în Rust, încercarea de a accesa elemente dintr-un `String` prin indexare va genera o eroare. Iată codul incorect prezentat în Listarea 8-19.
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch08-common-collections/listing-08-19/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 8-19: Attempting to use indexing syntax with a
-String</span>
+<span class="caption">Listarea 8-19: Tentativa de utilizare a indexării cu un String</span>
 
-This code will result in the following error:
+Executarea acestui cod va produce următoarea eroare:
 
 ```console
 {{#include ../listings/ch08-common-collections/listing-08-19/output.txt}}
 ```
 
-The error and the note tell the story: Rust strings don’t support indexing. But
-why not? To answer that question, we need to discuss how Rust stores strings in
-memory.
+Mesajul de eroare explică problema: string-urile din Rust nu permit folosirea indexării. De ce se întâmplă asta? Pentru a înțelege motivul, trebuie să discutăm despre modul în care Rust gestionează string-urile în memorie.
 
-#### Internal Representation
+#### Structura internă a unui string
 
-A `String` is a wrapper over a `Vec<u8>`. Let’s look at some of our properly
-encoded UTF-8 example strings from Listing 8-14. First, this one:
+Un `String` este practic un `Vec<u8>`. Să analizăm câteva exemple de string-uri corect codificate în UTF-8 din Listarea 8-14. Începem cu exemplul acesta:
 
 ```rust
 {{#rustdoc_include ../listings/ch08-common-collections/listing-08-14/src/main.rs:spanish}}
 ```
 
-In this case, `len` will be 4, which means the vector storing the string “Hola”
-is 4 bytes long. Each of these letters takes 1 byte when encoded in UTF-8. The
-following line, however, may surprise you. (Note that this string begins with
-the capital Cyrillic letter Ze, not the number 3.)
+Aici, `len` va fi 4, ceea ce înseamnă că vectorul care păstrează string-ul "Hola" are o lungime de 4 bytes. Fiecare literă ocupă 1 byte în codificarea UTF-8. Totuși, următoarea linie te poate surprinde. (Observă că acest string începe cu litera mare chirilică Ze, nu numărul 3.)
 
 ```rust
 {{#rustdoc_include ../listings/ch08-common-collections/listing-08-14/src/main.rs:russian}}
 ```
 
-Asked how long the string is, you might say 12. In fact, Rust’s answer is 24:
-that’s the number of bytes it takes to encode “Здравствуйте” in UTF-8, because
-each Unicode scalar value in that string takes 2 bytes of storage. Therefore,
-an index into the string’s bytes will not always correlate to a valid Unicode
-scalar value. To demonstrate, consider this invalid Rust code:
+La întrebarea despre lungimea string-ului, ai putea răspunde că este de 12. În realitate, Rust îți spune că este 24: acesta este numărul de bytes necesari pentru a codifica "Здравствуйте" în UTF-8. Acest lucru se datorează faptului că fiecare valoare scalară Unicode în acel string ocupă 2 bytes. Așadar, un indice al octeților string-ului nu corespunde întotdeauna unei valori scalare Unicode valide. Ca exemplu, iată un cod Rust incorect:
 
 ```rust,ignore,does_not_compile
 let hello = "Здравствуйте";
 let answer = &hello[0];
 ```
 
-You already know that `answer` will not be `З`, the first letter. When encoded
-in UTF-8, the first byte of `З` is `208` and the second is `151`, so it would
-seem that `answer` should in fact be `208`, but `208` is not a valid character
-on its own. Returning `208` is likely not what a user would want if they asked
-for the first letter of this string; however, that’s the only data that Rust
-has at byte index 0. Users generally don’t want the byte value returned, even
-if the string contains only Latin letters: if `&"hello"[0]` were valid code
-that returned the byte value, it would return `104`, not `h`.
+Știm că `answer` nu va fi `З`, prima literă. În codificarea UTF-8, primul byte pentru `З` este `208`, iar al doilea este `151`. Prin urmare, ai putea crede că `answer` ar trebui să fie `208`, dar `208` nu reprezintă un caracter valid de sine stătător. Acest rezultat nu este probabil ceea ce un utilizator ar aștepta când solicită prima literă a string-ului; în orice caz, Rust nu are la dispoziție alte date la indicele de byte zero. În general, utilizatorii nu doresc valoarea octetului în sine, chiar dacă string-ul constă doar din litere latine: dacă `&"hello"[0]` ar fi un cod valid care returnează valoarea octetului, acesta ar returna `104`, nu `h`.
 
-The answer, then, is that to avoid returning an unexpected value and causing
-bugs that might not be discovered immediately, Rust doesn’t compile this code
-at all and prevents misunderstandings early in the development process.
+Concluzia este că pentru a evita generarea unei valori neașteptate și introducerea de bug-uri ce ar putea rămâne nedetectate pentru o perioadă, Rust alege să nu compileze acest cod deloc, prevenind astfel confuziile încă din fazele incipiente ale dezvoltării software.
 
-#### Bytes and Scalar Values and Grapheme Clusters! Oh My!
+#### Octeți, valori scalare și grupuri de grafeme
 
-Another point about UTF-8 is that there are actually three relevant ways to
-look at strings from Rust’s perspective: as bytes, scalar values, and grapheme
-clusters (the closest thing to what we would call *letters*).
+Un alt aspect legat de UTF-8 este faptul că există trei moduri în care Rust consideră string-urile: ca octeți, valori scalare, și grupuri de grafeme (cel mai apropiat termen pentru ceea ce numim "litere").
 
-If we look at the Hindi word “नमस्ते” written in the Devanagari script, it is
-stored as a vector of `u8` values that looks like this:
+De exemplu, cuvântul hindi "नमस्ते" scris în scriptul Devanagari este stocat ca un vector de valori `u8` în felul următor:
 
 ```text
 [224, 164, 168, 224, 164, 174, 224, 164, 184, 224, 165, 141, 224, 164, 164,
 224, 165, 135]
 ```
 
-That’s 18 bytes and is how computers ultimately store this data. If we look at
-them as Unicode scalar values, which are what Rust’s `char` type is, those
-bytes look like this:
+Acestea sunt 18 octeți și reprezintă modul în care calculatoarele stochează aceste date. Privindu-le ca valori scalare Unicode, care sunt reprezentate de tipul `char` în Rust, acești octeți arată astfel:
 
 ```text
 ['न', 'म', 'स', '्', 'त', 'े']
 ```
 
-There are six `char` values here, but the fourth and sixth are not letters:
-they’re diacritics that don’t make sense on their own. Finally, if we look at
-them as grapheme clusters, we’d get what a person would call the four letters
-that make up the Hindi word:
+Avem aici șase valori `char`, dar a patra și a șasea nu reprezintă litere: ele sunt diacritice fără sens de sine stătător. În final, dacă le privim ca grupuri de grafeme, obținem cele patru "litere" care formează cuvântul hindi:
 
 ```text
 ["न", "म", "स्", "ते"]
 ```
 
-Rust provides different ways of interpreting the raw string data that computers
-store so that each program can choose the interpretation it needs, no matter
-what human language the data is in.
+Rust oferă diferite metode de interpretare a datelor brute ale unui string pentru ca fiecare program să își poată alege abordarea necesară, indiferent de limba umană în care sunt datele.
 
-A final reason Rust doesn’t allow us to index into a `String` to get a
-character is that indexing operations are expected to always take constant time
-(O(1)). But it isn’t possible to guarantee that performance with a `String`,
-because Rust would have to walk through the contents from the beginning to the
-index to determine how many valid characters there were.
+Un motiv suplimentar pentru care Rust nu permite indexarea unui `String` pentru a extrage un caracter este că se așteaptă ca operațiile de indexare să se efectueze într-un timp constant (O(1)). Dar acest lucru nu poate fi garantat cu `String`, deoarece Rust ar trebui să parcurgă conținutul de la început până la index pentru a identifica numărul de caractere valide.
 
-### Slicing Strings
+### Secționarea string-urilor
 
-Indexing into a string is often a bad idea because it’s not clear what the
-return type of the string-indexing operation should be: a byte value, a
-character, a grapheme cluster, or a string slice. If you really need to use
-indices to create string slices, therefore, Rust asks you to be more specific.
+A accesa un string folosind indici este adesea nerecomandat deoarece nu este clar ce tip de valoare ar trebui să returneze operația de indexare: un octet, un caracter, un cluster de grafeme sau o secțiune de string. Din acest motiv, Rust necesită specificații mai exacte atunci când vrei să folosești indici pentru a obține secțiuni de string.
 
-Rather than indexing using `[]` with a single number, you can use `[]` with a
-range to create a string slice containing particular bytes:
+În loc să te bazezi pe `[]` cu un singur număr, este posibil să utilizezi `[]` cu un diapazon pentru a crea o secțiune ce include anumiți octeți:
 
 ```rust
 let hello = "Здравствуйте";
@@ -331,27 +204,19 @@ let hello = "Здравствуйте";
 let s = &hello[0..4];
 ```
 
-Here, `s` will be a `&str` that contains the first 4 bytes of the string.
-Earlier, we mentioned that each of these characters was 2 bytes, which means
-`s` will be `Зд`.
+În exemplul de mai sus, `s` este un `&str` care cuprinde primii 4 octeți din string. Anterior, am menționat că fiecare caracter este reprezentat de 2 octeți, deci `s` va conține `Зд`.
 
-If we were to try to slice only part of a character’s bytes with something like
-`&hello[0..1]`, Rust would panic at runtime in the same way as if an invalid
-index were accessed in a vector:
+Dacă am încerca să extragem doar o parte a octeților unui caracter, cum ar fi cu `&hello[0..1]`, Rust va genera o eroare la rulare asemănătoare celei întâmpinate când se accesează un index invalid într-un array:
 
 ```console
 {{#include ../listings/ch08-common-collections/output-only-01-not-char-boundary/output.txt}}
 ```
 
-You should use ranges to create string slices with caution, because doing so
-can crash your program.
+Utilizează cu atenție diapazoanele când creezi secțiuni de string, deoarece acest lucru poate duce la erori grave în timpul execuției programului.
 
-### Methods for Iterating Over Strings
+### Metode de iterație pentru string-uri
 
-The best way to operate on pieces of strings is to be explicit about whether
-you want characters or bytes. For individual Unicode scalar values, use the
-`chars` method. Calling `chars` on “Зд” separates out and returns two values
-of type `char`, and you can iterate over the result to access each element:
+Când lucrezi cu părți din string-uri, e important să specifici clar dacă dorești să accesezi caractere sau octeți. Dacă ai nevoie de valori scalare Unicode individuale, folosește metoda `chars`. Dacă aplici `chars` pe textul “Зд”, vei obține două valori de tip `char`, pe care le poți parcurge prin iterare pentru a accesa fiecare caracter:
 
 ```rust
 for c in "Зд".chars() {
@@ -359,15 +224,14 @@ for c in "Зд".chars() {
 }
 ```
 
-This code will print the following:
+Acest exemplu de cod va afișa caracterele:
 
 ```text
 З
 д
 ```
 
-Alternatively, the `bytes` method returns each raw byte, which might be
-appropriate for your domain:
+Pe de altă parte, metoda `bytes` îți returnează octeții individuali ai textului, ceea ce poate fi util în anumite scenarii:
 
 ```rust
 for b in "Зд".bytes() {
@@ -375,7 +239,7 @@ for b in "Зд".bytes() {
 }
 ```
 
-This code will print the four bytes that make up this string:
+Acest cod va afișa cei patru octeți care formează textul dat:
 
 ```text
 208
@@ -384,29 +248,14 @@ This code will print the four bytes that make up this string:
 180
 ```
 
-But be sure to remember that valid Unicode scalar values may be made up of more
-than 1 byte.
+Este important să ții minte că o valoare scalară validă în Unicode poate fi alcătuită din mai mulți octeți.
 
-Getting grapheme clusters from strings as with the Devanagari script is
-complex, so this functionality is not provided by the standard library. Crates
-are available on [crates.io](https://crates.io/)<!-- ignore --> if this is the
-functionality you need.
+Extragerea clusterelor de grafeme din string-uri, cum ar fi cele din scrierea Devanagari, este o operație complexă și, din acest motiv, nu este inclusă în biblioteca standard. Pentru această nevoie, poți găsi crate-uri specializate pe [crates.io](https://crates.io/)<!-- ignore -->.
 
-### Strings Are Not So Simple
+### Simplitatea înșelătoare a string-urilor
 
-To summarize, strings are complicated. Different programming languages make
-different choices about how to present this complexity to the programmer. Rust
-has chosen to make the correct handling of `String` data the default behavior
-for all Rust programs, which means programmers have to put more thought into
-handling UTF-8 data upfront. This trade-off exposes more of the complexity of
-strings than is apparent in other programming languages, but it prevents you
-from having to handle errors involving non-ASCII characters later in your
-development life cycle.
+Pentru a rezuma, lucrurile cu string-urile sunt complexe. Fiecare limbaj de programare alege diferit cum să îţi prezinte această complexitate. Rust optează pentru gestionarea corectă a datelor `String` ca opțiune standard în orice program Rust. Acest lucru înseamnă că trebuie să acorzi o atenție sporită procesării datelor UTF-8 din start. Această abordare scoate la iveală complexitatea string-urilor mai mult decât în alte limbaje, însă astfel, eviți întâmpinarea erorilor legate de caractere non-ASCII în etapele avansate de dezvoltare a proiectelor tale.
 
-The good news is that the standard library offers a lot of functionality built
-off the `String` and `&str` types to help handle these complex situations
-correctly. Be sure to check out the documentation for useful methods like
-`contains` for searching in a string and `replace` for substituting parts of a
-string with another string.
+Partea încurajatoare este că biblioteca standard vine la pachet cu multe funcționalități, bazate pe `String` și `&str`, care sunt gândite să ajute la navigarea cu succes prin aceste complexități. Nu rata documentația, unde vei găsi metode valoroase cum ar fi `contains`, pentru căutarea într-un string, sau `replace`, pentru înlocuirea secțiunilor dintr-un string cu alte string-uri.
 
-Let’s switch to something a bit less complex: hash maps!
+Acum, să ne îndreptăm atenția spre ceva mai simplu: hash map-urile!

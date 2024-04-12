@@ -1,49 +1,21 @@
-# Fearless Concurrency
+# Concurență fără temeri
 
-Handling concurrent programming safely and efficiently is another of Rust’s
-major goals. *Concurrent programming*, where different parts of a program
-execute independently, and *parallel programming*, where different parts of a
-program execute at the same time, are becoming increasingly important as more
-computers take advantage of their multiple processors. Historically,
-programming in these contexts has been difficult and error prone: Rust hopes to
-change that.
+Unul dintre principalele obiective ale Rust este să faciliteze o programare concurentă sigură și eficientă. *Programarea concurentă*, care permite executarea independentă a diferitelor componente ale unui program, și *programarea paralelă*, care permite execuția simultană a acestora, devin tot mai relevante pe măsură ce computerele extind utilizarea procesoarelor multiple. În trecut, aceste forme de programare au prezentat dificultăți semnificative și erau predispuse la greșeli: Rust intenționează să revoluționeze acest domeniu.
 
-Initially, the Rust team thought that ensuring memory safety and preventing
-concurrency problems were two separate challenges to be solved with different
-methods. Over time, the team discovered that the ownership and type systems are
-a powerful set of tools to help manage memory safety *and* concurrency
-problems! By leveraging ownership and type checking, many concurrency errors
-are compile-time errors in Rust rather than runtime errors. Therefore, rather
-than making you spend lots of time trying to reproduce the exact circumstances
-under which a runtime concurrency bug occurs, incorrect code will refuse to
-compile and present an error explaining the problem. As a result, you can fix
-your code while you’re working on it rather than potentially after it has been
-shipped to production. We’ve nicknamed this aspect of Rust *fearless*
-*concurrency*. Fearless concurrency allows you to write code that is free of
-subtle bugs and is easy to refactor without introducing new bugs.
+La început, echipa Rust era de părere că asigurarea siguranței memoriei și prevenirea problemelor de concurență sunt două provocări distincte, ce ar trebui soluționate cu metode diferite. Cu timpul, echipa a realizat că sistemele de posesiune și de tipizare sunt un set de unelte extrem de eficiente în gestionarea atât a siguranței memoriei *cât și* a problemelor de concurență! Folosindu-se de conceptul de posesiune și verificarea tipurilor, multe erori legate de concurență se transformă în erori de compilare în Rust, în loc de erori de rulare. Deci, în loc să pierzi timp încercând să reproduci condițiile exacte în care apare un bug de concurență la execuție, codul eronat pur și simplu nu va compila, afișând o eroare ce explică problema. Prin urmare, poti rectifica codul în timp ce lucrezi la el, nu după ce acesta a ajuns deja în producție. Această abordare din Rust este cunoscută sub numele de *concurența fără teamă*. Concurența fără teamă îți oferă posibilitatea de a scrie cod fără bug-uri subtile și care poate fi refactorizat cu ușurință fără a introduce noi erori.
 
-> Note: For simplicity’s sake, we’ll refer to many of the problems as
-> *concurrent* rather than being more precise by saying *concurrent and/or
-> parallel*. If this book were about concurrency and/or parallelism, we’d be
-> more specific. For this chapter, please mentally substitute *concurrent
-> and/or parallel* whenever we use *concurrent*.
+> Notă: Pentru a menține simplitatea, vom numi multe dintre probleme ca fiind
+> *concurente* în loc de a fi mai preciși și a spune *concurente și/sau
+> paralele*. Dacă subiectul acestei cărți ar fi fost concurența și/sau
+> paralelismul, am fi fost mai expliciți. Pentru acest capitol, te rog să
+> substitui mental *concurente și/sau paralele* de fiecare dată când folosim
+> termenul *concurente*.
 
-Many languages are dogmatic about the solutions they offer for handling
-concurrent problems. For example, Erlang has elegant functionality for
-message-passing concurrency but has only obscure ways to share state between
-threads. Supporting only a subset of possible solutions is a reasonable
-strategy for higher-level languages, because a higher-level language promises
-benefits from giving up some control to gain abstractions. However, lower-level
-languages are expected to provide the solution with the best performance in any
-given situation and have fewer abstractions over the hardware. Therefore, Rust
-offers a variety of tools for modeling problems in whatever way is appropriate
-for your situation and requirements.
+Multe limbaje sunt rigide când vine vorba de soluțiile pe care le propun pentru gestionarea problemelor de concurență. De exemplu, Erlang oferă facilități elegante pentru concurența prin pasare de mesaje, dar are doar câteva metode obtuze pentru a împărtăși starea între fire de execuție. A susține exclusiv o gamă limitată de soluții este o strategie acceptabilă pentru limbajele de nivel înalt, dat fiind că aceste limbaje promit avantaje prin sacrificarea unei părți din control în schimbul abstracțiilor. În schimb, limbajele de nivel jos sunt așteptate să furnizeze soluția cu cea mai bună performanță în fiecare situație specifică și oferă mai puține abstracții ale hardware-ului. Așadar, Rust pune la dispoziție o gamă variată de instrumente pentru modelarea problemelor în orice mod se potrivește cel mai bine situației și necesităților tale.
 
-Here are the topics we’ll cover in this chapter:
+Iată temele pe care le vom aborda în acest capitol:
 
-* How to create threads to run multiple pieces of code at the same time
-* *Message-passing* concurrency, where channels send messages between threads
-* *Shared-state* concurrency, where multiple threads have access to some piece
-  of data
-* The `Sync` and `Send` traits, which extend Rust’s concurrency guarantees to
-  user-defined types as well as types provided by the standard library
+* Cum să inițiezi thread-uri pentru a executa simultan mai multe porțiuni de cod
+* Concurența prin *pasarea de mesaje*, unde canale comunică mesaje între fire de execuție
+* Concurența cu *stare partajată*, unde mai multe fire de execuție au acces la același fragment de date
+* Trăsăturile `Sync` și `Send`, care extind garanțiile de concurență oferite de Rust către tipurile definite de utilizator, precum și către cele oferite de biblioteca standard

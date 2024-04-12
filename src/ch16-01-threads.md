@@ -1,57 +1,30 @@
-## Using Threads to Run Code Simultaneously
+## Utilizarea firelor de execuție pentru a executa cod simultan
 
-In most current operating systems, an executed program’s code is run in a
-*process*, and the operating system will manage multiple processes at once.
-Within a program, you can also have independent parts that run simultaneously.
-The features that run these independent parts are called *threads*. For
-example, a web server could have multiple threads so that it could respond to
-more than one request at the same time.
+În cele mai multe sisteme de operare actuale, codul unui program executat este rulat în cadrul unui *proces*, iar sistemul de operare gestionează în același timp multiple procese. În interiorul unui program, poți avea de asemenea părți independente care rulează simultan. Capabilitățile care execută aceste părți independente se numesc *fire de execuție*, or *thread-uri*. De exemplu, un server web poate avea mai multe thread-uri pentru a răspunde simultan la mai multe cereri.
 
-Splitting the computation in your program into multiple threads to run multiple
-tasks at the same time can improve performance, but it also adds complexity.
-Because threads can run simultaneously, there’s no inherent guarantee about the
-order in which parts of your code on different threads will run. This can lead
-to problems, such as:
+Împărțirea calculului din programul tău în mai multe fire de execuție pentru a rula simultan mai multe sarcini poate îmbunătăți performanța, dar adaugă și complexitate. Fiindcă thread-urile pot rula simultan, nu există o garanție implicită asupra ordinii în care secțiunile de cod de pe diferite thread-uri se vor executa. Aceasta poate cauza probleme, cum ar fi:
 
-* Race conditions, where threads are accessing data or resources in an
-  inconsistent order
-* Deadlocks, where two threads are waiting for each other, preventing both
-  threads from continuing
-* Bugs that happen only in certain situations and are hard to reproduce and fix
-  reliably
+* Condiții de cursă (Race conditions), când thread-urile accesează date sau resurse într-un ordine neconsistentă
+* Interblocaje (Deadlocks), în situația unde două thread-uri așteaptă unul pe celălalt, împiedicând astfel continuarea ambelor thread-uri
+* Erori care apar numai în anumite condiții și sunt dificil de reprodus și de reparat în mod fiabil
 
-Rust attempts to mitigate the negative effects of using threads, but
-programming in a multithreaded context still takes careful thought and requires
-a code structure that is different from that in programs running in a single
-thread.
+Rust încearcă să minimizeze efectele negative ale utilizării thread-urilor, însă programarea într-un context multithreaded necesită o gândire meticuloasă și impune o structură a codului diferită de cea a programelor rulate într-un singur fir.
 
-Programming languages implement threads in a few different ways, and many
-operating systems provide an API the language can call for creating new
-threads. The Rust standard library uses a *1:1* model of thread implementation,
-whereby a program uses one operating system thread per one language thread.
-There are crates that implement other models of threading that make different
-tradeoffs to the 1:1 model.
+Limbajele de programare implementează thread-uri în diferite moduri, iar multe sisteme de operare furnizează un API pe care limbajul îl poate folosi pentru a crea noi thread-uri. Biblioteca standard Rust utilizează un model de implementare *1:1* pentru thread-uri, prin care un program folosește un thread de sistem de operare pentru fiecare thread de limbaj. Există crate-uri care pun în practică alte modele de threading ce oferă compromisuri diferite comparativ cu modelul 1:1.
 
-### Creating a New Thread with `spawn`
+### Crearea unui fir nou de execuție cu `spawn`
 
-To create a new thread, we call the `thread::spawn` function and pass it a
-closure (we talked about closures in Chapter 13) containing the code we want to
-run in the new thread. The example in Listing 16-1 prints some text from a main
-thread and other text from a new thread:
+Pentru a crea un fir nou de execuție, apelăm funcția `thread::spawn` la care pasăm o închidere (discutate în Capitolul 13) care conține codul ce urmează să fie executat în nou-creatul fir de execuție. Exemplul din Listarea 16-1 afișează un text din firul principal și alt text dintr-un fir nou-creat:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch16-fearless-concurrency/listing-16-01/src/main.rs}}
 ```
 
-<span class="caption">Listing 16-1: Creating a new thread to print one thing
-while the main thread prints something else</span>
+<span class="caption">Listarea 16-1: Crearea unui nou fir de execuție pentru a printa ceva, în timp ce firul principal printează altceva</span>
 
-Note that when the main thread of a Rust program completes, all spawned threads
-are shut down, whether or not they have finished running. The output from this
-program might be a little different every time, but it will look similar to the
-following:
+Notăm că atunci când firul principal al unui program Rust se finalizează, toate firele secundare care au fost create sunt închise, indiferent dacă și-au finisat execuția sau nu. Rezultatul executării acestui program poate varia la fiecare rulare, dar va arăta similar cu următoarea afișare:
 
 <!-- Not extracting output because changes to this output aren't significant;
 the changes are likely to be due to the threads running differently rather than
@@ -69,46 +42,25 @@ hi number 4 from the spawned thread!
 hi number 5 from the spawned thread!
 ```
 
-The calls to `thread::sleep` force a thread to stop its execution for a short
-duration, allowing a different thread to run. The threads will probably take
-turns, but that isn’t guaranteed: it depends on how your operating system
-schedules the threads. In this run, the main thread printed first, even though
-the print statement from the spawned thread appears first in the code. And even
-though we told the spawned thread to print until `i` is 9, it only got to 5
-before the main thread shut down.
+Apelurile la `thread::sleep` determină un fir de execuție să își întrerupă temporar execuția, ceea ce permite altui fir să preia controlul. Este posibil ca firele să se alterneze, dar nu este garantat, deoarece acest lucru depinde de cum sistemul de operare gestionează secvențierea firelor de execuție. În această execuție, firul principal a făcut prima afișare, chiar dacă instrucțiunea de printare din firul secundar apare prima în cod. Chiar dacă i s-a specificat firului secundar să continue printarea până când `i` ajunge la 9, acesta a reușit doar să ajungă la 5 înainte ca firul principal să fie închis.
 
-If you run this code and only see output from the main thread, or don’t see any
-overlap, try increasing the numbers in the ranges to create more opportunities
-for the operating system to switch between the threads.
+În cazul în care executând acest cod observi doar rezultate din partea firului principal, sau nu există nicio suprapunere, încearcă să extinzi valorile maxime pentru a oferi mai multe șanse sistemului de operare să alterneze între firele de execuție.
 
-### Waiting for All Threads to Finish Using `join` Handles
+### Așteptarea finalizării tuturor firelor de execuție folosind `join`
 
-The code in Listing 16-1 not only stops the spawned thread prematurely most of
-the time due to the main thread ending, but because there is no guarantee on
-the order in which threads run, we also can’t guarantee that the spawned thread
-will get to run at all!
+Codul din Listarea 16-1 nu doar că oprește prematur firul de execuție creat din cauza terminării firului principal, dar dat fiind faptul că nu există o garanție cu privire la ordinea execuției firelor de execuție, de asemenea nu putem asigura că firul de execuție creat va rula în genere!
 
-We can fix the problem of the spawned thread not running or ending prematurely
-by saving the return value of `thread::spawn` in a variable. The return type of
-`thread::spawn` is `JoinHandle`. A `JoinHandle` is an owned value that, when we
-call the `join` method on it, will wait for its thread to finish. Listing 16-2
-shows how to use the `JoinHandle` of the thread we created in Listing 16-1 and
-call `join` to make sure the spawned thread finishes before `main` exits:
+Problema firului de execuție creat care nu rulează sau care se încheie prematur poate fi rezolvată salvând valoarea returnată de `thread::spawn` într-o variabilă. Tipul returnat de `thread::spawn` este un descriptor `JoinHandle`. Un `JoinHandle` este o valoare deținută (owned) care, la apelarea metodei `join` pe aceasta, va aștepta finalizarea firului de execuție asociat. Listarea 16-2 ilustrează utilizarea lui `JoinHandle` pentru firul de execuție creat în Listarea 16-1 și invocarea lui `join` pentru a ne asigura că firul de execuție inițiat se finalizează înainte de terminarea funcției `main`:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch16-fearless-concurrency/listing-16-02/src/main.rs}}
 ```
 
-<span class="caption">Listing 16-2: Saving a `JoinHandle` from `thread::spawn`
-to guarantee the thread is run to completion</span>
+<span class="caption">Listarea 16-2: Salvând un `JoinHandle` de la `thread::spawn` pentru a asigura finalizarea completă a firului de execuție</span>
 
-Calling `join` on the handle blocks the thread currently running until the
-thread represented by the handle terminates. *Blocking* a thread means that
-thread is prevented from performing work or exiting. Because we’ve put the call
-to `join` after the main thread’s `for` loop, running Listing 16-2 should
-produce output similar to this:
+Apelarea lui `join` pe descriptor blochează firul de execuție curent până când firul reprezentat de acel descriptor se termină. *Blocarea* unui fir de execuție împiedică acesta să efectueze sarcini sau să se termine. De aceea, punând apelul la `join` după bucla `for` a main thread-ului, executarea Listării 16-2 ar trebui să genereze un afișaj similar cu acesta:
 
 <!-- Not extracting output because changes to this output aren't significant;
 the changes are likely to be due to the threads running differently rather than
@@ -130,20 +82,17 @@ hi number 8 from the spawned thread!
 hi number 9 from the spawned thread!
 ```
 
-The two threads continue alternating, but the main thread waits because of the
-call to `handle.join()` and does not end until the spawned thread is finished.
+Ambele fire de execuție continuă să alterneze, însă firul principal așteaptă datorită apelului metodei `join` pe descriptor și nu se va încheia până nu se finalizează firul de execuție inițiat.
 
-But let’s see what happens when we instead move `handle.join()` before the
-`for` loop in `main`, like this:
+Acum, să analizăm ce se întâmplă dacă mutăm `handle.join()` înainte de bucla `for` în funcția `main`, în felul următor:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch16-fearless-concurrency/no-listing-01-join-too-early/src/main.rs}}
 ```
 
-The main thread will wait for the spawned thread to finish and then run its
-`for` loop, so the output won’t be interleaved anymore, as shown here:
+Thread-ul principal va aștepta finalizarea firului de execuție inițiat și apoi va executa propria buclă `for`, astfel încât afișajul nu va mai fi intercalat, după cum putem vedea aici:
 
 <!-- Not extracting output because changes to this output aren't significant;
 the changes are likely to be due to the threads running differently rather than
@@ -165,69 +114,43 @@ hi number 3 from the main thread!
 hi number 4 from the main thread!
 ```
 
-Small details, such as where `join` is called, can affect whether or not your
-threads run at the same time.
+Detalii subtile, precum locația unde este invocat `join`, pot influența dacă firele de execuție se vor rula simultan sau nu.
 
-### Using `move` Closures with Threads
+### Folosirea închiderilor `move` cu fire de execuție
 
-We'll often use the `move` keyword with closures passed to `thread::spawn`
-because the closure will then take ownership of the values it uses from the
-environment, thus transferring ownership of those values from one thread to
-another. In the [“Capturing References or Moving Ownership”][capture]<!-- ignore
---> section of Chapter 13, we discussed `move` in the context of closures. Now,
-we’ll concentrate more on the interaction between `move` and `thread::spawn`.
+Frecvent, utilizăm cuvântul cheie `move` cu închiderile transmise la `thread::spawn`, deoarece în acest mod închiderea preia posesiunea asupra valorilor utilizate din mediu, transferând astfel posesiunea acestor valori de la un fir de execuție la altul. În secțiunea [„Capturarea referințelor sau transferul posesiunii”][capture] din Capitolul 13, am discutat despre `move` în contextul închiderilor. Acum, vom aprofunda interacțiunea dintre `move` și `thread::spawn`.
 
-Notice in Listing 16-1 that the closure we pass to `thread::spawn` takes no
-arguments: we’re not using any data from the main thread in the spawned
-thread’s code. To use data from the main thread in the spawned thread, the
-spawned thread’s closure must capture the values it needs. Listing 16-3 shows
-an attempt to create a vector in the main thread and use it in the spawned
-thread. However, this won’t yet work, as you’ll see in a moment.
+În Listarea 16-1 putem observa că închiderea pe care o trecem la `thread::spawn` nu are argumente: nu utilizăm date din firul de execuție principal în codul firului de execuție nou. Pentru a folosi date din firul principal în cel nou, închiderea firului de execuție trebuie să captureze valorile necesare. Listarea 16-3 ne arată o tentativă de a folosi un vector creat în firul de execuție principal într-un fir secundar. Cu toate acestea, momentan acest lucru nu funcționează, cum vom vedem mai jos.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch16-fearless-concurrency/listing-16-03/src/main.rs}}
 ```
 
-<span class="caption">Listing 16-3: Attempting to use a vector created by the
-main thread in another thread</span>
+<span class="caption">Listarea 16-3: Încercarea de utilizare a unui vector creat în firul de execuție principal într-un alt fir de execuție</span>
 
-The closure uses `v`, so it will capture `v` and make it part of the closure’s
-environment. Because `thread::spawn` runs this closure in a new thread, we
-should be able to access `v` inside that new thread. But when we compile this
-example, we get the following error:
+Închiderea utilizează `v`, așadar va captura `v` și o va integra în mediul închiderii. Deoarece `thread::spawn` execută această închidere într-un fir de execuție nou, teoretic ar trebui să fie posibilă accesarea variabilei `v` în acest fir. Dar când încercăm să compilăm exemplul, întâmpinăm eroarea următoare:
 
 ```console
 {{#include ../listings/ch16-fearless-concurrency/listing-16-03/output.txt}}
 ```
 
-Rust *infers* how to capture `v`, and because `println!` only needs a reference
-to `v`, the closure tries to borrow `v`. However, there’s a problem: Rust can’t
-tell how long the spawned thread will run, so it doesn’t know if the reference
-to `v` will always be valid.
+Rust face *inferențe* cu privire la modul de capturare a lui `v`, și pentru că macro-ul `println!` necesită doar o referință la `v`, închiderea încearcă să împrumute `v`. Există, însă, o dificultate: Rust nu poate determina durata de execuție a firului nou, deci nu poate garanta că referința la `v` va rămâne validă.
 
-Listing 16-4 provides a scenario that’s more likely to have a reference to `v`
-that won’t be valid:
+Listarea 16-4 ilustrează un scenariu în care este improbabil ca referința la `v` să fie validă:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch16-fearless-concurrency/listing-16-04/src/main.rs}}
 ```
 
-<span class="caption">Listing 16-4: A thread with a closure that attempts to
-capture a reference to `v` from a main thread that drops `v`</span>
+<span class="caption">Listarea 16-4: Un fir de execuție cu o închidere care încearcă să capteze o referință la `v` din firul de execuție principal care apoi renunță la `v`</span>
 
-If Rust allowed us to run this code, there’s a possibility the spawned thread
-would be immediately put in the background without running at all. The spawned
-thread has a reference to `v` inside, but the main thread immediately drops
-`v`, using the `drop` function we discussed in Chapter 15. Then, when the
-spawned thread starts to execute, `v` is no longer valid, so a reference to it
-is also invalid. Oh no!
+Dacă Rust ar permite execuția acestui cod, am putea fi confruntați cu situația în care firul nou este mutat în fundal fără să fie executat. Firul de execuție are o referință la `v` la interior, dar firul principal renunță la `v` folosind funcția `drop` descrisă în Capitolul 15. Când apoi firul nou începe execuția, `v` nu mai este disponibil, făcând referința la acesta invalidă. O, nu!
 
-To fix the compiler error in Listing 16-3, we can use the error message’s
-advice:
+Pentru rezolvarea erorii de compilare din Listarea 16-3, putem urma sugestia furnizată de mesajul de eroare:
 
 <!-- manual-regeneration
 after automatic regeneration, look at listings/ch16-fearless-concurrency/listing-16-03/output.txt and copy the relevant part
@@ -240,10 +163,7 @@ help: to force the closure to take ownership of `v` (and any other referenced va
   |                                ++++
 ```
 
-By adding the `move` keyword before the closure, we force the closure to take
-ownership of the values it’s using rather than allowing Rust to infer that it
-should borrow the values. The modification to Listing 16-3 shown in Listing
-16-5 will compile and run as we intend:
+Prin adăugarea cuvântului cheie `move` în fața închiderii, obligăm închiderea să preia posesiunea asupra valorilor pe care le utilizează, în loc de a-l lăsa pe Rust să facă inferențe despre împrumutarea acestora. Modificările efectuate în Listarea 16-3, reprezentate în Listarea 16-5, vor permite compilarea și executarea codului așa cum intenționam:
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -251,31 +171,16 @@ should borrow the values. The modification to Listing 16-3 shown in Listing
 {{#rustdoc_include ../listings/ch16-fearless-concurrency/listing-16-05/src/main.rs}}
 ```
 
-<span class="caption">Listing 16-5: Using the `move` keyword to force a closure
-to take ownership of the values it uses</span>
+<span class="caption">Listarea 16-5: Folosirea cuvântului cheie `move` pentru a obliga o închidere să preia posesiunea valorilor pe care le utilizează</span>
 
-We might be tempted to try the same thing to fix the code in Listing 16-4 where
-the main thread called `drop` by using a `move` closure. However, this fix will
-not work because what Listing 16-4 is trying to do is disallowed for a
-different reason. If we added `move` to the closure, we would move `v` into the
-closure’s environment, and we could no longer call `drop` on it in the main
-thread. We would get this compiler error instead:
+Am putea fi ispitiți să încercăm același lucru pentru a remedia codul din Listarea 16-4 în care firul principal a invocat `drop`, folosind o închidere `move`. Totuși, această reparație nu va funcționa pentru că ceea ce încearcă să realizeze Listarea 16-4 este interzis dintr-un alt motiv. Adăugând `move` la închiderea respectivă, am transfera `v` în contextul închiderii și nu am mai putea apela funcția `drop` pe acesta în firul principal. Ne-am confrunta în loc cu următoarea eroare de la compilator:
 
 ```console
 {{#include ../listings/ch16-fearless-concurrency/output-only-01-move-drop/output.txt}}
 ```
 
-Rust’s ownership rules have saved us again! We got an error from the code in
-Listing 16-3 because Rust was being conservative and only borrowing `v` for the
-thread, which meant the main thread could theoretically invalidate the spawned
-thread’s reference. By telling Rust to move ownership of `v` to the spawned
-thread, we’re guaranteeing Rust that the main thread won’t use `v` anymore. If
-we change Listing 16-4 in the same way, we’re then violating the ownership
-rules when we try to use `v` in the main thread. The `move` keyword overrides
-Rust’s conservative default of borrowing; it doesn’t let us violate the
-ownership rules.
+Regulile de posesiune din Rust ne-au salvat încă o dată! Am primit o eroare pentru codul din Listarea 16-3 pentru că Rust a fost precaut, alegând doar să împrumute variabila `v` firului secundar de execuție, ce ar fi putut cauza ca firul principal să invalideze referința firului pornit. Instruind Rust să mute posesiunea lui `v` către firul pornit, îi garantăm că firul principal nu o va mai folosi. Schimbând Listarea 16-4 în același mod, încălcăm regulile de posesiune când încercăm să accesăm `v` în firul principal. Cuvântul cheie `move` anulează comportamentul implicit precaut al Rust de a împrumuta; nu ne permite să încălcăm regulile de posesiune.
 
-With a basic understanding of threads and the thread API, let’s look at what we
-can *do* with threads.
+Înarmat cu noțiuni fundamentale despre firele de execuție și API-ul lor, să descoperim ce putem *realiza* cu ajutorul acestor fire.
 
 [capture]: ch13-01-closures.html#capturing-references-or-moving-ownership

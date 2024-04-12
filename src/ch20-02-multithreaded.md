@@ -1,203 +1,109 @@
-## Turning Our Single-Threaded Server into a Multithreaded Server
+## Transformarea serverului nostru single-threaded într-unul multithreaded
 
-Right now, the server will process each request in turn, meaning it won’t
-process a second connection until the first is finished processing. If the
-server received more and more requests, this serial execution would be less and
-less optimal. If the server receives a request that takes a long time to
-process, subsequent requests will have to wait until the long request is
-finished, even if the new requests can be processed quickly. We’ll need to fix
-this, but first, we’ll look at the problem in action.
+În starea actuală, serverul nostru procesează fiecare cerere succesiv, ceea ce înseamnă că nu va gestiona o altă conexiune până când nu termină de procesat prima. Dacă serverul se confruntă cu un număr mare de cereri, această metodă de execuție secvențială devine tot mai puțin eficientă. Mai mult, dacă serverul întâmpină o cerere ce necesită timp îndelungat pentru procesare, cererile ulterioare trebuie să aștepte finalizarea acesteia, chiar dacă ar putea fi procesate rapid. Acesta este un aspect pe care trebuie să-l îmbunătățim, dar înainte de asta, să analizăm problema în detaliu.
 
-### Simulating a Slow Request in the Current Server Implementation
+### Simularea unei solicitări lente în implementarea actuală a serverului
 
-We’ll look at how a slow-processing request can affect other requests made to
-our current server implementation. Listing 20-10 implements handling a request
-to */sleep* with a simulated slow response that will cause the server to sleep
-for 5 seconds before responding.
+Să examinăm cum o solicitare care se procesează lent poate influența alte solicitări transmise serverului nostru actual. Listarea 20-10 ilustrează gestionarea unei solicitări către adresa */sleep* cu un răspuns lent simulat, care va cauza serverului să execute un somn de 5 secunde înainte de a răspunde.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,no_run
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-10/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 20-10: Simulating a slow request by sleeping for
-5 seconds</span>
+<span class="caption">Listarea 20-10: Simularea unei solicitări lente prin dormit timp de 5 secunde</span>
 
-We switched from `if` to `match` now that we have three cases. We need to
-explicitly match on a slice of `request_line` to pattern match against the
-string literal values; `match` doesn’t do automatic referencing and
-dereferencing like the equality method does.
+Am trecut de la utilizarea `if` la `match`, deoarece acum avem de-a face cu trei scenarii diferite. Este necesar să realizăm potriviri explicite asupra unei secțiuni din `request_line` pentru a se potrivi cu valorile literale string; `match` nu realizează referențierea și dereferențierea automată, cum o face metoda de egalitate.
 
-The first arm is the same as the `if` block from Listing 20-9. The second arm
-matches a request to */sleep*. When that request is received, the server will
-sleep for 5 seconds before rendering the successful HTML page. The third arm is
-the same as the `else` block from Listing 20-9.
+Primul caz este la fel ca blocul `if` din Listarea 20-9. Al doilea caz corespunde unei solicitări către */sleep*. Când se primește aceasta, serverul va aștepta 5 secunde înainte de a reda pagina HTML de succes. Cazul al treilea este identic cu blocul `else` din Listarea 20-9.
 
-You can see how primitive our server is: real libraries would handle the
-recognition of multiple requests in a much less verbose way!
+Putem vedea natura simplistică a serverului nostru: biblioteci reale ar trata recunoașterea multiplelor solicitări într-un mod mult mai eficient și concis!
 
-Start the server using `cargo run`. Then open two browser windows: one for
-*http://127.0.0.1:7878/* and the other for *http://127.0.0.1:7878/sleep*. If
-you enter the */* URI a few times, as before, you’ll see it respond quickly.
-But if you enter */sleep* and then load */*, you’ll see that */* waits until
-`sleep` has slept for its full 5 seconds before loading.
+Pentru a iniția serverul, folosește `cargo run`. Apoi, deschide două ferestre de browser: una pentru *http://127.0.0.1:7878/* și cealaltă pentru *http://127.0.0.1:7878/sleep*. Dacă accesezi URI-ul */* de mai multe ori, la fel ca anterior, va răspunde rapid. Dar dacă accesezi */sleep* și apoi încarci */*, observi că */* va aștepta finalizarea celor 5 secunde de somn a funcției `sleep` înainte să se încarce.
 
-There are multiple techniques we could use to avoid requests backing up behind
-a slow request; the one we’ll implement is a thread pool.
+Există mai multe tehnici pe care le-ar putea folosi pentru a evita întârzierea solicitărilor din cauza unei alte solicitări lente; vom alege să implementăm un pool de fire de execuție.
 
-### Improving Throughput with a Thread Pool
+### Lărgirea capacității de bandă cu un pool de fire de execuție
 
-A *thread pool* is a group of spawned threads that are waiting and ready to
-handle a task. When the program receives a new task, it assigns one of the
-threads in the pool to the task, and that thread will process the task. The
-remaining threads in the pool are available to handle any other tasks that come
-in while the first thread is processing. When the first thread is done
-processing its task, it’s returned to the pool of idle threads, ready to handle
-a new task. A thread pool allows you to process connections concurrently,
-increasing the throughput of your server.
+Un *thread pool* este un ansamblu de fire de execuție inițializate și în așteptare de sarcini. Când programul detectează o nouă sarcină, alocă un fir din pool pentru gestionarea acesteia, care o va prelucra. Celelalte fire rămân disponibile pentru orice alte sarcini care apar în timp ce primul fir este ocupat. După finalizarea sarcinii, firul revine în pool-ul de fire inactive, pregătit pentru o nouă provocare. Astfel, thread pool-ul facilitează procesarea concurentă a conexiunilor, sporind capacitatea de bandă a serverului.
 
-We’ll limit the number of threads in the pool to a small number to protect us
-from Denial of Service (DoS) attacks; if we had our program create a new thread
-for each request as it came in, someone making 10 million requests to our
-server could create havoc by using up all our server’s resources and grinding
-the processing of requests to a halt.
+Vom limita numărul de fire de execuție din pool pentru a ne proteja împotriva atacurilor de tipul Denial of Service (DoS); altfel, creând un fir nou pentru fiecare cerere, un atacator care trimite milioane de cereri ar putea să epuizeze resursele serverului, blocând procesarea acestora.
 
-Rather than spawning unlimited threads, then, we’ll have a fixed number of
-threads waiting in the pool. Requests that come in are sent to the pool for
-processing. The pool will maintain a queue of incoming requests. Each of the
-threads in the pool will pop off a request from this queue, handle the request,
-and then ask the queue for another request. With this design, we can process up
-to `N` requests concurrently, where `N` is the number of threads. If each
-thread is responding to a long-running request, subsequent requests can still
-back up in the queue, but we’ve increased the number of long-running requests
-we can handle before reaching that point.
+Deci, în loc de a avea un număr nelimitat de fire, vom menține un număr fix de fire în așteptare în pool. Sosirea unei cereri conduce la direcționarea acesteia spre pool pentru prelucrare, unde există o coadă de cereri în așteptarea gestiunii. Fiecare fir din pool preia o cerere din coadă, o gestionează și apoi solicită o altă cerere. Prin această abordare, putem procesa concurent până la `N` cereri, unde `N` este numărul de fire. Aceasta crește numărul de cereri de lungă durată pe care le putem prelucra înainte de a se forma o coadă de așteptare.
 
-This technique is just one of many ways to improve the throughput of a web
-server. Other options you might explore are the *fork/join model*, the
-*single-threaded async I/O model*, or the *multi-threaded async I/O model*. If
-you’re interested in this topic, you can read more about other solutions and
-try to implement them; with a low-level language like Rust, all of these
-options are possible.
+Metoda dată este una dintre multele strategii de îmbunătățire a capacității unui server web. Alte opțiuni demne de luat în considerare sunt modelul *fork/join*, modelul *single-threaded async I/O*, sau modelul *multi-threaded async I/O*. Dacă domeniul te pasionează, e bine de știut că Rust, ca limbaj de nivel scăzut, face posibilă explorarea și implementarea acestor alternative.
 
-Before we begin implementing a thread pool, let’s talk about what using the
-pool should look like. When you’re trying to design code, writing the client
-interface first can help guide your design. Write the API of the code so it’s
-structured in the way you want to call it; then implement the functionality
-within that structure rather than implementing the functionality and then
-designing the public API.
+Înainte să trecem la construirea unui thread pool, să examinăm cum ar trebui să arate interacțiunea cu acesta. În etapa de proiectare a codului, construirea în prealabil a interfeței cu utilizatorul poate servi ca un bun ghid pentru design. Concepe API-ul astfel încât să se potrivească cu modul în care vrei să-l utilizezi; apoi dezvoltă funcționalitatea în acest cadru, în loc să creezi funcționalitățile și pe urmă să te ocupi de API.
 
-Similar to how we used test-driven development in the project in Chapter 12,
-we’ll use compiler-driven development here. We’ll write the code that calls the
-functions we want, and then we’ll look at errors from the compiler to determine
-what we should change next to get the code to work. Before we do that, however,
-we’ll explore the technique we’re not going to use as a starting point.
+Similar cu dezvoltarea ghidată de teste din proiectul Capitolului 12, vom folosi aici dezvoltarea ghidată de compilator. Vom scrie cod ce cheamă funcțiile dorite și vom corecta erorile indicate de compilator pentru a avansa spre o implementare funcțională. Dar înainte de asta, să explorăm o tehnică pe care nu o vom adopta în calitate de punct de plecare.
 
-<!-- Old headings. Do not remove or links may break. -->
-<a id="code-structure-if-we-could-spawn-a-thread-for-each-request"></a>
+<!-- Old headings. Do not remove or links may break. --> <a id="code-structure-if-we-could-spawn-a-thread-for-each-request"></a>
 
-#### Spawning a Thread for Each Request
+#### Crearea unui fir de execuție pentru fiecare cerere
 
-First, let’s explore how our code might look if it did create a new thread for
-every connection. As mentioned earlier, this isn’t our final plan due to the
-problems with potentially spawning an unlimited number of threads, but it is a
-starting point to get a working multithreaded server first. Then we’ll add the
-thread pool as an improvement, and contrasting the two solutions will be
-easier. Listing 20-11 shows the changes to make to `main` to spawn a new thread
-to handle each stream within the `for` loop.
+Să explorăm cum ar arăta codul nostru dacă ar genera un nou fir de execuție pentru fiecare conexiune. După cum am explicat anterior, aceasta nu este soluția finală datorită complicațiilor care ar apărea prin crearea unui număr nelimitat de fire de execuție, însă este un punct de start pentru a realiza mai întâi un server funcțional multithreaded. Apoi, vom adăuga un thread pool ca o îmbunătățire, iar compararea celor două abordări va fi mai simplă. Listarea 20-11 ilustrează modificările necesare în `main` pentru a crea un nou fir de execuție care să proceseze fiecare stream în cadrul buclei `for`.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,no_run
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-11/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 20-11: Spawning a new thread for each
-stream</span>
+<span class="caption">Listarea 20-11: Crearea unui nou fir de execuție pentru fiecare stream</span>
 
-As you learned in Chapter 16, `thread::spawn` will create a new thread and then
-run the code in the closure in the new thread. If you run this code and load
-*/sleep* in your browser, then */* in two more browser tabs, you’ll indeed see
-that the requests to */* don’t have to wait for */sleep* to finish. However, as
-we mentioned, this will eventually overwhelm the system because you’d be making
-new threads without any limit.
+După cum ai învățat în Capitolul 16, `thread::spawn` va crea un nou fir de execuție și va executa codul din încheiere în acest nou fir. Dacă rulezi acest cod și accesezi
+*/sleep* în browser-ul tău, apoi */* în alte două tab-uri, vei vedea că cererile către */* nu trebuie să aștepte finalizarea cererii către */sleep*. Cu toate acestea, așa cum am menționat, această metodă poate în cele din urmă să suprasolicite sistemul prin crearea continuă de noi fire de execuție fără niciun fel de limită.
 
-<!-- Old headings. Do not remove or links may break. -->
-<a id="creating-a-similar-interface-for-a-finite-number-of-threads"></a>
+<!-- Old headings. Do not remove or links may break. --> <a id="creating-a-similar-interface-for-a-finite-number-of-threads"></a>
 
-#### Creating a Finite Number of Threads
+#### Crearea unui număr finit de fire de execuție
 
-We want our thread pool to work in a similar, familiar way so switching from
-threads to a thread pool doesn’t require large changes to the code that uses
-our API. Listing 20-12 shows the hypothetical interface for a `ThreadPool`
-struct we want to use instead of `thread::spawn`.
+Scopul nostru este ca pool-ul de fire să fie intuitiv și să funcționeze în mod similar cu firele de execuție individuale, astfel încât să nu fie necesare ajustări majore în codul sursă care interacționează cu API-ul creat de noi. Listarea 20-12 ilustrează interfața ideală pentru structura `ThreadPool` pe care dorim să o adoptăm în locul folosirii `thread::spawn`.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-12/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 20-12: Our ideal `ThreadPool` interface</span>
+<span class="caption">Listarea 20-12: Interfața vizată pentru `ThreadPool`</span>
 
-We use `ThreadPool::new` to create a new thread pool with a configurable number
-of threads, in this case four. Then, in the `for` loop, `pool.execute` has a
-similar interface as `thread::spawn` in that it takes a closure the pool should
-run for each stream. We need to implement `pool.execute` so it takes the
-closure and gives it to a thread in the pool to run. This code won’t yet
-compile, but we’ll try so the compiler can guide us in how to fix it.
+Utilizăm `ThreadPool::new` pentru a pune la punct un pool nou de fire de execuție cu un număr de fire pe care îl putem configura, aici exemplificând cu patru. Mai departe, în bucla `for`, `pool.execute` propune o interfață similară cu cea a lui `thread::spawn`, primind o închidere care urmează a fi executată de pool individual pentru fiecare flux. Este necesar să definim `pool.execute` astfel încât să preia închiderea și să o repartizeze către un fir din pool pentru execuție. Deocamdată codul nu este compilabil, însă o vom încerca pentru ca compilatorul să ne poată îndruma spre soluționarea problemelor.
 
-<!-- Old headings. Do not remove or links may break. -->
-<a id="building-the-threadpool-struct-using-compiler-driven-development"></a>
+<!-- Old headings. Do not remove or links may break. --> <a id="building-the-threadpool-struct-using-compiler-driven-development"></a>
 
-#### Building `ThreadPool` Using Compiler Driven Development
+#### Construirea unui `ThreadPool` prin dezvoltare ghidată de compilator
 
-Make the changes in Listing 20-12 to *src/main.rs*, and then let’s use the
-compiler errors from `cargo check` to drive our development. Here is the first
-error we get:
+Aplică modificările din Listarea 20-12 în *src/main.rs*, după care să utilizăm erorile de compilator de la `cargo check` ca ghid în procesul nostru de dezvoltare. Iată prima eroare care ne apare:
 
 ```console
 {{#include ../listings/ch20-web-server/listing-20-12/output.txt}}
 ```
 
-Great! This error tells us we need a `ThreadPool` type or module, so we’ll
-build one now. Our `ThreadPool` implementation will be independent of the kind
-of work our web server is doing. So, let’s switch the `hello` crate from a
-binary crate to a library crate to hold our `ThreadPool` implementation. After
-we change to a library crate, we could also use the separate thread pool
-library for any work we want to do using a thread pool, not just for serving
-web requests.
+Minunat! Această eroare ne indică faptul că avem nevoie de un tip sau modul denumit `ThreadPool`, deci e momentul să construim unul. Implementarea `ThreadPool` va fi realizată independent de tipul de muncă pe care serverul nostru web îl execută. Astfel, să convertim crate-ul `hello` dintr-un crate tip binar într-unul de tip bibliotecă, pentru a include implementarea `ThreadPool`. Odată ce am trecut la un crate de tip bibliotecă, am putea folosi biblioteca de pool de fire de execuție și pentru alte munci la care am avea nevoie de un pool de fire de execuție, nu doar pentru prelucrarea cererilor web.
 
-Create a *src/lib.rs* that contains the following, which is the simplest
-definition of a `ThreadPool` struct that we can have for now:
+Creează un fișier *src/lib.rs* care să conțină următoarea definiție, care este cel mai simplu exemplu al structurii `ThreadPool` pe care îl putem avea în acest moment:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch20-web-server/no-listing-01-define-threadpool-struct/src/lib.rs}}
 ```
 
-Then edit *main.rs* file to bring `ThreadPool` into scope from the library
-crate by adding the following code to the top of *src/main.rs*:
-
-<span class="filename">Filename: src/main.rs</span>
+Acum, editează fișierul *main.rs* pentru a aduce `ThreadPool` în domeniul de vizibilitate din crate-ul de tip bibliotecă adăugând următorul cod la partea de sus a *src/main.rs*:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch20-web-server/no-listing-01-define-threadpool-struct/src/main.rs:here}}
 ```
 
-This code still won’t work, but let’s check it again to get the next error that
-we need to address:
+Acest cod nu va funcționa încă, dar să facem încă o verificare pentru a primi următoarea eroare ce trebuie abordată:
 
 ```console
 {{#include ../listings/ch20-web-server/no-listing-01-define-threadpool-struct/output.txt}}
 ```
 
-This error indicates that next we need to create an associated function named
-`new` for `ThreadPool`. We also know that `new` needs to have one parameter
-that can accept `4` as an argument and should return a `ThreadPool` instance.
-Let’s implement the simplest `new` function that will have those
-characteristics:
+Această eroare ne arată că trebuie să creăm în continuare o funcție asociată numită `new` pentru `ThreadPool`. De asemenea, înțelegem că funcția `new` trebuie să aibă un parametru ce acceptă `4` ca argument și care să returneze o instanță de `ThreadPool`. Să implementăm cea mai simplă versiune a funcției `new`, care să corespundă acestor cerințe:
 
 <span class="filename">Filename: src/lib.rs</span>
 
@@ -205,33 +111,17 @@ characteristics:
 {{#rustdoc_include ../listings/ch20-web-server/no-listing-02-impl-threadpool-new/src/lib.rs}}
 ```
 
-We chose `usize` as the type of the `size` parameter, because we know that a
-negative number of threads doesn’t make any sense. We also know we’ll use this
-4 as the number of elements in a collection of threads, which is what the
-`usize` type is for, as discussed in the [“Integer Types”][integer-types]<!--
-ignore --> section of Chapter 3.
+Am ales tipul `usize` pentru parametrul `size`, deoarece este clar că un număr negativ de fire de execuție nu ar avea sens. În plus, știm că acest număr 4 va fi folosit pentru a reprezenta cantitatea de elemente într-o colecție de fire de execuție, acesta fiind rolul tipului `usize`, după cum am discutat în secțiunea [“Tipurile de întregi”][integer-types]<!-- ignore --> din Capitolul 3.
 
-Let’s check the code again:
+Să examinăm din nou codul:
 
 ```console
 {{#include ../listings/ch20-web-server/no-listing-02-impl-threadpool-new/output.txt}}
 ```
 
-Now the error occurs because we don’t have an `execute` method on `ThreadPool`.
-Recall from the [“Creating a Finite Number of
-Threads”](#creating-a-finite-number-of-threads)<!-- ignore --> section that we
-decided our thread pool should have an interface similar to `thread::spawn`. In
-addition, we’ll implement the `execute` function so it takes the closure it’s
-given and gives it to an idle thread in the pool to run.
+Eroarea apare acum deoarece `ThreadPool` nu are o metodă `execute`. Reamintim din secțiunea [„Crearea unui număr finit de fire de execuție”](#creating-a-finite-number-of-threads)<!-- ignore --> că am stabilit ca pool-ul nostru de fire de execuție să aibă o interfață asemănătoare cu `thread::spawn`. În plus, intenționăm să implementăm funcția `execute` într-o manieră care să preia o închidere furnizată și să o aloce unui fir inactiv din pool pentru executare.
 
-We’ll define the `execute` method on `ThreadPool` to take a closure as a
-parameter. Recall from the [“Moving Captured Values Out of the Closure and the
-`Fn` Traits”][fn-traits]<!-- ignore --> section in Chapter 13 that we can take
-closures as parameters with three different traits: `Fn`, `FnMut`, and
-`FnOnce`. We need to decide which kind of closure to use here. We know we’ll
-end up doing something similar to the standard library `thread::spawn`
-implementation, so we can look at what bounds the signature of `thread::spawn`
-has on its parameter. The documentation shows us the following:
+Definirea metodei `execute` pe `ThreadPool` se va face astfel încât aceasta să primească o închidere ca parametru. Reflectând asupra secțiunii [„Permutarea valorilor capturate din închideri și trăsături `Fn`”][fn-traits]<!-- ignore --> din Capitolul 13, ținem minte că putem accepta închideri ca parametri utilizând trei trăsături distincte: `Fn`, `FnMut` și `FnOnce`. Acum trebuie să hotărâm care dintre acestea este potrivită în contextul nostru. Având în vedere că vom urma o abordare similară cu cea a implementării `thread::spawn` din librăria standard, putem examina restricțiile aplicate de semnătura lui `thread::spawn` asupra parametrului său. Documentația ne evidențiază următoarea formă:
 
 ```rust,ignore
 pub fn spawn<F, T>(f: F) -> JoinHandle<T>
@@ -241,93 +131,57 @@ pub fn spawn<F, T>(f: F) -> JoinHandle<T>
         T: Send + 'static,
 ```
 
-The `F` type parameter is the one we’re concerned with here; the `T` type
-parameter is related to the return value, and we’re not concerned with that. We
-can see that `spawn` uses `FnOnce` as the trait bound on `F`. This is probably
-what we want as well, because we’ll eventually pass the argument we get in
-`execute` to `spawn`. We can be further confident that `FnOnce` is the trait we
-want to use because the thread for running a request will only execute that
-request’s closure one time, which matches the `Once` in `FnOnce`.
+Aici, parametrul de tip `F` este cel la care ne vom concentra; parametrul de tip `T` se raportează la valoarea de retur, ce nu constituie un punct de interes în acest context. Observăm că `spawn` recurge la trăsătura `FnOnce` ca delimitare pe `F`. Probabil că aceasta este alegerea corectă pentru noi, întrucât argumentul primit în `execute` va fi transferat către `spawn`. Convicția că `FnOnce` este trăsătura adecvată se întărește de faptul că un fir de execuție destinat procesării unei cereri va rula închiderea respectivă doar o singură dată, conform implicării termenului `Once` în `FnOnce`.
 
-The `F` type parameter also has the trait bound `Send` and the lifetime bound
-`'static`, which are useful in our situation: we need `Send` to transfer the
-closure from one thread to another and `'static` because we don’t know how long
-the thread will take to execute. Let’s create an `execute` method on
-`ThreadPool` that will take a generic parameter of type `F` with these bounds:
+Parametrul de tip `F` are acum și delimitarea de trăsătură `Send` și delimitarea de durata de viață `'static`, esențiale în cazul nostru: `Send` este necesar pentru a transfera închiderea de la un fir de execuție la altul și `'static` este necesar deoarece nu putem determina durata execuției firului. În continuare să implementăm o metodă `execute` pe `ThreadPool` care să primească un parametru generic de tip `F` cu aceste constrângeri:
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch20-web-server/no-listing-03-define-execute/src/lib.rs:here}}
 ```
 
-We still use the `()` after `FnOnce` because this `FnOnce` represents a closure
-that takes no parameters and returns the unit type `()`. Just like function
-definitions, the return type can be omitted from the signature, but even if we
-have no parameters, we still need the parentheses.
+Continuăm să utilizăm `()` după `FnOnce` pentru că acest `FnOnce` definește o închidere fără parametri și care returnează tipul unit `()`. Ca și în cazul definițiilor funcțiilor, putem omite tipul de retur din semnătură, dar chiar și în absența parametrilor, avem totuși nevoie de paranteze.
 
-Again, this is the simplest implementation of the `execute` method: it does
-nothing, but we’re trying only to make our code compile. Let’s check it again:
+Revenind, aceasta este implementarea cea mai simplificată a metodei `execute`: nu realizează nimic, însă obiectivul nostru este numai de a verifica compilarea codului. Să verificăm din nou:
 
 ```console
 {{#include ../listings/ch20-web-server/no-listing-03-define-execute/output.txt}}
 ```
 
-It compiles! But note that if you try `cargo run` and make a request in the
-browser, you’ll see the errors in the browser that we saw at the beginning of
-the chapter. Our library isn’t actually calling the closure passed to `execute`
-yet!
+Compilarea reușește! Totuși, vei vedea că dacă rulezi `cargo run` și inițiezi o cerere în browser, vei întâmpina erorile din browser pe care le-am observat la începutul capitolului. Biblioteca noastră încă nu execută închiderea transmisă metodei `execute`!
 
-> Note: A saying you might hear about languages with strict compilers, such as
-> Haskell and Rust, is “if the code compiles, it works.” But this saying is not
-> universally true. Our project compiles, but it does absolutely nothing! If we
-> were building a real, complete project, this would be a good time to start
-> writing unit tests to check that the code compiles *and* has the behavior we
-> want.
+> Notă: O expresie pe care o poți auzi în legătură cu limbaje de programare cu
+> compilatoare stricte, cum sunt Haskell și Rust, este „dacă codul compilează,
+> înseamnă că funcționează.” Totuși, acest adagiu nu este valabil universal.
+> Proiectul nostru compilează, însă nu realizează efectiv nimic! Dacă am
+> dezvolta un proiect real și complet, acum ar fi momentul oportun pentru a
+> compune teste unitare pentru a confirma că codul nu doar că compilează, dar
+> și că se comportă așa cum anticipăm.
 
-#### Validating the Number of Threads in `new`
+#### Validarea numărului de fire de execuție în `new`
 
-We aren’t doing anything with the parameters to `new` and `execute`. Let’s
-implement the bodies of these functions with the behavior we want. To start,
-let’s think about `new`. Earlier we chose an unsigned type for the `size`
-parameter, because a pool with a negative number of threads makes no sense.
-However, a pool with zero threads also makes no sense, yet zero is a perfectly
-valid `usize`. We’ll add code to check that `size` is greater than zero before
-we return a `ThreadPool` instance and have the program panic if it receives a
-zero by using the `assert!` macro, as shown in Listing 20-13.
+Încă nu am folosit parametrii metodei `new` și `execute`. Să realizăm acum implementările acestora conform comportamentului dorit. Începând cu `new`, mai devreme am optat pentru un tip de date fără semn pentru parametrul `size`, deoarece ideea unui pool cu un număr negativ de fire de execuție e lipsită de sens. Totuși, un pool cu zero fire este de asemenea ilogic, chiar dacă zero este o valoare perfect validă pentru `usize`. Vom include un cod care să asigure că `size` este mai mare ca zero înainte să returnăm o instanță `ThreadPool`, forțând programul să genereze panică dacă primește zero folosind macrocomanda `assert!`, conform prezentării din Listarea 20-13.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-13/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 20-13: Implementing `ThreadPool::new` to panic if
-`size` is zero</span>
+<span class="caption">Listarea 20-13: Implementarea lui `ThreadPool::new` astfel încât să genereze panică dacă `size` este zero</span>
 
-We’ve also added some documentation for our `ThreadPool` with doc comments.
-Note that we followed good documentation practices by adding a section that
-calls out the situations in which our function can panic, as discussed in
-Chapter 14. Try running `cargo doc --open` and clicking the `ThreadPool` struct
-to see what the generated docs for `new` look like!
+Am integrat de asemenea comentarii doc pentru documentarea `ThreadPool`. Observi că am respectat practicile recomandate pentru documentație, incluzând o secțiune care subliniază situațiile în care funcția noastră poate intra în panică, aspect abordat în Capitolul 14. Încearcă să executați comanda `cargo doc --open` și să selectezi structura `ThreadPool` pentru a vedea cum arată documentația generată pentru `new`!
 
-Instead of adding the `assert!` macro as we’ve done here, we could change `new`
-into `build` and return a `Result` like we did with `Config::build` in the I/O
-project in Listing 12-9. But we’ve decided in this case that trying to create a
-thread pool without any threads should be an unrecoverable error. If you’re
-feeling ambitious, try to write a function named `build` with the following
-signature to compare with the `new` function:
+În loc să folosim macrocomanda `assert!`, am putea transforma `new` în `build` și să returnăm un `Result` așa cum am procedat cu `Config::build` în proiectul legat de intrare/ieșire (I/O) din Listarea 12-9. Cu toate acestea, am decis că în acest caz încercarea de a crea un pool de fire de execuție fără fire este o eroare irecuperabilă. Dacă ești în căutarea unei provocări, încearcă să scrii o metodă denumită `build` cu următoarea semnătură pentru a o compara cu metoda `new`:
 
 ```rust,ignore
 pub fn build(size: usize) -> Result<ThreadPool, PoolCreationError> {
 ```
 
-#### Creating Space to Store the Threads
+#### Crearea spațiului pentru stocarea firelor de execuție
 
-Now that we have a way to know we have a valid number of threads to store in
-the pool, we can create those threads and store them in the `ThreadPool` struct
-before returning the struct. But how do we “store” a thread? Let’s take another
-look at the `thread::spawn` signature:
+Acum, că avem o metodă de a verifica dacă avem un număr valid de fire de execuție pentru a le stoca în pool, putem crea aceste fire și să le stocăm în structura `ThreadPool` înainte de a o returna. Dar cum „stocăm” un fir de execuție? Să aruncăm din nou o privire la semnătura `thread::spawn`:
 
 ```rust,ignore
 pub fn spawn<F, T>(f: F) -> JoinHandle<T>
@@ -337,217 +191,125 @@ pub fn spawn<F, T>(f: F) -> JoinHandle<T>
         T: Send + 'static,
 ```
 
-The `spawn` function returns a `JoinHandle<T>`, where `T` is the type that the
-closure returns. Let’s try using `JoinHandle` too and see what happens. In our
-case, the closures we’re passing to the thread pool will handle the connection
-and not return anything, so `T` will be the unit type `()`.
+Funcția `spawn` returnează un `JoinHandle<T>`, unde `T` este tipul returnat de închidere. Să încercăm să folosim și `JoinHandle` și să vedem ce se întâmplă. În cazul nostru, închiderile pe care le pasăm pool-ului de fire sunt responsabile pentru gestionarea conexiunii și nu returnează nimic, astfel `T` va fi de tipul unit `()`.
 
-The code in Listing 20-14 will compile but doesn’t create any threads yet.
-We’ve changed the definition of `ThreadPool` to hold a vector of
-`thread::JoinHandle<()>` instances, initialized the vector with a capacity of
-`size`, set up a `for` loop that will run some code to create the threads, and
-returned a `ThreadPool` instance containing them.
-
-<span class="filename">Filename: src/lib.rs</span>
+Codul din Listarea 20-14 va compila, dar nu va crea niciun fir de execuție până în acest punct. Am modificat definiția `ThreadPool` pentru a include un vector de `thread::JoinHandle<()>`, am inițializat vectorul cu o capacitate de `size`, am configurat o buclă `for` pentru a executa un cod ce va crea firele și am returnat o instanță `ThreadPool` care le include.
 
 ```rust,ignore,not_desired_behavior
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-14/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 20-14: Creating a vector for `ThreadPool` to hold
-the threads</span>
+<span class="caption">Listarea 20-14: Crearea unui vector pentru `ThreadPool` pentru stocarea firelor de execuție</span>
 
-We’ve brought `std::thread` into scope in the library crate, because we’re
-using `thread::JoinHandle` as the type of the items in the vector in
-`ThreadPool`.
+Am importat `std::thread` în domeniul de vizibilitate al crate-ului de bibliotecă, deoarece utilizăm `thread::JoinHandle` ca tip al elementelor din vectorul `ThreadPool`.
 
-Once a valid size is received, our `ThreadPool` creates a new vector that can
-hold `size` items. The `with_capacity` function performs the same task as
-`Vec::new` but with an important difference: it preallocates space in the
-vector. Because we know we need to store `size` elements in the vector, doing
-this allocation up front is slightly more efficient than using `Vec::new`,
-which resizes itself as elements are inserted.
+Odată ce se confirmă primirea unei dimensiuni valide, `ThreadPool`-ul nostru generează un nou vector capabil să conțină `size` elemente. Funcția `with_capacity` îndeplinește aceeași sarcină ca şi `Vec::new`, dar cu un avantaj considerabil: ea alocă spațiul în vector în prealabil. Având în vedere că știm că trebuie să stocăm `size` de elemente în vector, această alocare inițială este mai eficientă decât utilizarea `Vec::new`, ce își ajustează mărimea pe măsură ce se adaugă elemente.
 
-When you run `cargo check` again, it should succeed.
+Când rulezi din nou `cargo check`, procesul ar trebui să fie realizat cu succes.
 
-#### A `Worker` Struct Responsible for Sending Code from the `ThreadPool` to a Thread
+#### Structura `Worker` responsabilă de transmiterea codului din `ThreadPool` către un fir de execuție
 
-We left a comment in the `for` loop in Listing 20-14 regarding the creation of
-threads. Here, we’ll look at how we actually create threads. The standard
-library provides `thread::spawn` as a way to create threads, and
-`thread::spawn` expects to get some code the thread should run as soon as the
-thread is created. However, in our case, we want to create the threads and have
-them *wait* for code that we’ll send later. The standard library’s
-implementation of threads doesn’t include any way to do that; we have to
-implement it manually.
+În listarea 20-14, în secțiunea buclei `for`, am deschis subiectul creării firelor de execuție. Vom detalia acum modalitatea efectivă de creare a acestora. Biblioteca standard ne oferă funcționalitatea `thread::spawn` pentru a genera fire de execuție, prin care `thread::spawn` anticipează recepționarea unui fragment de cod ce trebuie executat imediat după pornirea firului. Cu toate acestea, cazul nostru este de a inițializa firele de execuție pentru ca acestea să *rămână în așteptare*, în vederea primirii codului pe care îl vom furniza la un moment ulterior. Abordarea standard a firelor de execuție nu include o astfel de capacitate, ceea ce ne obligă să implementăm manual acest comportament.
 
-We’ll implement this behavior by introducing a new data structure between the
-`ThreadPool` and the threads that will manage this new behavior. We’ll call
-this data structure *Worker*, which is a common term in pooling
-implementations. The Worker picks up code that needs to be run and runs the
-code in the Worker’s thread. Think of people working in the kitchen at a
-restaurant: the workers wait until orders come in from customers, and then
-they’re responsible for taking those orders and fulfilling them.
+Vom obține acest comportament prin integrarea unei noi structuri de date între `ThreadPool` și firele de execuție, destinată gestionării acestei funcționalități noi. Această structură va purta denumirea de *Worker* (lucrător), termen des întâlnit în schemele de pooling. `Worker`-ul preia codul așteptând execuția și îl procesează folosind firul de execuție alocat lui. Gândește-te la bucătarii dintr-un restaurant: aceștia așteaptă comenzi de la clienți și, la sosirea acestora, sunt responsabili pentru prelucrarea și finalizarea lor.
 
-Instead of storing a vector of `JoinHandle<()>` instances in the thread pool,
-we’ll store instances of the `Worker` struct. Each `Worker` will store a single
-`JoinHandle<()>` instance. Then we’ll implement a method on `Worker` that will
-take a closure of code to run and send it to the already running thread for
-execution. We’ll also give each worker an `id` so we can distinguish between
-the different workers in the pool when logging or debugging.
+În `ThreadPool`, în locul unui vector conținând instanțe de `JoinHandle<()>`, vom include mai degrabă instanțe ale structurii `Worker`. Fiecare `Worker` va deține o singură instanță `JoinHandle<()>`. Vom dezvolta o metodă pe structura `Worker` ce va accepta o închidere cu cod spre a fi executat, pe care o va expedia firului de execuție activ pentru procesare. În plus, vom atribui fiecărei instanțe de `Worker` un `id`, astfel încât să putem distinge cu ușurință între diferiții lucrători ai pool-ului, în contexte de logging sau depanare.
 
-Here is the new process that will happen when we create a `ThreadPool`. We’ll
-implement the code that sends the closure to the thread after we have `Worker`
-set up in this way:
+Iată procedura nouă care are loc atunci când inițiem un `ThreadPool`. Vom implementa codul care expediază închiderea la firul de execuție odată ce avem `Worker` configurat în această manieră:
 
-1. Define a `Worker` struct that holds an `id` and a `JoinHandle<()>`.
-2. Change `ThreadPool` to hold a vector of `Worker` instances.
-3. Define a `Worker::new` function that takes an `id` number and returns a
-   `Worker` instance that holds the `id` and a thread spawned with an empty
-   closure.
-4. In `ThreadPool::new`, use the `for` loop counter to generate an `id`, create
-   a new `Worker` with that `id`, and store the worker in the vector.
+1. Definește o structură `Worker` care posedă un `id` și un `JoinHandle<()>`.
+2. Modifică `ThreadPool` pentru a păstra un vector de instanțe `Worker`.
+3. Creează o funcție `Worker::new` care acceptă un număr `id` și înapoiază o instanță `Worker` care conține `id`-ul și un fir de execuție generat cu o închidere goală.
+4. În `ThreadPool::new`, utilizează contorul din bucla `for` pentru a produce un `id`, creează un nou `Worker` cu acest `id` și îl stochează în vector.
 
-If you’re up for a challenge, try implementing these changes on your own before
-looking at the code in Listing 20-15.
+Dacă ești dispus de o provocare, încearcă să realizezi aceste modificări de unul singur înainte de a consulta codul din Listarea 20-15.
 
-Ready? Here is Listing 20-15 with one way to make the preceding modifications.
+Ești gata? Aici este Listarea 20-15 care prezintă una dintre modalitățile de a efectua modificările discutate.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-15/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 20-15: Modifying `ThreadPool` to hold `Worker`
-instances instead of holding threads directly</span>
+<span class="caption">Listarea 20-15: Modificarea `ThreadPool` pentru a include instanțe `Worker` în loc de a păstra direct fire de execuție</span>
 
-We’ve changed the name of the field on `ThreadPool` from `threads` to `workers`
-because it’s now holding `Worker` instances instead of `JoinHandle<()>`
-instances. We use the counter in the `for` loop as an argument to
-`Worker::new`, and we store each new `Worker` in the vector named `workers`.
+Am modificat numele câmpului din `ThreadPool` de la `threads` la `workers`, deoarece acum include instanțe `Worker` în loc de instanțe `JoinHandle<()>`. Utilizăm numărătorul din bucla `for` ca argument pentru `Worker::new` și stocăm fiecare `Worker` nou în vectorul numit `workers`.
 
-External code (like our server in *src/main.rs*) doesn’t need to know the
-implementation details regarding using a `Worker` struct within `ThreadPool`,
-so we make the `Worker` struct and its `new` function private. The
-`Worker::new` function uses the `id` we give it and stores a `JoinHandle<()>`
-instance that is created by spawning a new thread using an empty closure.
+Codul exterior (precum serverul nostru din *src/main.rs*) nu trebuie să fie conștient de detalii de implementare legate de utilizarea structurii `Worker` în `ThreadPool`, de aceea structura `Worker` și funcția sa `new` sunt marcate ca private. Funcția `Worker::new` folosește `id`-ul primit și reține o instanță `JoinHandle<()>` care este creată generând un fir de execuție nou cu o închidere goală.
 
-> Note: If the operating system can’t create a thread because there aren’t
-> enough system resources, `thread::spawn` will panic. That will cause our
-> whole server to panic, even though the creation of some threads might
-> succeed. For simplicity’s sake, this behavior is fine, but in a production
-> thread pool implementation, you’d likely want to use
-> [`std::thread::Builder`][builder]<!-- ignore --> and its
-> [`spawn`][builder-spawn]<!-- ignore --> method that returns `Result` instead.
+> Notă: Dacă sistemul de operare nu reușește să creeze un fir de execuție din
+> cauza lipsei resurselor de sistem, `thread::spawn` va genera panică. Asta va
+> provoca generația de panică a întregului server, chiar dacă crearea altor fire
+> de execuție ar putea avea succes. Din motive de simplitate, acest comportament
+> este accpetabil, însă într-o implementare ThreadPool destinată producției, ar
+> fi de preferat să utilizăm [`std::thread::Builder`][builder]<!-- ignore --> și
+> metoda sa [`spawn`][builder-spawn]<!-- ignore -->, care returnează `Result`,
+> în schimb.
 
-This code will compile and will store the number of `Worker` instances we
-specified as an argument to `ThreadPool::new`. But we’re *still* not processing
-the closure that we get in `execute`. Let’s look at how to do that next.
+Codul se va compila și va reține numărul de instanțe `Worker` pe care le-am definit ca argument pentru `ThreadPool::new`. Totuși, *încă* nu gestionăm închiderea pe care o primim în `execute`. Să vedem cum putem proceda în continuare.
 
-#### Sending Requests to Threads via Channels
+#### Trimiterea cererilor către fire de execuție utilizând canale
 
-The next problem we’ll tackle is that the closures given to `thread::spawn` do
-absolutely nothing. Currently, we get the closure we want to execute in the
-`execute` method. But we need to give `thread::spawn` a closure to run when we
-create each `Worker` during the creation of the `ThreadPool`.
+Problema pe care o abordăm acum este că închiderile oferite lui `thread::spawn` în acest moment sunt nefuncționale. Obținem închiderea dorită pentru execuție în metoda `execute`, dar trebuie să furnizăm lui `thread::spawn` o închidere pentru a o executa atunci când constituim fiecare `Worker` la inițierea `ThreadPool`.
 
-We want the `Worker` structs that we just created to fetch the code to run from
-a queue held in the `ThreadPool` and send that code to its thread to run.
+Ne dorim ca structurile `Worker` să recupereze codul ce trebuie rulat dintr-o coadă menținută în `ThreadPool` și să îl transmită propriului fir pentru execuție.
 
-The channels we learned about in Chapter 16—a simple way to communicate between
-two threads—would be perfect for this use case. We’ll use a channel to function
-as the queue of jobs, and `execute` will send a job from the `ThreadPool` to
-the `Worker` instances, which will send the job to its thread. Here is the plan:
+Canalele care au fost analizate în Capitolul 16, o cale simplă de comunicare între două fire de execuție, se potrivesc excelent pentru necesitatea noastră. Vom utiliza un canal ca și coadă a sarcinilor, iar `execute` va trimite sarcinile de la `ThreadPool` spre instanțele de `Worker`, care la rândul lor vor trimite sarcina către firul de execuție. Iată strategia:
 
-1. The `ThreadPool` will create a channel and hold on to the sender.
-2. Each `Worker` will hold on to the receiver.
-3. We’ll create a new `Job` struct that will hold the closures we want to send
-   down the channel.
-4. The `execute` method will send the job it wants to execute through the
-   sender.
-5. In its thread, the `Worker` will loop over its receiver and execute the
-   closures of any jobs it receives.
+1. `ThreadPool` va iniția un canal și va menține transmițătorul.
+2. Fiecare `Worker` va deține receptorul.
+3. Vom crea o structură de tip `Job` care va conține închiderile pe care intenționăm să le expediem prin canal.
+4. Metoda `execute` va livra sarcina preconizată pentru execuție printr-un transmițător.
+5. În cadrul firului său de execuție, `Worker` va parcurge receptorul implementând închiderile oricărui sarcini recepționate.
 
-Let’s start by creating a channel in `ThreadPool::new` and holding the sender
-in the `ThreadPool` instance, as shown in Listing 20-16. The `Job` struct
-doesn’t hold anything for now but will be the type of item we’re sending down
-the channel.
+Începem prin a constitui un canal în `ThreadPool::new` și reținem transmițătorul în instanța `ThreadPool`, așa cum este ilustrat în Listarea 20-16. Deocamdată, structura `Job` nu înmagazinează nimic, dar va constitui tipul elementelor ce vor fi transmise prin canal.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-16/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 20-16: Modifying `ThreadPool` to store the
-sender of a channel that transmits `Job` instances</span>
+<span class="caption">Listarea 20-16: Modificarea `ThreadPool` pentru stocarea transmițătorului unui canal care expediază instanțe de sarcini</span>
 
-In `ThreadPool::new`, we create our new channel and have the pool hold the
-sender. This will successfully compile.
+În `ThreadPool::new`, concepem noul nostru canal și alocăm pool-ului păstrarea transmițătorului, care va asigura o compilare de succes.
 
-Let’s try passing a receiver of the channel into each worker as the thread pool
-creates the channel. We know we want to use the receiver in the thread that the
-workers spawn, so we’ll reference the `receiver` parameter in the closure. The
-code in Listing 20-17 won’t quite compile yet.
-
-<span class="filename">Filename: src/lib.rs</span>
+Să transmitem un receptor al canalului fiecărui lucrător în momentul în care pool-ul de fire de execuție inițiază canalul. Ne propunem să folosim receptorul în firul pe care lucrătorii îl vor genera, așadar vom referi `receiver` în închidere. Codul prezentat în Listarea 20-17, însă, nu va compila încă.
 
 ```rust,ignore,does_not_compile
-{{#rustdoc_include ../listings/ch20-web-server/listing-20-17/src/lib.rs:here}}
+...
 ```
 
-<span class="caption">Listing 20-17: Passing the receiver to the workers</span>
+<span class="caption">Listarea 20-17: Transmiterea receptorului lucrătorilor</span>
 
-We’ve made some small and straightforward changes: we pass the receiver into
-`Worker::new`, and then we use it inside the closure.
+Am implementat câteva schimbări mici și simple: pasăm receptorul către `Worker::new`, după care îl utilizăm în cadrul închiderii.
 
-When we try to check this code, we get this error:
+La verificarea acestui cod, apare următoarea eroare:
 
 ```console
 {{#include ../listings/ch20-web-server/listing-20-17/output.txt}}
 ```
 
-The code is trying to pass `receiver` to multiple `Worker` instances. This
-won’t work, as you’ll recall from Chapter 16: the channel implementation that
-Rust provides is multiple *producer*, single *consumer*. This means we can’t
-just clone the consuming end of the channel to fix this code. We also don’t
-want to send a message multiple times to multiple consumers; we want one list
-of messages with multiple workers such that each message gets processed once.
+Se încearcă transmiterea `receiver` către multiple instanțe `Worker`. Aceasta nu va avea succes, deoarece, așa cum ne amintim din Capitolul 16, implementarea canalului în Rust este configurată pentru mai mulți *producători* și un singur *consumator*. Astfel, nu putem duplica simplu partea ce consumă din canal pentru a remedia codul. Nu intenționăm nici să expediem același mesaj la diverși consumatori; intenționăm să avem o listă unică de mesaje procesate de mai mulți lucrători, fiecare mesaj fiind procesat individual.
 
-Additionally, taking a job off the channel queue involves mutating the
-`receiver`, so the threads need a safe way to share and modify `receiver`;
-otherwise, we might get race conditions (as covered in Chapter 16).
+Mai mult, preluarea unei sarcini din coada canalului presupune modificarea lui `receiver`, motiv pentru care firele de execuție necesită o cale sigură de a împărți și de a modifica `receiver`. Altminteri, am putea întâlni situații de concurență, așa cum am discutat în Capitolul 16.
 
-Recall the thread-safe smart pointers discussed in Chapter 16: to share
-ownership across multiple threads and allow the threads to mutate the value, we
-need to use `Arc<Mutex<T>>`. The `Arc` type will let multiple workers own the
-receiver, and `Mutex` will ensure that only one worker gets a job from the
-receiver at a time. Listing 20-18 shows the changes we need to make.
-
-<span class="filename">Filename: src/lib.rs</span>
+Adusu-ți aminte de conceptul de pointeri inteligenți siguri de fir de execuție abordat în Capitolul 16: pentru a distribui posesiunea între mai multe fire și pentru a permite modificări ale valorii, trebuie să utilizăm `Arc<Mutex<T>>`. `Arc` le va permite lucrătorilor să posede receptorul împreună, iar `Mutex` va garanta că un singur lucrător va prelua o sarcină de la receptor la un moment dat. Listarea 20-18 prezintă ajustările necesare.
 
 ```rust,noplayground
-{{#rustdoc_include ../listings/ch20-web-server/listing-20-18/src/lib.rs:here}}
+...
 ```
 
-<span class="caption">Listing 20-18: Sharing the receiver among the workers
-using `Arc` and `Mutex`</span>
+<span class="caption">Listarea 20-18: Partajarea receptorului între lucrători, utilizând `Arc` și `Mutex`</span>
 
-In `ThreadPool::new`, we put the receiver in an `Arc` and a `Mutex`. For each
-new worker, we clone the `Arc` to bump the reference count so the workers can
-share ownership of the receiver.
+În funcția `ThreadPool::new`, așezăm receptorul într-un `Arc` și un `Mutex`. Pentru fiecare lucrător nou, replicăm `Arc` pentru a spori contorul de referințe, permițând lucrătorilor să dețină receptorul comun.
 
-With these changes, the code compiles! We’re getting there!
+Odată cu aceste modificări, codul se compilează cu succes! Suntem pe calea cea bună!
 
-#### Implementing the `execute` Method
+#### Implementarea metodei `execute`
 
-Let’s finally implement the `execute` method on `ThreadPool`. We’ll also change
-`Job` from a struct to a type alias for a trait object that holds the type of
-closure that `execute` receives. As discussed in the [“Creating Type Synonyms
-with Type Aliases”][creating-type-synonyms-with-type-aliases]<!-- ignore -->
-section of Chapter 19, type aliases allow us to make long types shorter for
-ease of use. Look at Listing 20-19.
+Acum să ne apucăm de implementarea metodei `execute` pentru `ThreadPool`. Totodată, transformăm `Job` dintr-o structură într-un alias de tip pentru un obiect-trăsătură care înglobează tipul închiderii pe care `execute` o primește. După cum am discutat în secțiunea [„Crearea sinonimelor de tip cu aliasuri de tip”][creating-type-synonyms-with-type-aliases]<!-- ignore --> din Capitolul 19, aliasurile de tip ne sunt de ajutor pentru a abrevia tipuri lungi și a le folosi mai ușor. Să privim Listarea 20-19.
 
 <span class="filename">Filename: src/lib.rs</span>
 
@@ -555,52 +317,27 @@ ease of use. Look at Listing 20-19.
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-19/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 20-19: Creating a `Job` type alias for a `Box`
-that holds each closure and then sending the job down the channel</span>
+<span class="caption">Listarea 20-19: Crearea unui alias de tip `Job` sub forma unui `Box` care încapsulează fiecare închidere și ulterior trimiterea sarcinii printr-un canal</span>
 
-After creating a new `Job` instance using the closure we get in `execute`, we
-send that job down the sending end of the channel. We’re calling `unwrap` on
-`send` for the case that sending fails. This might happen if, for example, we
-stop all our threads from executing, meaning the receiving end has stopped
-receiving new messages. At the moment, we can’t stop our threads from
-executing: our threads continue executing as long as the pool exists. The
-reason we use `unwrap` is that we know the failure case won’t happen, but the
-compiler doesn’t know that.
+După ce generăm o instanță nouă de `Job` utilizând închiderea primită în `execute`, expediem această sarcină către capătul transmițător al canalului. Se apelează `unwrap` pe `send` în cazul în care transmisia dă greș. Acest lucru s-ar putea întâmpla dacă, spre exemplu, am înceta execuția tuturor firelor noastre, caz în care capătul receptor nu mai primește mesaje noi. Momentan, firele noastre de execuție nu pot fi oprite: acestea vor rula atât timp cât pool-ul este activ. Folosim `unwrap` deoarece suntem siguri că situația de eșec nu se va produce, deși compilatorul nu poate avea această certitudine.
 
-But we’re not quite done yet! In the worker, our closure being passed to
-`thread::spawn` still only *references* the receiving end of the channel.
-Instead, we need the closure to loop forever, asking the receiving end of the
-channel for a job and running the job when it gets one. Let’s make the change
-shown in Listing 20-20 to `Worker::new`.
+Totuși, ne mai rămâne un pas de efectuat! În cadrul firului de execuție, închiderea trimisă către `thread::spawn` se limitează în continuare la utilizarea capătului receptor al canalului. Trebuie ca această închidere să intre într-o buclă care să solicite în mod repetat de la receptorul canalului o nouă sarcină și să o execute odată ce a fost primită. Implementăm schimbarea indicată în Listarea 20-20 în `Worker::new`.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-20/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 20-20: Receiving and executing the jobs in the
-worker’s thread</span>
+<span class="caption">Listarea 20-20: Recepția și executarea sarcinilor în firul de execuție</span>
 
-Here, we first call `lock` on the `receiver` to acquire the mutex, and then we
-call `unwrap` to panic on any errors. Acquiring a lock might fail if the mutex
-is in a *poisoned* state, which can happen if some other thread panicked while
-holding the lock rather than releasing the lock. In this situation, calling
-`unwrap` to have this thread panic is the correct action to take. Feel free to
-change this `unwrap` to an `expect` with an error message that is meaningful to
-you.
+Aici, inițial facem un apel la `lock` pe `receiver` pentru a obține mutex-ul, urmând să apelăm `unwrap` pentru a provoca panică în caz de erori. Procesul de a dobândi un lock poate eșua dacă mutex-ul se află într-o stare *otrăvită*, o situație ce poate apărea dacă un alt fir de execuție a intrat în panică în timp ce avea lock-ul, în loc să-l elibereze. În această circumstanță, utilizarea `unwrap` pentru ca acest fir să intre în panică este acțiunea corectă. Ai libertatea de a înlocui acest `unwrap` cu un `expect` care să conțină un mesaj de eroare care îți este familiar.
 
-If we get the lock on the mutex, we call `recv` to receive a `Job` from the
-channel. A final `unwrap` moves past any errors here as well, which might occur
-if the thread holding the sender has shut down, similar to how the `send`
-method returns `Err` if the receiver shuts down.
+Dacă reușim să obținem lock-ul pe mutex, apelăm `recv` pentru a recepționa un `Job` din canal. Un alt `unwrap` ne ajută să depășim orice alte erori aici, care ar putea surveni dacă firul care deține sender-ul s-a terminat, într-o manieră similară cu modul în care metoda `send` returnează `Err` dacă receiver-ul este oprit.
 
-The call to `recv` blocks, so if there is no job yet, the current thread will
-wait until a job becomes available. The `Mutex<T>` ensures that only one
-`Worker` thread at a time is trying to request a job.
+Apelul la `recv` blochează execuția, deci dacă nu există încă o sarcină, firul curent va aștepta până când una devine disponibil. `Mutex<T>` asigură că numai un fir `Worker` încearcă la un moment dat să solicite o sarcină. 
 
-Our thread pool is now in a working state! Give it a `cargo run` and make some
-requests:
+Acum, pool-ul nostru de firuri este operațional! Încearcă să-l rulezi cu `cargo run` și trimite câteva solicitări.
 
 <!-- manual-regeneration
 cd listings/ch20-web-server/listing-20-20
@@ -647,52 +384,27 @@ Worker 0 got a job; executing.
 Worker 2 got a job; executing.
 ```
 
-Success! We now have a thread pool that executes connections asynchronously.
-There are never more than four threads created, so our system won’t get
-overloaded if the server receives a lot of requests. If we make a request to
-*/sleep*, the server will be able to serve other requests by having another
-thread run them.
+Success! Acum avem un pool de fire de execuție care procesează conexiunile în mod asincron. Suntem limitați la crearea a maximum patru thread-uri, prin urmare sistemul nostru nu va fi copleșit dacă serverul va primi un număr mare de cereri. Dacă trimitem o cerere către
+*/sleep*, serverul va fi capabil să gestioneze alte cereri utilizând un alt thread pentru executarea lor.
 
-> Note: if you open */sleep* in multiple browser windows simultaneously, they
-> might load one at a time in 5 second intervals. Some web browsers execute
-> multiple instances of the same request sequentially for caching reasons. This
-> limitation is not caused by our web server.
+> Notă: dacă deschizi */sleep* în multiple ferestre de browser în același timp,
+> este posibil ca paginile să fie încărcate una după alta, în interval de 5
+> secunde fiecare. Unele browsere web procesează multiple instanțe ale
+> aceleiași cereri în mod secvențial din cauza strategiilor de caching. Această
+> limitare nu este un efect al serverului nostru web.
 
-After learning about the `while let` loop in Chapter 18, you might be wondering
-why we didn’t write the worker thread code as shown in Listing 20-21.
+După ce am explorat bucla `while let` în Capitolul 18, ai putea fi curios de ce nu am implementat codul firului `Worker` așa cum este prezentat în Listarea 20-21.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,ignore,not_desired_behavior
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-21/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 20-21: An alternative implementation of
-`Worker::new` using `while let`</span>
+<span class="caption">Listarea 20-21: O versiune alternativă de implementare a `Worker::new` utilizând `while let`</span>
 
-This code compiles and runs but doesn’t result in the desired threading
-behavior: a slow request will still cause other requests to wait to be
-processed. The reason is somewhat subtle: the `Mutex` struct has no public
-`unlock` method because the ownership of the lock is based on the lifetime of
-the `MutexGuard<T>` within the `LockResult<MutexGuard<T>>` that the `lock`
-method returns. At compile time, the borrow checker can then enforce the rule
-that a resource guarded by a `Mutex` cannot be accessed unless we hold the
-lock. However, this implementation can also result in the lock being held
-longer than intended if we aren’t mindful of the lifetime of the
-`MutexGuard<T>`.
+Codul se compilează și funcționează, dar nuduce la comportamentul dorit al thread-urilor: o cerere lentă va încetini procesarea altor cereri. Explicația este destul de subtilă: structura `Mutex` nu oferă o metodă `unlock` accesibilă publicului deoarece dreptul asupra blocării se stabilește prin durata de viață a `MutexGuard<T>` în rezultatul `LockResult<MutexGuard<T>>` returnat de metoda `lock`. Acest fapt permite verificatorului de împrumut să impună reguli la compilare care asigură că o resursă protejată de un `Mutex` nu poate fi accesată decât dacă deținem blocarea. Totodată, această implementare poate conduce la menținerea blocării pentru un timp mai îndelungat decât este necesar dacă nu suntem atenți la durata de viață a `MutexGuard<T>`.
 
-The code in Listing 20-20 that uses `let job =
-receiver.lock().unwrap().recv().unwrap();` works because with `let`, any
-temporary values used in the expression on the right hand side of the equals
-sign are immediately dropped when the `let` statement ends. However, `while
-let` (and `if let` and `match`) does not drop temporary values until the end of
-the associated block. In Listing 20-21, the lock remains held for the duration
-of the call to `job()`, meaning other workers cannot receive jobs.
+În Listarea 20-20, codul care conține `let job = receiver.lock().unwrap().recv().unwrap();` se execută corect datorită faptului că, prin utilizarea `let`, valorile temporare implicate în expresia de la partea dreaptă a semnului egal sunt imediat eliberate odată ce instrucțiunea `let` se finalizează. În contrast, `while let` (la fel ca `if let` și `match`) nu eliberează valorile temporare decât după terminarea blocului de cod corespunzător. Conform Listării 20-21, lock-ul este păstrat activ pe întreaga durată a executării lui `job()`. Acesta împiedică ceilalți lucrători să preia joburi noi.
 
-[creating-type-synonyms-with-type-aliases]:
-ch19-04-advanced-types.html#creating-type-synonyms-with-type-aliases
-[integer-types]: ch03-02-data-types.html#integer-types
-[fn-traits]:
-ch13-01-closures.html#moving-captured-values-out-of-the-closure-and-the-fn-traits
-[builder]: ../std/thread/struct.Builder.html
-[builder-spawn]: ../std/thread/struct.Builder.html#method.spawn
+[creating-type-synonyms-with-type-aliases]: ch19-04-advanced-types.html#creating-type-synonyms-with-type-aliases [integer-types]: ch03-02-data-types.html#integer-types [fn-traits]: ch13-01-closures.html#moving-captured-values-out-of-the-closure-and-the-fn-traits [builder]: ../std/thread/struct.Builder.html [builder-spawn]: ../std/thread/struct.Builder.html#method.spawn

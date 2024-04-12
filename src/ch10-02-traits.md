@@ -1,219 +1,123 @@
-## Traits: Defining Shared Behavior
+## Traits: definirea comportamentului partajat
 
-A *trait* defines functionality a particular type has and can share with other
-types. We can use traits to define shared behavior in an abstract way. We can
-use *trait bounds* to specify that a generic type can be any type that has
-certain behavior.
+O *trăsătură* (trait) definește funcționalitățile pe care un tip le posedă și care pot fi partajate cu alte tipuri. Noi utilizăm trăsăturile pentru a stabili în mod abstract comportamentul partajat. Totodată, prin *limitele trăsăturii* specificăm că un tip generic poate fi orice tip care manifestă anumite comportamente.
 
-> Note: Traits are similar to a feature often called *interfaces* in other
-> languages, although with some differences.
+> Notă: Trăsăturile sunt similare cu o funcționalitate frecvent întâlnită în
+> alte limbaje de programare, des numită *interfețe*, deși există diferențe
+> notabile.
 
-### Defining a Trait
+### Definirea unei trăsături
 
-A type’s behavior consists of the methods we can call on that type. Different
-types share the same behavior if we can call the same methods on all of those
-types. Trait definitions are a way to group method signatures together to
-define a set of behaviors necessary to accomplish some purpose.
+Comportamentul unui tip este caracterizat de metodele care pot fi invocate pe acel tip. Diverse tipuri au un comportament comun dacă este posibil să apelăm aceleași metode pe fiecare dintre ele. Definițiile trăsăturilor reprezintă o metodă de a grupa semnături de metode pentru a contura un set de comportamente necesare pentru îndeplinirea unui obiectiv anume.
 
-For example, let’s say we have multiple structs that hold various kinds and
-amounts of text: a `NewsArticle` struct that holds a news story filed in a
-particular location and a `Tweet` that can have at most 280 characters along
-with metadata that indicates whether it was a new tweet, a retweet, or a reply
-to another tweet.
+Să presupunem, de exemplu, că dispunem de structuri multiple care stochează diferite cantități și tipuri de text: o structură `NewsArticle` care conține o știre legată de o locație specifică și un `Tweet` care poate avea până la 280 de caractere, împreună cu metadate care precizează dacă acesta este un tweet nou, un retweet sau un răspuns la un alt tweet.
 
-We want to make a media aggregator library crate named `aggregator` that can
-display summaries of data that might be stored in a `NewsArticle` or `Tweet`
-instance. To do this, we need a summary from each type, and we’ll request
-that summary by calling a `summarize` method on an instance. Listing 10-12
-shows the definition of a public `Summary` trait that expresses this behavior.
+Ne propunem să construim o crate de bibliotecă de agregare ale articolelor media numită `aggregator`, capabilă să prezinte sumare ale datelor care pot fi conținute de instanțe ale `NewsArticle` sau `Tweet`. Pentru acest lucru, avem nevoie de un rezumat din partea fiecărui tip, pe care îl solicităm prin apelarea metodei `summarize` pe o instanță respectivă. Listarea 10-12 ilustrează definiția unei trăsături publice `Summary` ce exprimă acest comportament.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-12/src/lib.rs}}
 ```
 
-<span class="caption">Listing 10-12: A `Summary` trait that consists of the
-behavior provided by a `summarize` method</span>
+<span class="caption">Listarea 10-12: O trăsătură `Summary` ce constă din comportamentul oferit de metoda `summarize`</span>
 
-Here, we declare a trait using the `trait` keyword and then the trait’s name,
-which is `Summary` in this case. We’ve also declared the trait as `pub` so that
-crates depending on this crate can make use of this trait too, as we’ll see in
-a few examples. Inside the curly brackets, we declare the method signatures
-that describe the behaviors of the types that implement this trait, which in
-this case is `fn summarize(&self) -> String`.
+În acest caz, introducem o trăsătură utilizând cuvântul cheie `trait` urmat de numele trăsăturii, care este `Summary`. Am declarat trăsătura ca fiind publică (`pub`), astfel încât alte crate-uri care depind de acesta să aibă posibilitatea de a o folosi, așa cum vom observa în unele exemple ulterioare. În spațiul dintre acolade, sunt prezentate semnăturile metodelor care definesc comportamentele asumate de tipurile care implementează această trăsătură; în cazul de față fiind `fn summarize(&self) -> String`.
 
-After the method signature, instead of providing an implementation within curly
-brackets, we use a semicolon. Each type implementing this trait must provide
-its own custom behavior for the body of the method. The compiler will enforce
-that any type that has the `Summary` trait will have the method `summarize`
-defined with this signature exactly.
+În loc să furnizăm o implementare a metodei între acolade, punem un punct și virgulă după semnătură. Fiecărui tip care realizează această trăsătură îi revine sarcina de a implementa propriul comportament pentru corpul metodei. Compilatorul va asigura că orice tip cu trăsătura `Summary` va avea definită metoda `summarize` cu anume această semnătură exactă.
 
-A trait can have multiple methods in its body: the method signatures are listed
-one per line and each line ends in a semicolon.
+O trăsătură poate include în corpul său mai multe metode: semnăturile acestora sunt enumerate independent, pe rânduri separate, iar fiecare rând se încheie cu un punct și virgulă.
 
-### Implementing a Trait on a Type
+### Implementarea unei trăsături pentru un tip
 
-Now that we’ve defined the desired signatures of the `Summary` trait’s methods,
-we can implement it on the types in our media aggregator. Listing 10-13 shows
-an implementation of the `Summary` trait on the `NewsArticle` struct that uses
-the headline, the author, and the location to create the return value of
-`summarize`. For the `Tweet` struct, we define `summarize` as the username
-followed by the entire text of the tweet, assuming that tweet content is
-already limited to 280 characters.
+Noi am definit semnăturile dorite ale metodelor trăsăturii `Summary` și acum e timpul să le implementăm pentru tipurile din agregatorul nostru de media. Listarea 10-13 ilustrează implementarea trăsăturii `Summary` pentru structura `NewsArticle`, utilizând titlul, autorul și locația pentru a crea valoarea de retur a metodei `summarize`. În cazul structurii `Tweet`, metoda `summarize` este definită ca numele de utilizator urmat de întregul text al tweet-ului, având în vedere că conținutul tweet-ului este limitat la 280 de caractere.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-13/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 10-13: Implementing the `Summary` trait on the
-`NewsArticle` and `Tweet` types</span>
+<span class="caption">Listarea 10-13: Implementarea trăsăturii `Summary` pentru tipurile `NewsArticle` și `Tweet`</span>
 
-Implementing a trait on a type is similar to implementing regular methods. The
-difference is that after `impl`, we put the trait name we want to implement,
-then use the `for` keyword, and then specify the name of the type we want to
-implement the trait for. Within the `impl` block, we put the method signatures
-that the trait definition has defined. Instead of adding a semicolon after each
-signature, we use curly brackets and fill in the method body with the specific
-behavior that we want the methods of the trait to have for the particular type.
+Implementarea unei trăsături pentru un tip este similară cu implementarea metodelor obișnuite. Diferența constă în faptul că, după `impl`, specificăm numele trăsăturii pe care dorim să o realizăm, folosim cuvântul cheie `for`, și apoi numele tipului pentru care implementăm trăsătura. În blocul `impl`, includem semnăturile metodelor definite de trăsătura respectivă. În loc să finalizăm fiecare semnătură cu un punct și virgulă, adăugăm acolade și detaliem corpul fiecărei metode pentru a defini comportamentul specific pe care îl dorim de la metodele trăsăturii pentru tipul respectiv.
 
-Now that the library has implemented the `Summary` trait on `NewsArticle` and
-`Tweet`, users of the crate can call the trait methods on instances of
-`NewsArticle` and `Tweet` in the same way we call regular methods. The only
-difference is that the user must bring the trait into scope as well as the
-types. Here’s an example of how a binary crate could use our `aggregator`
-library crate:
+Odată ce biblioteca noastră a implementat trăsătura `Summary` pentru `NewsArticle` și `Tweet`, utilizatori crate-ului pot folosi metodele trăsăturii pe instanțe de `NewsArticle` și `Tweet`, similar cu modul în care sunt apelate metodele obișnuite. Singura diferență este că utilizatorii trebuie să includă atât trăsătura cât și tipurile în domeniul de vizibilitate. Aici este un exemplu de cum ar putea fi utilizată biblioteca noastră `aggregator` în cadrul unui crate binar:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-01-calling-trait-method/src/main.rs}}
 ```
 
-This code prints `1 new tweet: horse_ebooks: of course, as you probably already
-know, people`.
+Acest exemplu de cod va afișa `1 new tweet: horse_ebooks: of course, as you probably already know, people`.
 
-Other crates that depend on the `aggregator` crate can also bring the `Summary`
-trait into scope to implement `Summary` on their own types. One restriction to
-note is that we can implement a trait on a type only if at least one of the
-trait or the type is local to our crate. For example, we can implement standard
-library traits like `Display` on a custom type like `Tweet` as part of our
-`aggregator` crate functionality, because the type `Tweet` is local to our
-`aggregator` crate. We can also implement `Summary` on `Vec<T>` in our
-`aggregator` crate, because the trait `Summary` is local to our `aggregator`
-crate.
+Alte crate-uri care utilizează crate-ul `aggregator` pot de asemenea să își aducă trăsătura `Summary` în domeniul de vizibilitate pentru a o implementa pe tipurile proprii. O restricție de reținut este că putem implementa o trăsătură pe un tip doar în cazul în care cel puțin unul dintre elemente - trăsătura sau tipul - este definit local în propriul nostru crate. De exemplu, putem implementa trăsături standard ale bibliotecii, cum ar fi `Display`, pentru un tip nativ crate-ului nostru ca `Tweet`, ca parte a funcționalității `aggregator`. De asemenea, putem implementa `Summary` pentru `Vec<T>` în cadrul `aggregator`, din moment ce trăsătura `Summary` este locală crate-ului nostru.
 
-But we can’t implement external traits on external types. For example, we can’t
-implement the `Display` trait on `Vec<T>` within our `aggregator` crate,
-because `Display` and `Vec<T>` are both defined in the standard library and
-aren’t local to our `aggregator` crate. This restriction is part of a property
-called *coherence*, and more specifically the *orphan rule*, so named because
-the parent type is not present. This rule ensures that other people’s code
-can’t break your code and vice versa. Without the rule, two crates could
-implement the same trait for the same type, and Rust wouldn’t know which
-implementation to use.
+Cu toate acestea, nu avem posibilitatea să implementăm trăsături externe pentru tipuri externe. Spre exemplu, nu putem să realizăm implementarea trăsăturii `Display` pentru `Vec<T>` în cadrul crate-ului `aggregator`, pentru că atât `Display` cât și `Vec<T>` sunt parte din biblioteca standard și nu sunt locale lui `aggregator`. Această limitare este o parte din principiul de *coerență*, mai precis din *regula orfanilor*. Această regulă asigură că codul altor persoane nu poate interfera cu al tău și în același timp protejează codul tău de a fi afectat de alții. Fără această regulă, ar exista posibilitatea ca două crate-uri diferite să implementeze aceeași trăsătură pentru același tip, ceea ce ar crea confuzie pentru Rust cu privire la care implementare ar trebui utilizată.
 
-### Default Implementations
+### Implementări implicite
 
-Sometimes it’s useful to have default behavior for some or all of the methods
-in a trait instead of requiring implementations for all methods on every type.
-Then, as we implement the trait on a particular type, we can keep or override
-each method’s default behavior.
+Câteodată e util să avem un comportament implicit pentru unele sau pentru toate metodele unei trăsături în loc să necesităm implementări pentru toate metodele pe fiecare tip. Prin urmare, atunci când implementăm trăsătura pe un anumit tip, putem menține sau suprascrie comportamentul implicit al fiecărei metode.
 
-In Listing 10-14 we specify a default string for the `summarize` method of the
-`Summary` trait instead of only defining the method signature, as we did in
-Listing 10-12.
+În Listarea 10-14, am specificat un string implicit pentru metoda `summarize` a trăsăturii `Summary` în loc doar să definim semnătura metodei, cum am făcut în Listarea 10-12.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-14/src/lib.rs:here}}
 ```
 
-<span class="caption">Listing 10-14: Defining a `Summary` trait with a default
-implementation of the `summarize` method</span>
+<span class="caption">Listarea 10-14: Definirea trăsăturii `Summary` cu o implementare implicită a metodei `summarize`</span>
 
-To use a default implementation to summarize instances of `NewsArticle`, we
-specify an empty `impl` block with `impl Summary for NewsArticle {}`.
+Pentru a folosi o implementare implicită în rezumarea instanțelor de `NewsArticle`, specificăm un bloc `impl` gol cu `impl Summary for NewsArticle {}`.
 
-Even though we’re no longer defining the `summarize` method on `NewsArticle`
-directly, we’ve provided a default implementation and specified that
-`NewsArticle` implements the `Summary` trait. As a result, we can still call
-the `summarize` method on an instance of `NewsArticle`, like this:
+Deși nu mai definim metoda `summarize` în mod direct pe `NewsArticle`, am furnizat o implementare implicită și am specificat că `NewsArticle` implementează trăsătura `Summary`. Drept rezultat, putem totuși apela metoda `summarize` pe o instanță de `NewsArticle`, astfel:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-02-calling-default-impl/src/main.rs:here}}
 ```
 
-This code prints `New article available! (Read more...)`.
+Acest cod afișează `New article available! (Read more...)`.
 
-Creating a default implementation doesn’t require us to change anything about
-the implementation of `Summary` on `Tweet` in Listing 10-13. The reason is that
-the syntax for overriding a default implementation is the same as the syntax
-for implementing a trait method that doesn’t have a default implementation.
+Crearea unei implementări implicite nu ne obligă să modificăm nimic în ceea ce privește implementarea `Summary` pentru `Tweet`, conform Listării 10-13. Acest lucru este datorat faptului că sintaxa pentru a suprascrie o implementare implicită este identică cu sintaxa pentru implementarea unei metode de trăsătură care nu are nicio implementare implicită.
 
-Default implementations can call other methods in the same trait, even if those
-other methods don’t have a default implementation. In this way, a trait can
-provide a lot of useful functionality and only require implementors to specify
-a small part of it. For example, we could define the `Summary` trait to have a
-`summarize_author` method whose implementation is required, and then define a
-`summarize` method that has a default implementation that calls the
-`summarize_author` method:
+Implementările implicite pot apela alte metode din aceeași trăsătură, chiar dacă aceste alte metode nu dispun de implementări implicite. Astfel, o trăsătură poate oferi multe funcționalități utile și poate cere implementatorilor să definească doar o mică parte din acelea. De exemplu, am putea defini trăsătura `Summary` să includă o metodă `summarize_author` ce necesită implementare, și apoi să definim o metodă `summarize` care are o implementare implicită ce invocă `summarize_author`:
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-03-default-impl-calls-other-methods/src/lib.rs:here}}
 ```
 
-To use this version of `Summary`, we only need to define `summarize_author`
-when we implement the trait on a type:
+Când folosim această versiune de `Summary`, trebuie să definim `summarize_author` doar când implementăm trăsătura pentru un tip:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-03-default-impl-calls-other-methods/src/lib.rs:impl}}
 ```
 
-After we define `summarize_author`, we can call `summarize` on instances of the
-`Tweet` struct, and the default implementation of `summarize` will call the
-definition of `summarize_author` that we’ve provided. Because we’ve implemented
-`summarize_author`, the `Summary` trait has given us the behavior of the
-`summarize` method without requiring us to write any more code.
+După ce definim `summarize_author`, putem invoca `summarize` pe instanțele structurii `Tweet`, iar implementarea implicită a `summarize` va utiliza definiția de `summarize_author` pe care am furnizat-o. Întrucât am implementat `summarize_author`, trăsătura `Summary` ne oferă funcționalitatea metodei `summarize` fără să fie nevoie să scriem cod suplimentar.
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-03-default-impl-calls-other-methods/src/main.rs:here}}
 ```
 
-This code prints `1 new tweet: (Read more from @horse_ebooks...)`.
+Acest cod afișează `1 new tweet: (Read more from @horse_ebooks...)`.
 
-Note that it isn’t possible to call the default implementation from an
-overriding implementation of that same method.
+Notă: nu este posibil să apelăm implementarea implicită din cadrul unei implementări care o suprascrie pe aceeași metodă.
 
-### Traits as Parameters
+### Utilizarea trăsăturilor drept parametri
 
-Now that you know how to define and implement traits, we can explore how to use
-traits to define functions that accept many different types. We'll use the
-`Summary` trait we implemented on the `NewsArticle` and `Tweet` types in
-Listing 10-13 to define a `notify` function that calls the `summarize` method
-on its `item` parameter, which is of some type that implements the `Summary`
-trait. To do this, we use the `impl Trait` syntax, like this:
+Înarmat cu abilitatea de a defini și implementa trăsături, ești acum pregătit să descoperi cum să folosești trăsături pentru a concepe funcții care să accepte o varietate de tipuri diferite. Vom apela la trăsătura `Summary`, implementată pentru `NewsArticle` și `Tweet` în Listarea 10-13, pentru a defini funcția `notify` care invocă metoda `summarize` pe parametrul său `item`. Acest `item` trebuie să fie de un tip care implementează trăsătura `Summary`. Procedăm astfel folosind sintaxa `impl Trait`, în modul următor:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-04-traits-as-parameters/src/lib.rs:here}}
 ```
 
-Instead of a concrete type for the `item` parameter, we specify the `impl`
-keyword and the trait name. This parameter accepts any type that implements the
-specified trait. In the body of `notify`, we can call any methods on `item`
-that come from the `Summary` trait, such as `summarize`. We can call `notify`
-and pass in any instance of `NewsArticle` or `Tweet`. Code that calls the
-function with any other type, such as a `String` or an `i32`, won’t compile
-because those types don’t implement `Summary`.
+În loc de un tip explicit pentru parametrul `item`, specificăm cuvântul cheie `impl` și numele trăsăturii. Acest parametru va accepta orice tip care implementează trăsătura indicată. În cadrul funcției `notify`, avem posibilitatea să apelăm orice metode asociate cu `item` ce derivă din trăsătura `Summary`, precum `summarize`. Funcția `notify` poate fi apelată utilizând orice exemplar de `NewsArticle` sau `Tweet`. Încercarea de a folosi funcția cu tipuri care nu implementează `Summary`, cum ar fi `String` sau `i32`, nu va fi compilată, deoarece aceste tipuri nu îndeplinesc cerința trăsăturii `Summary`.
 
 <!-- Old headings. Do not remove or links may break. -->
 <a id="fixing-the-largest-function-with-trait-bounds"></a>
 
-#### Trait Bound Syntax
+#### Sintaxa delimitării de trăsături
 
-The `impl Trait` syntax works for straightforward cases but is actually syntax
-sugar for a longer form known as a *trait bound*; it looks like this:
+Sintaxa `impl Trait` este practică în situații simple, dar de fapt reprezintă o formă abreviată pentru o formă mai extinsă, cunoscută ca *delimitare de trăsături* (trait bound); aceasta se prezintă astfel:
 
 ```rust,ignore
 pub fn notify<T: Summary>(item: &T) {
@@ -221,138 +125,87 @@ pub fn notify<T: Summary>(item: &T) {
 }
 ```
 
-This longer form is equivalent to the example in the previous section but is
-more verbose. We place trait bounds with the declaration of the generic type
-parameter after a colon and inside angle brackets.
+Această variantă completă este identică cu exemplul din secțiunea anterioară, dar mai explicită. Plasăm delimitările de trăsături împreună cu declararea parametrului de tip generic după două puncte (:) și în interiorul parantezelor unghiulare.
 
-The `impl Trait` syntax is convenient and makes for more concise code in simple
-cases, while the fuller trait bound syntax can express more complexity in other
-cases. For example, we can have two parameters that implement `Summary`. Doing
-so with the `impl Trait` syntax looks like this:
+Sintaxa `impl Trait` oferă concizie în cazurile simple, în timp ce sintaxa extinsă a delimitărilor de trăsături poate să exprime mai multă complexitate în alte situații. De pildă, putem avea doi parametri ce implementează `Summary`. Aplicarea sintaxei `impl Trait` apare în felul următor:
 
 ```rust,ignore
 pub fn notify(item1: &impl Summary, item2: &impl Summary) {
 ```
 
-Using `impl Trait` is appropriate if we want this function to allow `item1` and
-`item2` to have different types (as long as both types implement `Summary`). If
-we want to force both parameters to have the same type, however, we must use a
-trait bound, like this:
+Utilizarea `impl Trait` este adecvată dacă dorim ca funcția să permită lui `item1` și `item2` să fie de tipuri diferite (atât timp cât ambele tipuri implementează `Summary`). Totuși, dacă vrem să constrângem ambii parametri să fie de același tip, atunci trebuie să apelăm la delimitarea de trăsături, ca în exemplul următor:
 
 ```rust,ignore
 pub fn notify<T: Summary>(item1: &T, item2: &T) {
 ```
 
-The generic type `T` specified as the type of the `item1` and `item2`
-parameters constrains the function such that the concrete type of the value
-passed as an argument for `item1` and `item2` must be the same.
+Tipul generic `T`, specificat ca tip pentru parametrii `item1` și `item2`, restricționează funcția astfel încât tipul concret al valorilor transmise ca argumente pentru `item1` și `item2` trebuie să fie același.
 
-#### Specifying Multiple Trait Bounds with the `+` Syntax
+#### Indicarea mai multor delimitări de trăsătură folosind sintaxa `+`
 
-We can also specify more than one trait bound. Say we wanted `notify` to use
-display formatting as well as `summarize` on `item`: we specify in the `notify`
-definition that `item` must implement both `Display` and `Summary`. We can do
-so using the `+` syntax:
+Este posibil să specificăm concurent mai multe delimitări de trăsătă. De exemplu, dacă dorim ca `notify` să utilizeze formatare prin afișare, precum și metoda `summarize` pentru `item`, trebuie să notăm în definiția `notify` că `item` trebuie să implementeze trăsăturile `Display` și `Summary`. Putem realiza acest lucru utilizând sintaxa `+`:
 
 ```rust,ignore
 pub fn notify(item: &(impl Summary + Display)) {
 ```
 
-The `+` syntax is also valid with trait bounds on generic types:
+Această sintaxă `+` poate fi folosită și în cazul limitelor impuse pe trăsături pentru tipuri generice:
 
 ```rust,ignore
 pub fn notify<T: Summary + Display>(item: &T) {
 ```
 
-With the two trait bounds specified, the body of `notify` can call `summarize`
-and use `{}` to format `item`.
+Odată ce ambele trăsături sunt specificate, în cadrul lui `notify` putem invoca `summarize` și folosi `{}` pentru a formata `item`, ceea ce este posibil datorită implementării trăsăturii `Display`.
 
-#### Clearer Trait Bounds with `where` Clauses
+#### Delimitări de trăsătură mai clare cu clauza `where`
 
-Using too many trait bounds has its downsides. Each generic has its own trait
-bounds, so functions with multiple generic type parameters can contain lots of
-trait bound information between the function’s name and its parameter list,
-making the function signature hard to read. For this reason, Rust has alternate
-syntax for specifying trait bounds inside a `where` clause after the function
-signature. So instead of writing this:
+Abundența de delimitări de trăsătură pe generici poate avea dezavantaje. Fiecare tip generic vine cu propriile sale restricții de trăsătură, astfel funcțiile cu mai mulți parametri generici pot fi supraîncărcate cu informații privind trăsăturile între numele funcției și lista parametrilor, complicând citirea semnăturii funcției. Pentru a simplifica această problemă, Rust oferă o sintaxă alternativă prin utilizarea unei clauze `where` care se plasează după semnătura funcției. Astfel, în loc de a scrie în modul următor:
 
 ```rust,ignore
 fn some_function<T: Display + Clone, U: Clone + Debug>(t: &T, u: &U) -> i32 {
 ```
 
-we can use a `where` clause, like this:
+putem opta pentru utilizarea unei clauze `where`, cum ar fi:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-07-where-clause/src/lib.rs:here}}
 ```
 
-This function’s signature is less cluttered: the function name, parameter list,
-and return type are close together, similar to a function without lots of trait
-bounds.
+Semnătura funcției este astfel mai clară: numele funcției, lista parametrilor și tipul returnat sunt regrupate în proximitate, similar unei funcții simple care nu include numeroase restricții de trăsătură.
 
-### Returning Types that Implement Traits
+### Returnarea tipurilor ce implementează trăsături
 
-We can also use the `impl Trait` syntax in the return position to return a
-value of some type that implements a trait, as shown here:
+Este posibil de asemenea să utilizăm sintaxa `impl Trait` în poziția de returnare pentru a returna o valoare de un tip care implementează o trăsătură, așa cum este arătat în exemplul de mai jos:
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-05-returning-impl-trait/src/lib.rs:here}}
 ```
 
-By using `impl Summary` for the return type, we specify that the
-`returns_summarizable` function returns some type that implements the `Summary`
-trait without naming the concrete type. In this case, `returns_summarizable`
-returns a `Tweet`, but the code calling this function doesn’t need to know that.
+Prin aplicarea `impl Summary` ca tip de retur, indicăm că funcția `returns_summarizable` va întoarce un tip ce implementează trăsătura `Summary`, fără a specifica tipul concret. În acest caz specific, `returns_summarizable` returnează un `Tweet`, dar codul care cheamă această funcție nu are nevoie să cunoască acest amănunt.
 
-The ability to specify a return type only by the trait it implements is
-especially useful in the context of closures and iterators, which we cover in
-Chapter 13. Closures and iterators create types that only the compiler knows or
-types that are very long to specify. The `impl Trait` syntax lets you concisely
-specify that a function returns some type that implements the `Iterator` trait
-without needing to write out a very long type.
+Posibilitatea de a specifica un tip de retur exclusiv prin trăsătura implementată se dovedește a fi extrem de valoroasă în contextul închiderilor (closure) și iteratorilor, teme ce vor fi explorate în Capitolul 13. Aceste închideri și iteratori produc tipuri cunoscute doar de compilator sau tipuri care ar fi oneros de specificat complet. Sintaxa `impl Trait` facilitează specificarea succintă a faptului că o funcție returnează un tip care implementează trăsătura `Iterator`, eliminând necesitatea de a descrie un tip extensiv.
 
-However, you can only use `impl Trait` if you’re returning a single type. For
-example, this code that returns either a `NewsArticle` or a `Tweet` with the
-return type specified as `impl Summary` wouldn’t work:
+Totuși, `impl Trait` poate fi folosit doar atunci când se returnează un tip unic. Spre exemplu, codul care face returnarea unui `NewsArticle` sau un `Tweet`, având tipul de retur definit ca `impl Summary`, nu va funcționa:
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-06-impl-trait-returns-one-type/src/lib.rs:here}}
 ```
 
-Returning either a `NewsArticle` or a `Tweet` isn’t allowed due to restrictions
-around how the `impl Trait` syntax is implemented in the compiler. We’ll cover
-how to write a function with this behavior in the [“Using Trait Objects That
-Allow for Values of Different
-Types”][using-trait-objects-that-allow-for-values-of-different-types]<!--
-ignore --> section of Chapter 17.
+Este interzisă returnarea fie a unui `NewsArticle`, fie a unui `Tweet`, pe fondul restricțiilor asociate modului de implementare a sintaxei `impl Trait` în compilator. Metodologia de scriere a unei funcții cu acest comportament va fi detaliată în secțiunea [„Utilizând obiecte de trăsătură ce permit valori pentru tipuri diverse”][using-trait-objects-that-allow-for-values-of-different-types]<!-- ignore --> din Capitolul 17.
 
-### Using Trait Bounds to Conditionally Implement Methods
+### Folosirea delimitărilor de trăsături pentru implementarea condiționată a metodelor
 
-By using a trait bound with an `impl` block that uses generic type parameters,
-we can implement methods conditionally for types that implement the specified
-traits. For example, the type `Pair<T>` in Listing 10-15 always implements the
-`new` function to return a new instance of `Pair<T>` (recall from the
-[“Defining Methods”][methods]<!-- ignore --> section of Chapter 5 that `Self`
-is a type alias for the type of the `impl` block, which in this case is
-`Pair<T>`). But in the next `impl` block, `Pair<T>` only implements the
-`cmp_display` method if its inner type `T` implements the `PartialOrd` trait
-that enables comparison *and* the `Display` trait that enables printing.
+Prin utilizarea unei delimitări de trăsături într-un bloc `impl` ce include parametri de tip generic, noi putem să implementăm metode în mod condiționat pentru tipurile care implementează trăsăturile specificate. Spre exemplu, tipul `Pair<T>` din Listarea 10-15 implementează constant funcția `new` pentru a crea o nouă instanță de `Pair<T>` (reîmprospătăm aici din secțiunea [“Definirea Metodelor”][methods]<!-- ignore --> a Capitolului 5 că `Self` este un sinonim pentru tipul blocului `impl`, care în acest caz este `Pair<T>`). Totuși, în următorul bloc `impl`, `Pair<T>` implementează metoda `cmp_display` doar dacă tipul său intern `T` aderă atât la trăsătura `PartialOrd` ce face posibilă compararea cât *și* la trăsătura `Display` ce permite afișarea.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fișierului: src/lib.rs</span>
 
 ```rust,noplayground
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-15/src/lib.rs}}
 ```
 
-<span class="caption">Listing 10-15: Conditionally implementing methods on a
-generic type depending on trait bounds</span>
+<span class="caption">Listarea 10-15: Implementarea condiționată a metodelor pe un tip generic, în dependență de delimitările de trăsătură</span>
 
-We can also conditionally implement a trait for any type that implements
-another trait. Implementations of a trait on any type that satisfies the trait
-bounds are called *blanket implementations* and are extensively used in the
-Rust standard library. For example, the standard library implements the
-`ToString` trait on any type that implements the `Display` trait. The `impl`
-block in the standard library looks similar to this code:
+De asemenea, putem implementa condiționat o trăsătură pentru orice tip care implementează o altă trăsătură. Aceste implementări, realizate pentru orice tip care îndeplinește delimitările de trăsătură, poartă numele de *implementări generalizate* (blanket implementations) și sunt utilizate extensiv în biblioteca standard Rust. De exemplu, biblioteca standard oferă implementarea trăsăturii `ToString` pentru orice tip care implementează trăsătura `Display`. Blocul `impl` din biblioteca standard este similar cu acest fragment de cod:
 
 ```rust,ignore
 impl<T: Display> ToString for T {
@@ -360,29 +213,15 @@ impl<T: Display> ToString for T {
 }
 ```
 
-Because the standard library has this blanket implementation, we can call the
-`to_string` method defined by the `ToString` trait on any type that implements
-the `Display` trait. For example, we can turn integers into their corresponding
-`String` values like this because integers implement `Display`:
+Datorită acestei implementări generalizate prezente în biblioteca standard, noi putem invoca metoda `to_string`, definită de trăsătura `ToString`, pe orice tip ce implementează trăsătura `Display`. Ca urmare, avem posibilitatea de a transforma numere întregi în echivalentele lor `String` pentru că întregii implementează `Display`:
 
 ```rust
 let s = 3.to_string();
 ```
 
-Blanket implementations appear in the documentation for the trait in the
-“Implementors” section.
+Implementările generalizate pot fi găsite în documentația referitoare la trăsătura respectivă, în secțiunea “Implementors”.
 
-Traits and trait bounds let us write code that uses generic type parameters to
-reduce duplication but also specify to the compiler that we want the generic
-type to have particular behavior. The compiler can then use the trait bound
-information to check that all the concrete types used with our code provide the
-correct behavior. In dynamically typed languages, we would get an error at
-runtime if we called a method on a type which didn’t define the method. But Rust
-moves these errors to compile time so we’re forced to fix the problems before
-our code is even able to run. Additionally, we don’t have to write code that
-checks for behavior at runtime because we’ve already checked at compile time.
-Doing so improves performance without having to give up the flexibility of
-generics.
+Trăsăturile și delimitările de trăsături ne permit să concepem cod care utilizează parametrii de tip generic pentru a reduce dublarea, dar ne și permit să indicăm compilatorului că dorim ca tipul generic să prezinte un anumit comportament. Compilatorul, folosind informațiile delimitărilor de trăsături, poate verifica dacă toate tipurile concrete folosite în codul nostru corespund comportamentului cerut. În limbajele de programare cu tipizare dinamică, erorile legate de apeluri ale unor metode nedefinite pe un tip apar la runtime, pe când Rust transferă aceste erori la timpul de compilare, obligându-ne să rezolvăm problemele înainte ca programul nostru să fie capabil să ruleze. Mai mult, evităm necesitatea de a scrie cod care să verifice comportamentul la runtime deoarece verificările au loc în timpul compilării. Acest proces îmbunătățește performanța fără a renunța la flexibilitatea oferită de utilizarea genericilor.
 
 [using-trait-objects-that-allow-for-values-of-different-types]: ch17-02-trait-objects.html#using-trait-objects-that-allow-for-values-of-different-types
 [methods]: ch05-03-method-syntax.html#defining-methods

@@ -1,619 +1,344 @@
-## Validating References with Lifetimes
+## Validarea referințelor cu ajutorul lifetimes
 
-Lifetimes are another kind of generic that we’ve already been using. Rather
-than ensuring that a type has the behavior we want, lifetimes ensure that
-references are valid as long as we need them to be.
+Lifetimes sunt un alt fel de generici pe care i-am utilizat deja. Aceștia nu doar că asigură faptul că un tip are comportamentul pe care îl dorim, ci și că referințele rămân valide pentru durata necesară.
 
-One detail we didn’t discuss in the [“References and
-Borrowing”][references-and-borrowing]<!-- ignore --> section in Chapter 4 is
-that every reference in Rust has a *lifetime*, which is the scope for which
-that reference is valid. Most of the time, lifetimes are implicit and inferred,
-just like most of the time, types are inferred. We must only annotate types
-when multiple types are possible. In a similar way, we must annotate lifetimes
-when the lifetimes of references could be related in a few different ways. Rust
-requires us to annotate the relationships using generic lifetime parameters to
-ensure the actual references used at runtime will definitely be valid.
+Un aspect pe care nu l-am discutat în secțiunea [„Referințe și împrumutare”][references-and-borrowing]<!-- ignore --> din Capitolul 4 este acela că fiecare referință în Rust deține un *lifetime*, adică un domeniu de vizibilitate pentru care referința este validă. În cele mai multe situații, lifetimes sunt impliciți și inferați, așa cum sunt și tipurile, în mod obișnuit. Adnotarea tipurilor este necesară doar atunci când mai multe tipuri sunt posibile. Analog, adnotarea lifetimes este necesară atunci când duratele de viață ale referințelor pot fi interpretate diferit. Rust ne cere să definim aceste relații utilizând parametri de lifetime generici pentru a garanta că referințele utilizate în timpul execuției vor fi valide în mod cert.
 
-Annotating lifetimes is not a concept most other programming languages
-have, so this is going to feel unfamiliar. Although we won’t cover lifetimes in
-their entirety in this chapter, we’ll discuss common ways you might encounter
-lifetime syntax so you can get comfortable with the concept.
+Conceptul de adnotare a lifetimes nu există în multe alte limbaje de programare, ceea ce îl face să ni se pară neobișnuit. Deși nu vom trata lifetimes în totalitatea lor în acest capitol, vom explora modalitățile comune prin care este posibil să întâlnim sintaxa specifică lifetimes astfel încât să ne obișnuim cu conceptul.
 
-### Preventing Dangling References with Lifetimes
+### Combaterea referințelor suspendate prin intermediul duratelor de viață
 
-The main aim of lifetimes is to prevent *dangling references*, which cause a
-program to reference data other than the data it’s intended to reference.
-Consider the program in Listing 10-16, which has an outer scope and an inner
-scope.
+Scopul esențial al duratelor de viață (lifetimes) este de a înlătura referințele suspendate (dangling references), care determină programul să referențieze alte date decât cele destinate. Analizează programul din Listarea 10-16, ce conține un domeniu de vizibilitate extern și unul intern.
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-16/src/main.rs}}
 ```
 
-<span class="caption">Listing 10-16: An attempt to use a reference whose value
-has gone out of scope</span>
+<span class="caption">Listarea 10-16: Tentativa de a folosi o referință a cărei valoare nu mai este în domeniul de vizibilitate</span>
 
-> Note: The examples in Listings 10-16, 10-17, and 10-23 declare variables
-> without giving them an initial value, so the variable name exists in the
-> outer scope. At first glance, this might appear to be in conflict with Rust’s
-> having no null values. However, if we try to use a variable before giving it
-> a value, we’ll get a compile-time error, which shows that Rust indeed does
-> not allow null values.
+> Notă: În Listările 10-16, 10-17 și 10-23 sunt declarate variabile fără
+> valori inițiale, astfel numele lor sunt prezente în domeniul extern. La
+> prima vedere, acest lucru poate părea că intră în conflict cu faptul că Rust
+> nu permite valori null. Cu toate acestea, dacă încercăm să utilizăm o
+> variabilă înainte să îi atribuim o valoare, vom întâlni o eroare la
+> compilare, confirmând astfel că Rust nu acceptă valori null.
 
-The outer scope declares a variable named `r` with no initial value, and the
-inner scope declares a variable named `x` with the initial value of 5. Inside
-the inner scope, we attempt to set the value of `r` as a reference to `x`. Then
-the inner scope ends, and we attempt to print the value in `r`. This code won’t
-compile because what the value `r` is referring to has gone out of scope before we
-try to use it. Here is the error message:
+În domeniul extern este declarată o variabilă `r` fără valoare inițială, iar în domeniul intern este declarată o variabilă `x` cu valoarea inițială de 5. În domeniul intern, încercăm să stabilim `r` ca referință la `x`. La încheierea domeniului intern, încercăm să afișăm valoarea referită de `r`. Acest cod nu va compila deoarece valoarea la care `r` face referire a ieșit din domeniul de vizibilitate înainte de a fi folosită. Iată mesajul de eroare:
 
 ```console
 {{#include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-16/output.txt}}
 ```
 
-The variable `x` doesn’t “live long enough.” The reason is that `x` will be out
-of scope when the inner scope ends on line 7. But `r` is still valid for the
-outer scope; because its scope is larger, we say that it “lives longer.” If
-Rust allowed this code to work, `r` would be referencing memory that was
-deallocated when `x` went out of scope, and anything we tried to do with `r`
-wouldn’t work correctly. So how does Rust determine that this code is invalid?
-It uses a borrow checker.
+Variabila `x` nu "durează" suficient de mult. Aceasta iese din domeniul de vizibilitate când domeniul intern se sfârșește la linia 7. Cu toate acestea, `r` rămâne în domeniul extern; deoarece domeniul său de vizibilitate este mai amplu, spunem că "are o durată de viață mai mare". Dacă Rust ar permite ca acest cod să funcționeze, `r` ar face referință la memorie care a fost dezalocată când `x` a ieșit din domeniu, și orice tentativă de interacțiune cu `r` nu ar avea rezultate corecte. Cum determină Rust că acest cod este nevalid? Prin utilizarea unui verificator de împrumut (borrow checker).
 
-### The Borrow Checker
+### Verificatorul de împrumut
 
-The Rust compiler has a *borrow checker* that compares scopes to determine
-whether all borrows are valid. Listing 10-17 shows the same code as Listing
-10-16 but with annotations showing the lifetimes of the variables.
+Compilatorul Rust beneficiază de un *verificator de împrumut* care evaluează domeniile de vizibilitate și stabilește dacă toate împrumuturile sunt conforme. Listarea 10-17 îți prezintă același cod ca Listarea 10-16, dar cu adnotări ce indică durata de viață a variabilelor.
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-17/src/main.rs}}
 ```
 
-<span class="caption">Listing 10-17: Annotations of the lifetimes of `r` and
-`x`, named `'a` and `'b`, respectively</span>
+<span class="caption">Listarea 10-17: Adnotările duratelor de viață ale `r` și `x`, denumite `'a` și `'b`, în ordine</span>
 
-Here, we’ve annotated the lifetime of `r` with `'a` and the lifetime of `x`
-with `'b`. As you can see, the inner `'b` block is much smaller than the outer
-`'a` lifetime block. At compile time, Rust compares the size of the two
-lifetimes and sees that `r` has a lifetime of `'a` but that it refers to memory
-with a lifetime of `'b`. The program is rejected because `'b` is shorter than
-`'a`: the subject of the reference doesn’t live as long as the reference.
+În exemplul de față, am însemnat durata de viață a `r` cu `'a` și pe cea a lui `x` cu `'b`. Remarcăm că blocul intern `'b` este considerabil mai restrâns decât blocul extern `'a`. În etapa de compilare, Rust analizează și compară extinderea celor două durate și identifică faptul că `r` există pentru `'a`, dar face referire la memorie ale cărei valori au durata `'b`. Programul este respins pentru că durata `'b` este inferioară lui `'a`: entitatea la care face referire nu persistă atât cât durează referința.
 
-Listing 10-18 fixes the code so it doesn’t have a dangling reference and
-compiles without any errors.
+Listarea 10-18 rezolvă problema referinței suspendate și se compilează fără niciun fel de eroare.
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-18/src/main.rs}}
 ```
 
-<span class="caption">Listing 10-18: A valid reference because the data has a
-longer lifetime than the reference</span>
+<span class="caption">Listarea 10-18: O referință corectă, având în vedere că informațiile referite au o durată de viață mai lungă decât referința însăși</span>
 
-Here, `x` has the lifetime `'b`, which in this case is larger than `'a`. This
-means `r` can reference `x` because Rust knows that the reference in `r` will
-always be valid while `x` is valid.
+În această situație, `x` deține durata de viață `'b`, care de această dată excede `'a`. Astfel, `r` are libertatea de a referi `x`, deoarece Rust confirmă că referința din `r` va fi întotdeauna în vigoare pe durata existenței lui `x`.
 
-Now that you know where the lifetimes of references are and how Rust analyzes
-lifetimes to ensure references will always be valid, let’s explore generic
-lifetimes of parameters and return values in the context of functions.
+Acum, cunoscând localizarea duratelor de viață ale referințelor și metodologia prin care Rust le evaluează pentru a asigura validitatea neîntreruptă a acestora, să ne orientăm spre examinarea duratelor de viață generice pentru parametri și valori returnate în contextul funcțiilor.
 
-### Generic Lifetimes in Functions
+### Durate de viață generice în funcții
 
-We’ll write a function that returns the longer of two string slices. This
-function will take two string slices and return a single string slice. After
-we’ve implemented the `longest` function, the code in Listing 10-19 should
-print `The longest string is abcd`.
+Să dezvoltăm o funcție care identifică care dintre două secțiuni de string-uri este mai lungă. Această funcție va accepta două secțiuni și va oferi ca rezultat o singură secțiune de string. Implementarea corespunzătoare pentru funcția `longest` va face ca exemplul prezentat în Listarea 10-19 să genereze output-ul `The longest string is abcd`.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-19/src/main.rs}}
 ```
 
-<span class="caption">Listing 10-19: A `main` function that calls the `longest`
-function to find the longer of two string slices</span>
+<span class="caption">Listarea 10-19: Funcția `main` apelează `longest` pentru a afla cea mai lungă secțiune dintre două secțiuni de string-uri</span>
 
-Note that we want the function to take string slices, which are references,
-rather than strings, because we don’t want the `longest` function to take
-ownership of its parameters. Refer to the [“String Slices as
-Parameters”][string-slices-as-parameters]<!-- ignore --> section in Chapter 4
-for more discussion about why the parameters we use in Listing 10-19 are the
-ones we want.
+Trebuie subliniat faptul că funcția trebuie să opereze cu secțiuni de string-uri, adică referințe, nu cu string-uri, pentru că nu ne dorim ca `longest` să preia posesiunea asupra parametrilor săi. Consultă secțiunea [“Secțiuni de string-uri ca
+parametri”][string-slices-as-parameters]<!-- ignore --> din Capitolul 4 pentru mai multe explicații privind alegerea acestor parametri în Listarea 10-19.
 
-If we try to implement the `longest` function as shown in Listing 10-20, it
-won’t compile.
+Dacă vom încerca să implementăm `longest` așa cum e exemplificat în Listarea 10-20, vom observa că nu va compila.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-20/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 10-20: An implementation of the `longest`
-function that returns the longer of two string slices but does not yet
-compile</span>
+<span class="caption">Listarea 10-20: O încercare de implementare a `longest`, care urmează să returneze secțiunea de string mai lungă, dar care în prezent nu compilează</span>
 
-Instead, we get the following error that talks about lifetimes:
+Eroarea întâmpinată se referă la duratele de viață:
 
 ```console
 {{#include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-20/output.txt}}
 ```
 
-The help text reveals that the return type needs a generic lifetime parameter
-on it because Rust can’t tell whether the reference being returned refers to
-`x` or `y`. Actually, we don’t know either, because the `if` block in the body
-of this function returns a reference to `x` and the `else` block returns a
-reference to `y`!
+Indicațiile de ajutor arată că tipul care se returnează necesită un parametru de durată de viață generic, pentru că Rust nu este capabil să determine dacă referința ce se returnează aparține lui `x` sau `y`. Și noi suntem în aceeași incertitudine, de vreme ce funcția poate returna fie o referință către `x`, fie una către `y`, în funcție de rezultatul condiției `if`.
 
-When we’re defining this function, we don’t know the concrete values that will
-be passed into this function, so we don’t know whether the `if` case or the
-`else` case will execute. We also don’t know the concrete lifetimes of the
-references that will be passed in, so we can’t look at the scopes as we did in
-Listings 10-17 and 10-18 to determine whether the reference we return will
-always be valid. The borrow checker can’t determine this either, because it
-doesn’t know how the lifetimes of `x` and `y` relate to the lifetime of the
-return value. To fix this error, we’ll add generic lifetime parameters that
-define the relationship between the references so the borrow checker can
-perform its analysis.
+Nu avem informațiile despre valorile exacte care vor fi introduse în funcție la definirea acesteia, deci nu putem prevedea care dintre cazurile `if` sau `else` se va întâmpla. Nu cunoaștem nici care vor fi duratele de viață concrete ale referințelor ce vor fi folosite, așa că nu putem estima domeniile lor de vizibilitate pentru a decide dacă referința returnată va fi mereu validă. Verificatorul de împrumut al lui Rust nu este capabil să facă aceste deducții singur; nu are cunoștințe despre cum se corelează duratele de viață ale lui `x` și `y` cu durata de viață a valorii ce urmează să fie returnată. Pentru a rectifica eroarea, trebuie să introducem parametri generici de durată de viață, care vor clarifica relația dintre referințele implicate, permițând astfel verificatorului de împrumut să realizeze analiza necesară.
 
-### Lifetime Annotation Syntax
+### Sintaxa adnotărilor pentru duratele de Viață
 
-Lifetime annotations don’t change how long any of the references live. Rather,
-they describe the relationships of the lifetimes of multiple references to each
-other without affecting the lifetimes. Just as functions can accept any type
-when the signature specifies a generic type parameter, functions can accept
-references with any lifetime by specifying a generic lifetime parameter.
+Adnotările pentru duratele de viață nu influențează cât timp supraviețuiesc referințele. În realitate, ele stabilesc relații între duratele de viață ale mai multor referințe, neavând impact asupra acestora. Asemănător cu funcțiile ce acceptă orice tip când sunt definite cu parametri generici de tip, funcțiile pot accepta referințe cu orice durată de viață specificând un parametru generic de durată de viață.
 
-Lifetime annotations have a slightly unusual syntax: the names of lifetime
-parameters must start with an apostrophe (`'`) and are usually all lowercase
-and very short, like generic types. Most people use the name `'a` for the first
-lifetime annotation. We place lifetime parameter annotations after the `&` of a
-reference, using a space to separate the annotation from the reference’s type.
+Adnotările pentru duratele de viață utilizează o sintaxă ceva mai neobișnuită: numele acestor parametri încep cu apostrof (`'`) și sunt de regulă foarte scurte și scrise cu litere mici, în manieră similară tipurilor generice. Denumirea `'a` este adesea prima opțiune pentru o adnotare de durată de viață. Aceste adnotări se plasează după simbolul `&` al unei referințe, cu un spațiu între adnotarea și tipul referinței.
 
-Here are some examples: a reference to an `i32` without a lifetime parameter, a
-reference to an `i32` that has a lifetime parameter named `'a`, and a mutable
-reference to an `i32` that also has the lifetime `'a`.
+Iată nişte exemple: o referință către un `i32` fără un parametru de durată de viață, o referință către un `i32` cu un parametru de durată de viață `'a`, și o referință mutabilă către un `i32` care are de asemenea durata de viață `'a`.
 
 ```rust,ignore
-&i32        // a reference
-&'a i32     // a reference with an explicit lifetime
-&'a mut i32 // a mutable reference with an explicit lifetime
+&i32        // o referință
+&'a i32     // o referință cu durată de viață explicită
+&'a mut i32 // o referință mutabilă cu durată de viață explicită
 ```
 
-One lifetime annotation by itself doesn’t have much meaning, because the
-annotations are meant to tell Rust how generic lifetime parameters of multiple
-references relate to each other. Let’s examine how the lifetime annotations
-relate to each other in the context of the `longest` function.
+O singură adnotare de durată de viață, luată individual, nu aduce multă claritate, deoarece aceste adnotări sunt proiectate să descrie pentru Rust cum relaționează între ele parametrii de durată de viață generici ai diferitelor referințe. Să analizăm cum aceste adnotări pentru duratele de viață interacționează reciproc în contextul funcției `longest`.
 
-### Lifetime Annotations in Function Signatures
+### Adnotarea duratelor de viață în semnăturile funcțiilor
 
-To use lifetime annotations in function signatures, we need to declare the
-generic *lifetime* parameters inside angle brackets between the function name
-and the parameter list, just as we did with generic *type* parameters.
+Pentru a aplica adnotări ale duratelor de viață în semnăturile funcțiilor, este necesar să declarăm parametrii de *durată de viață* generici, plasându-i între parantezele unghiulare care se află între numele funcției și lista de parametri, procedând astfel ca în cazul parametrilor de *tip* generici.
 
-We want the signature to express the following constraint: the returned
-reference will be valid as long as both the parameters are valid. This is the
-relationship between lifetimes of the parameters and the return value. We’ll
-name the lifetime `'a` and then add it to each reference, as shown in Listing
-10-21.
+Semnătura trebuie să exprime următoarea restricție: referința returnată rămâne validă pe durata de viață a ambilor parametri. Aceasta descrie relația dintre duratele de viață ale parametrilor și valoarea returnată. Durata de viață `'a` este numele pe care îl vom da acestei relații, pe care o vom adnota pe fiecare referință, așa cum este ilustrat în Listarea 10-21.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-21/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 10-21: The `longest` function definition
-specifying that all the references in the signature must have the same lifetime
-`'a`</span>
+<span class="caption">Listarea 10-21: Definirea funcției `longest`, indicând că toate referințele din semnătură trebuie să aibă durata de viață `'a`</span>
 
-This code should compile and produce the result we want when we use it with the
-`main` function in Listing 10-19.
+Acest cod ar trebui să compileze și să genereze rezultatul dorit atunci când este folosit odată cu 
+funcția `main` din Listarea 10-19.
 
-The function signature now tells Rust that for some lifetime `'a`, the function
-takes two parameters, both of which are string slices that live at least as
-long as lifetime `'a`. The function signature also tells Rust that the string
-slice returned from the function will live at least as long as lifetime `'a`.
-In practice, it means that the lifetime of the reference returned by the
-`longest` function is the same as the smaller of the lifetimes of the values
-referred to by the function arguments. These relationships are what we want
-Rust to use when analyzing this code.
+Semnătura funcției ne anunță că pentru o anumită durată de viață `'a`, aceasta primește doi parametri, ambii fiind secțiuni de string-uri care persistă minim pe durata de viață `'a`. De asemenea, semnătura precizează că secțiunea de string returnată de funcție va persista cel puțin pe durata de viață `'a`. În practică, acest lucru sugerează că durata de viață a referinței întoarse de funcția`longest` corespunde cu cea mai scurtă durată de viață a valorilor referite de argumentele funcției. Aceste legături sunt relațiile pe care dorim ca Rust să le folosească în evaluarea codului nostru.
 
-Remember, when we specify the lifetime parameters in this function signature,
-we’re not changing the lifetimes of any values passed in or returned. Rather,
-we’re specifying that the borrow checker should reject any values that don’t
-adhere to these constraints. Note that the `longest` function doesn’t need to
-know exactly how long `x` and `y` will live, only that some scope can be
-substituted for `'a` that will satisfy this signature.
+Trebuie reținut că atunci când definim parametri de *durată de viață* în această semnătură, nu modificăm duratele de viață ale valorilor care sunt transmise sau întoarse de funcție. În schimb, stabilim condițiile pe care verificatorul de împrumut trebuie să le aplice, respingând valorile care nu se încadrează în aceste limite. Cu alte cuvinte, funcția `longest` nu trebuie să cunoască exact cât timp `x` și `y` vor exista, ci trebuie să fie garantat că va exista o durată de viață care poate fi atribuită lui `'a` și care va îndeplini cerințele acestei semnături.
 
-When annotating lifetimes in functions, the annotations go in the function
-signature, not in the function body. The lifetime annotations become part of
-the contract of the function, much like the types in the signature. Having
-function signatures contain the lifetime contract means the analysis the Rust
-compiler does can be simpler. If there’s a problem with the way a function is
-annotated or the way it is called, the compiler errors can point to the part of
-our code and the constraints more precisely. If, instead, the Rust compiler
-made more inferences about what we intended the relationships of the lifetimes
-to be, the compiler might only be able to point to a use of our code many steps
-away from the cause of the problem.
+Când vine vorba de adnotarea duratelor de viață în funcții, acestea sunt specificate în semnătura funcției, nu în corpul acesteia. Astfel adnotările devin parte integrantă a contractului funcției, pe picior de egalitate cu tipurile din semnătură. Includerea acestui contract de *durată de viață* în semnătura funcției simplifică analiza realizată de compilatorul Rust. Dacă întâmpinăm probleme legate de adnotările unei funcții sau de modul în care este invocată, erorile generate de compilator pot indica precis unde în codul nostru se află problemele și care sunt constrângerile nerespectate. Dacă ar exista o dependență mai mare pe inferențele Rust în ceea ce privește intențiile noastre legate de relațiile duratelor de viață, atunci compilatorul ar putea indica problemele abia după urmărirea utilizării codului la câteva niveluri de la cauza de bază.
 
-When we pass concrete references to `longest`, the concrete lifetime that is
-substituted for `'a` is the part of the scope of `x` that overlaps with the
-scope of `y`. In other words, the generic lifetime `'a` will get the concrete
-lifetime that is equal to the smaller of the lifetimes of `x` and `y`. Because
-we’ve annotated the returned reference with the same lifetime parameter `'a`,
-the returned reference will also be valid for the length of the smaller of the
-lifetimes of `x` and `y`.
+Când folosim referințe specifice cu funcția `longest`, durata de viață concretă substituită pentru `'a` este acea parte din durata de viață a lui `x` care coincide cu durata de viață a lui `y`. Mai direct spus, durata de viață generică `'a` se va concretiza în cea mai scurtă durată de viață dintre cele ale lui `x` și `y`. Dat fiind că am adnotat referința returnată cu același parametru de *durată de viață* `'a`, și referința returnată va fi validă pentru aceeași perioadă de timp cât sunt valide `x` și `y`.
 
-Let’s look at how the lifetime annotations restrict the `longest` function by
-passing in references that have different concrete lifetimes. Listing 10-22 is
-a straightforward example.
+Evaluăm acum modul în care adnotările de durată de viață limitează funcția `longest` printr-o demonstrație unde sunt folosite referințe cu durate de viață concrete diferite. Listarea 10-22 ne furnizează un astfel de exemplu explicit.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-22/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 10-22: Using the `longest` function with
-references to `String` values that have different concrete lifetimes</span>
+<span class="caption">Listarea 10-22: Utilizarea funcției `longest` cu referințe la valori `String` ce au durate de viață concrete diferite</span>
 
-In this example, `string1` is valid until the end of the outer scope, `string2`
-is valid until the end of the inner scope, and `result` references something
-that is valid until the end of the inner scope. Run this code, and you’ll see
-that the borrow checker approves; it will compile and print `The longest string
-is long string is long`.
+În acest caz, `string1` rămâne valid până la încheierea domeniului de vizibilitate exterior, `string2` este valid până la încheierea domeniului de vizibilitate interior, iar `result` indică o valoare care rămâne validă până la finalul domeniului de vizibilitate interior. Dacă executăm acest cod, vom constata că este acreditat de verificatorul de împrumut; va compila și va crea afișajul „The longest string is long string is long”.
+```
 
-Next, let’s try an example that shows that the lifetime of the reference in
-`result` must be the smaller lifetime of the two arguments. We’ll move the
-declaration of the `result` variable outside the inner scope but leave the
-assignment of the value to the `result` variable inside the scope with
-`string2`. Then we’ll move the `println!` that uses `result` to outside the
-inner scope, after the inner scope has ended. The code in Listing 10-23 will
-not compile.
+Continuând, să analizăm un exemplu care ilustrează necesitatea ca durata de viață a referinței în `result` să fie mai scurtă decât duratele de viață ale celor două argumente. Declararea variabilei `result` va fi efectuată în afara domeniului de vizibilitate intern, în timp ce asignarea valorii pentru aceasta va rămâne în interiorul acelui domeniu împreună cu `string2`. Vom muta instrucțiunea `println!`, ce utilizează `result`, în afara domeniului intern, după ce acesta se încheie. Codul prezentat în Listarea 10-23 nu va fi compilabil.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-23/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 10-23: Attempting to use `result` after `string2`
-has gone out of scope</span>
+<span class="caption">Listarea 10-23: Tentativa de utilizare a `result` după ce `string2` nu se mai află în domeniul de vizibilitate</span>
 
-When we try to compile this code, we get this error:
+La încercarea de a compila acest cod, întâmpinăm eroarea:
 
 ```console
 {{#include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-23/output.txt}}
 ```
 
-The error shows that for `result` to be valid for the `println!` statement,
-`string2` would need to be valid until the end of the outer scope. Rust knows
-this because we annotated the lifetimes of the function parameters and return
-values using the same lifetime parameter `'a`.
+Eroarea ne arată că, pentru a fi valid pentru instrucțiunea `println!`, `string2` ar necesita să fie disponibil până la finalul domeniului extern. Rust înțelege acest aspect deoarece am adnotat duratele de viață ale parametrilor funcției și ale valorii de retur utilizând același parametru `'a`.
 
-As humans, we can look at this code and see that `string1` is longer than
-`string2` and therefore `result` will contain a reference to `string1`.
-Because `string1` has not gone out of scope yet, a reference to `string1` will
-still be valid for the `println!` statement. However, the compiler can’t see
-that the reference is valid in this case. We’ve told Rust that the lifetime of
-the reference returned by the `longest` function is the same as the smaller of
-the lifetimes of the references passed in. Therefore, the borrow checker
-disallows the code in Listing 10-23 as possibly having an invalid reference.
+Noi, oamenii, putem privi acest cod și înțelege că `string1` este disponibil mai mult timp decât `string2` și, prin urmare, `result` va conține o referință către `string1`, care, nefiind încă ieșită din domeniul de vizibilitate, rămâne validă pentru instrucțiunea `println!`. Cu toate acestea, compilatorul nu este capabil să deducă că referința este validă în acest caz. I-am indicat compilatorului Rust că durata de viață a referinței returnate de funcția `longest` coincide cu durata cea mai scurtă a referințelor primite. În consecință, verificatorul de împrumut respinge codul din Listarea 10-23 pentru că s-ar putea să aibă o referință invalidă.
 
-Try designing more experiments that vary the values and lifetimes of the
-references passed in to the `longest` function and how the returned reference
-is used. Make hypotheses about whether or not your experiments will pass the
-borrow checker before you compile; then check to see if you’re right!
+Propune-ți să experimentezi cu diverse scenarii care alterează valorile și duratele de viață ale referințelor transmise funcției `longest`, precum și modul în care este utilizată referința retur. Înainte de compilare, formulează presupuneri referitoare la rezultatele verificatorului de împrumut și verifică ulterior dacă acestea sunt corecte!
 
-### Thinking in Terms of Lifetimes
+### Gândirea în termeni de durate de viață
 
-The way in which you need to specify lifetime parameters depends on what your
-function is doing. For example, if we changed the implementation of the
-`longest` function to always return the first parameter rather than the longest
-string slice, we wouldn’t need to specify a lifetime on the `y` parameter. The
-following code will compile:
+Alegerea parametrilor de durată de viață este strâns legată de lucrul efectuat de funcția în cauză. Dacă, spre exemplu, am decide ca funcția `longest` să returneze constant primul argument în locul celei mai lungi secțiuni de string, indicația de durată de viață pentru parametrul `y` nu ar fi necesară. Așadar, următorul cod va fi considerat valid de către compilator:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-08-only-one-reference-with-lifetime/src/main.rs:here}}
 ```
 
-We’ve specified a lifetime parameter `'a` for the parameter `x` and the return
-type, but not for the parameter `y`, because the lifetime of `y` does not have
-any relationship with the lifetime of `x` or the return value.
+Prin introducerea parametrului de durată de viață `'a` pentru argumentul `x` și pentru tipul de retur, dar omițându-l pe `y`, recunoaștem că durata de viață a lui `y` nu are conexiuni cu durata de viață a lui `x` ori cu valoarea returnată.
 
-When returning a reference from a function, the lifetime parameter for the
-return type needs to match the lifetime parameter for one of the parameters. If
-the reference returned does *not* refer to one of the parameters, it must refer
-to a value created within this function. However, this would be a dangling
-reference because the value will go out of scope at the end of the function.
-Consider this attempted implementation of the `longest` function that won’t
-compile:
+O funcție care returnează o referință trebuie să sincronizeze durata de viață a tipului de retur cu durata de viață a unuia dintre argumente. Dacă referința returnată *nu* corespunde niciunui argument, atunci ea trebuie să indică spre o valoare creată intern în funcție, ceea ce inevitabil va crea o referință suspendată, dat fiind că respectivele valori vor părăsi domeniul de vizibilitate când funcția se încheie. Să luăm spre analiză un caz de implementare eșuată a funcției `longest`, care va fi respins de compilator:
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-09-unrelated-lifetime/src/main.rs:here}}
 ```
 
-Here, even though we’ve specified a lifetime parameter `'a` for the return
-type, this implementation will fail to compile because the return value
-lifetime is not related to the lifetime of the parameters at all. Here is the
-error message we get:
+Deși am definit parametrul de durată de viață `'a` pentru tipul returnat, codul nu trece de etapa de compilare, pentru că durata de viață a valorii returnate nu are nicio legătură cu duratele de viață ale argumentelor. Acesta este mesajul de eroare afișat:
 
 ```console
 {{#include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-09-unrelated-lifetime/output.txt}}
 ```
 
-The problem is that `result` goes out of scope and gets cleaned up at the end
-of the `longest` function. We’re also trying to return a reference to `result`
-from the function. There is no way we can specify lifetime parameters that
-would change the dangling reference, and Rust won’t let us create a dangling
-reference. In this case, the best fix would be to return an owned data type
-rather than a reference so the calling function is then responsible for
-cleaning up the value.
+Complicația de aici provine din faptul că `result` nu mai există după închiderea funcției `longest`, încercând totodată să returneze o referință către aceasta. Nu putem remedia prin parametrii de durată de viață acest tip de referință suspendată, iar in sistemul Rust, acestea sunt inacceptabile. În situații similare, soluția cea mai potrivită ar fi să optăm pentru returnarea unei date cu posesiune completă, nu sub formă de referință, astfel încât funcția apelatoare să preia responsabilitatea gestiunii acesteia.
 
-Ultimately, lifetime syntax is about connecting the lifetimes of various
-parameters and return values of functions. Once they’re connected, Rust has
-enough information to allow memory-safe operations and disallow operations that
-would create dangling pointers or otherwise violate memory safety.
+Concluzionând, aplicarea corectă a sintaxei duratelor de viață leagă duratele de viață ale diverselor argumente de cele ale valorilor returnate, permițându-i astfel limbajului Rust să asigure operațiuni de gestionare a memoriei în mod sigur și să interzică orice operațiune ce ar putea duce la apariția referințelor suspendate sau care ar putea pune în pericol siguranța manipulării memoriei.
 
-### Lifetime Annotations in Struct Definitions
+### Adnotări de durată de viață în definițiile de structuri
 
-So far, the structs we’ve defined all hold owned types. We can define structs to
-hold references, but in that case we would need to add a lifetime annotation on
-every reference in the struct’s definition. Listing 10-24 has a struct named
-`ImportantExcerpt` that holds a string slice.
+Până acum, structurile pe care le-am descris includ tipuri de date cu posesiune proprie. Avem posibilitatea să definim structuri ce conțin referințe, dar pentru aceasta este necesar să adăugăm adnotări de durată de viață pentru toate referințele din definiția structurii. În Listarea 10-24, este prezentată structura `ImportantExcerpt`, care încorporează o secțiune de tip string.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-24/src/main.rs}}
 ```
 
-<span class="caption">Listing 10-24: A struct that holds a reference, requiring
-a lifetime annotation</span>
+<span class="caption">Listarea 10-24: Structura care include o referință necesitând adnotare de durată de viață</span>
 
-This struct has the single field `part` that holds a string slice, which is a
-reference. As with generic data types, we declare the name of the generic
-lifetime parameter inside angle brackets after the name of the struct so we can
-use the lifetime parameter in the body of the struct definition. This
-annotation means an instance of `ImportantExcerpt` can’t outlive the reference
-it holds in its `part` field.
+Structura posedă un unic câmp `part`, ce conține o secțiune dintr-un string, iar aceasta este o referință. În maniera tipurilor generice, numele parametrului generic al duratei de viață se declară în paranteze unghiulare după numele structurii, ceea ce ne permite să folosim parametrul în cadrul definiției structurii. Adnotarea indică faptul că o instanță de `ImportantExcerpt` nu are voie să depășească durata de viață a referinței din câmpul `part`.
 
-The `main` function here creates an instance of the `ImportantExcerpt` struct
-that holds a reference to the first sentence of the `String` owned by the
-variable `novel`. The data in `novel` exists before the `ImportantExcerpt`
-instance is created. In addition, `novel` doesn’t go out of scope until after
-the `ImportantExcerpt` goes out of scope, so the reference in the
-`ImportantExcerpt` instance is valid.
+Funcția `main` generează o instanță a structurii `ImportantExcerpt`, care înglobează o referință la prima sentință din `String` aparținând variabilei `novel`. Informația conținută în `novel` este disponibilă cu mult înainte de crearea instanței `ImportantExcerpt`. În plus, `novel` nu devine inaccesibil până după ce structura `ImportantExcerpt` este retrasă din domeniul de vizibilitate, făcând astfel ca referința din instanța `ImportantExcerpt` să fie validă.
 
-### Lifetime Elision
+### Eliziunea duratei de viață
 
-You’ve learned that every reference has a lifetime and that you need to specify
-lifetime parameters for functions or structs that use references. However, in
-Chapter 4 we had a function in Listing 4-9, shown again in Listing 10-25, that
-compiled without lifetime annotations.
+Am învățat că fiecare referință are o durată de viață şi trebuie să specificăm
+parametrii de durată de viață pentru funcții sau structuri care folosesc referințe. Totuși, în
+Capitolul 4, am prezentat o funcție în Listarea 4-9, reafirmată în Listarea 10-25, ce
+s-a compilat fără adnotări de durată de viață.
 
-<span class="filename">Filename: src/lib.rs</span>
+<span class="filename">Numele fişierului: src/lib.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-25/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 10-25: A function we defined in Listing 4-9 that
-compiled without lifetime annotations, even though the parameter and return
-type are references</span>
+<span class="caption">Listarea 10-25: O funcție definită în Listarea 4-9 care
+s-a compilat fără adnotările de durată de viață, deși parametrul și tipul de retur sunt referințe</span>
 
-The reason this function compiles without lifetime annotations is historical:
-in early versions (pre-1.0) of Rust, this code wouldn’t have compiled because
-every reference needed an explicit lifetime. At that time, the function
-signature would have been written like this:
+Funcția se compilează fără adnotări de durată de viață din motive istorice: în versiunile timpurii (pre-1.0) ale Rust, codul respectiv nu ar fi funcționat, fiind necesară o durată de viață explicită pentru fiecare referință. Semnătura funcției de atunci ar fi arătat astfel:
 
 ```rust,ignore
 fn first_word<'a>(s: &'a str) -> &'a str {
 ```
 
-After writing a lot of Rust code, the Rust team found that Rust programmers
-were entering the same lifetime annotations over and over in particular
-situations. These situations were predictable and followed a few deterministic
-patterns. The developers programmed these patterns into the compiler’s code so
-the borrow checker could infer the lifetimes in these situations and wouldn’t
-need explicit annotations.
+După redactarea unei cantități considerabile de cod Rust, echipa a identificat situații specifice unde programatorii Rust repetă adnotări similare de durată de viață. Având un șablon previzibil și determinist, dezvoltatorii au înscris aceste modele în comportamentul compilatorului, astfel încât verificatorul de împrumut să poată înțelege duratele de viață implicit, eliminând necesitatea adnotărilor explicite.
 
-This piece of Rust history is relevant because it’s possible that more
-deterministic patterns will emerge and be added to the compiler. In the future,
-even fewer lifetime annotations might be required.
+Această parte din istoria Rust este relevantă, deoarece este posibil ca în viitor, pe măsură ce sunt identificate alte șabloane deterministe, să avem nevoie de și mai puține adnotări de durată de viață.
 
-The patterns programmed into Rust’s analysis of references are called the
-*lifetime elision rules*. These aren’t rules for programmers to follow; they’re
-a set of particular cases that the compiler will consider, and if your code
-fits these cases, you don’t need to write the lifetimes explicitly.
+Regulile care guvernează această analiză a referințelor în Rust se numesc *regulile de eliziune a duratei de viață*. Acestea nu sunt directive pentru programatori, ci cazuri specifice pe care compilatorul le recunoaște, iar în prezența acestora, nu este nevoie să specifice durate de viață în cod.
 
-The elision rules don’t provide full inference. If Rust deterministically
-applies the rules but there is still ambiguity as to what lifetimes the
-references have, the compiler won’t guess what the lifetime of the remaining
-references should be. Instead of guessing, the compiler will give you an error
-that you can resolve by adding the lifetime annotations.
+Eliziunea nu implică inferență totală. Dacă, după aplicarea regulilor în mod deterministic, rămân ambiguități cu privire la duratele de viață ale anumitor referințe, compilatorul nu va specula asupra lor. În schimb, va emite o eroare ce poate fi rezolvată prin adăugarea explicită a adnotărilor necesare.
 
-Lifetimes on function or method parameters are called *input lifetimes*, and
-lifetimes on return values are called *output lifetimes*.
+Duratele de viață asociate parametrilor de funcție sau metodei sunt cunoscute drept *durate de viață de intrare*, iar cele legate de valori returnate sunt *durate de viață de ieșire*.
 
-The compiler uses three rules to figure out the lifetimes of the references
-when there aren’t explicit annotations. The first rule applies to input
-lifetimes, and the second and third rules apply to output lifetimes. If the
-compiler gets to the end of the three rules and there are still references for
-which it can’t figure out lifetimes, the compiler will stop with an error.
-These rules apply to `fn` definitions as well as `impl` blocks.
+Pentru deducerea duratelor de viață ale referințelor lipsite de adnotări explicite, compilatorul urmează trei reguli. Prima se aplică la duratele de viață de intrare, iar următoarele două la duratele de viață de ieșire. Dacă, după aceste trei reguli, există referințe având în continuare o durată de viață nedeterminată, compilatorul va întrerupe procesul și va raporta o eroare. Regulile sunt aplicabile atât definițiilor de `fn`, cât și blocurilor `impl`.
 
-The first rule is that the compiler assigns a lifetime parameter to each
-parameter that’s a reference. In other words, a function with one parameter gets
-one lifetime parameter: `fn foo<'a>(x: &'a i32)`; a function with two
-parameters gets two separate lifetime parameters: `fn foo<'a, 'b>(x: &'a i32,
-y: &'b i32)`; and so on.
+Prima regulă pe care compilatorul o impune este aceea că atribuie un parametru de durată de viață pentru fiecare parametru care este o referință. Concret, o funcție cu un singur parametru va avea un parametru de durată de viață: `fn foo<'a>(x: &'a i32)`. În cazul unei funcții cu doi parametri, vor exista doi parametri de durată de viață separați: `fn foo<'a, 'b>(x: &'a i32, y: &'b i32)` și așa mai departe.
 
-The second rule is that, if there is exactly one input lifetime parameter, that
-lifetime is assigned to all output lifetime parameters: `fn foo<'a>(x: &'a i32)
--> &'a i32`.
+Conform celei de-a doua reguli, dacă avem un singur parametru de intrare cu durată de viață, atunci aceasta se aplică întregii ieșiri: `fn foo<'a>(x: &'a i32) -> &'a i32`.
 
-The third rule is that, if there are multiple input lifetime parameters, but
-one of them is `&self` or `&mut self` because this is a method, the lifetime of
-`self` is assigned to all output lifetime parameters. This third rule makes
-methods much nicer to read and write because fewer symbols are necessary.
+Când intervin mai mulți parametri de intrare cu durate de viață și unul dintre aceștia este `&self` sau `&mut self` – adică în contextul unei metode – durata de viață a `self` se va atribui la întreaga ieșire. Acest lucru simplifică scrierea și citirea metodelor, deoarece nu este nevoie de atât de multe simboluri.
 
-Let’s pretend we’re the compiler. We’ll apply these rules to figure out the
-lifetimes of the references in the signature of the `first_word` function in
-Listing 10-25. The signature starts without any lifetimes associated with the
-references:
+Imaginându-ne în rolul compilatorului, aplicăm aceste reguli pentru a înțelege duratele de viață ale referințelor din semnătura funcției `first_word`, așa cum e prezentată în Listarea 10-25. Semnătura inițială nu conține nicio durată de viață asociată referințelor:
 
 ```rust,ignore
 fn first_word(s: &str) -> &str {
 ```
 
-Then the compiler applies the first rule, which specifies that each parameter
-gets its own lifetime. We’ll call it `'a` as usual, so now the signature is
-this:
+Aplicând prima regulă, compilatorul acordă fiecărui parametru propria durată de viață, etichetată în mod tradițional cu `'a`:
 
 ```rust,ignore
 fn first_word<'a>(s: &'a str) -> &str {
 ```
 
-The second rule applies because there is exactly one input lifetime. The second
-rule specifies that the lifetime of the one input parameter gets assigned to
-the output lifetime, so the signature is now this:
+Datorită prezenței unui unic parametru de intrare cu durată de viață, a doua regulă intervine pentru a atribui aceeași durată de viață și la ieșire, rezultând în următoarea semnătură:
 
 ```rust,ignore
 fn first_word<'a>(s: &'a str) -> &'a str {
 ```
 
-Now all the references in this function signature have lifetimes, and the
-compiler can continue its analysis without needing the programmer to annotate
-the lifetimes in this function signature.
+Astfel, toate referințele din această semnătură de funcție sunt acum prevăzute cu durate de viață, dând voie compilatorului să progreseze în analiză fără ca programatorul să fie nevoit să adnoteze manual aceste durate.
 
-Let’s look at another example, this time using the `longest` function that had
-no lifetime parameters when we started working with it in Listing 10-20:
+Luăm ca exemplu funcția `longest`, care la început nu includea parametri de durată de viață, așa cum vedem în Listarea 10-20:
 
 ```rust,ignore
 fn longest(x: &str, y: &str) -> &str {
 ```
 
-Let’s apply the first rule: each parameter gets its own lifetime. This time we
-have two parameters instead of one, so we have two lifetimes:
+Aplicăm prima regulă și observăm că fiecare dintre cei doi parametri are asignată o durată de viață distinctă:
 
 ```rust,ignore
 fn longest<'a, 'b>(x: &'a str, y: &'b str) -> &str {
 ```
 
-You can see that the second rule doesn’t apply because there is more than one
-input lifetime. The third rule doesn’t apply either, because `longest` is a
-function rather than a method, so none of the parameters are `self`. After
-working through all three rules, we still haven’t figured out what the return
-type’s lifetime is. This is why we got an error trying to compile the code in
-Listing 10-20: the compiler worked through the lifetime elision rules but still
-couldn’t figure out all the lifetimes of the references in the signature.
+În acest caz, nici a doua nici a treia regulă nu sunt aplicabile – a doua pentru că avem multiple durate de viață de intrare și a treia pentru că nu avem de-a face cu o metodă care implică `self`. Prin urmare, după examinarea celor trei reguli, încă nu se poate determina durata de viață a returnării funcției — motiv pentru care întâmpinăm o eroare la compilarea codului din Listarea 10-20: regulile de eliziune nu oferă suficiente informații compilatorului pentru a stabili duratele de viață ale referințelor din semnătură.
 
-Because the third rule really only applies in method signatures, we’ll look at
-lifetimes in that context next to see why the third rule means we don’t have to
-annotate lifetimes in method signatures very often.
+Deoarece a treia regulă este relevantă preponderent pentru metode, ne vom orienta în continuare spre analiza duratelor de viață în acest context particular, astfel încât să înțelegem de ce adnotarea manuală a duratelor de viață în semnăturile metodelor nu este, de obicei, necesară.
 
-### Lifetime Annotations in Method Definitions
+### Adnotarea duratelor de viață în definirea metodelor
 
-When we implement methods on a struct with lifetimes, we use the same syntax as
-that of generic type parameters shown in Listing 10-11. Where we declare and
-use the lifetime parameters depends on whether they’re related to the struct
-fields or the method parameters and return values.
+Când definim metode pentru o structură ce include durate de viață, aplicăm aceeași sintaxă ca și pentru parametrii de tipuri generice, demonstrată în Listarea 10-11. Decizia de unde să declarăm și să utilizăm parametrii duratei de viață este influențată de faptul că aceștia sunt asociați cu câmpurile structurii sau cu parametrii metodelor și valorile returnate.
 
-Lifetime names for struct fields always need to be declared after the `impl`
-keyword and then used after the struct’s name, because those lifetimes are part
-of the struct’s type.
+Numele pentru duratele de viață ale câmpurilor structurii sunt întotdeauna necesare după cuvântul `impl` și trebuie utilizate în continuarea numelui structurii, deoarece aceste durate de viață fac parte integrantă din tipul structurii.
 
-In method signatures inside the `impl` block, references might be tied to the
-lifetime of references in the struct’s fields, or they might be independent. In
-addition, the lifetime elision rules often make it so that lifetime annotations
-aren’t necessary in method signatures. Let’s look at some examples using the
-struct named `ImportantExcerpt` that we defined in Listing 10-24.
+În cadrul semnăturilor de metode din blocul `impl`, referințele pot fi conectate la durata de viață a referințelor din câmpurile structurii sau pot fi complet independente. În plus, regulile de eliziune a duratelor de viață percep frecvent în așa fel încât adnotările de durată de viață nu sunt necesare în semnăturile metodelor. Să evaluăm câteva exemple folosind structura `ImportantExcerpt`, pe care am definit-o în Listarea 10-24.
 
-First, we’ll use a method named `level` whose only parameter is a reference to
-`self` and whose return value is an `i32`, which is not a reference to anything:
+Mai întâi, examinăm o metodă denumită `level`, cu singurul parametru fiind o referință la `self`, care returnează o valoare de tip `i32` și nu este o referință la altceva:
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-10-lifetimes-on-methods/src/main.rs:1st}}
 ```
 
-The lifetime parameter declaration after `impl` and its use after the type name
-are required, but we’re not required to annotate the lifetime of the reference
-to `self` because of the first elision rule.
+Este necesară declararea parametrului de durată de viață după `impl` și a utilizării acestuia după numele tipului, însă nu este imperativă adnotarea duratei de viață a referinței la `self` datorită primei reguli de eliziune.
 
-Here is an example where the third lifetime elision rule applies:
+Iată un exemplu în care intervine a treia regulă de eliziune a duratei de viață:
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-10-lifetimes-on-methods/src/main.rs:3rd}}
 ```
 
-There are two input lifetimes, so Rust applies the first lifetime elision rule
-and gives both `&self` and `announcement` their own lifetimes. Then, because
-one of the parameters is `&self`, the return type gets the lifetime of `&self`,
-and all lifetimes have been accounted for.
+Dat fiind că există două durate de viață pentru argumente, Rust aplică prima regulă de eliziune și atribuie fiecăruia dintre `&self` și `announcement` propria durată de viață. Deoarece `&self` este unul dintre parametri, tipul de retur primește durata de viață a referinței `&self`, astfel fiind stabilite toate duratele de viață.
 
-### The Static Lifetime
+### Durata de viață `'static`
 
-One special lifetime we need to discuss is `'static`, which denotes that the
-affected reference *can* live for the entire duration of the program. All
-string literals have the `'static` lifetime, which we can annotate as follows:
+Un tip special de durată de viață pe care trebuie să-l abordăm este `'static`, care semnalează că referința în cauză *poate* persista pentru întregul timp al execuției programului. Fiecare literal de tip string are durata de viață `'static`, pe care o putem nota în felul următor:
 
 ```rust
-let s: &'static str = "I have a static lifetime.";
+let s: &'static str = "Am o durată de viață statică.";
 ```
 
-The text of this string is stored directly in the program’s binary, which
-is always available. Therefore, the lifetime of all string literals is
-`'static`.
+Textul acestui string este încapsulat direct în binarul programului, care este constant disponibil. Așadar, durata de viață a tuturor literalelor de string este `'static`.
 
-You might see suggestions to use the `'static` lifetime in error messages. But
-before specifying `'static` as the lifetime for a reference, think about
-whether the reference you have actually lives the entire lifetime of your
-program or not, and whether you want it to. Most of the time, an error message
-suggesting the `'static` lifetime results from attempting to create a dangling
-reference or a mismatch of the available lifetimes. In such cases, the solution
-is fixing those problems, not specifying the `'static` lifetime.
+Poate că vei întâlni sugestii de utilizare a duratei de viață `'static` atunci când apar mesaje de eroare. Însă, înainte de a atribui `'static` ca timp de durată de viață pentru o referință, e vital să te gândești dacă respectiva referință chiar necesită o durată de viață ce acoperă întreaga perioadă a programului, și dacă chiar vrei acest lucru. De regulă, un mesaj de eroare ce recomandă durata de viață `'static` este cauzat de încercarea de a genera o referință suspendată sau de o discrepanță între duratele de viață disponibile. În astfel de situații, este indicat să remediem aceste probleme, și nu să optăm pentru specificarea duratei de viață `'static`.
 
-## Generic Type Parameters, Trait Bounds, and Lifetimes Together
+## Combinarea parametrilor generici de tip, delimitărilor de trăsături și a duratelor de viață
 
-Let’s briefly look at the syntax of specifying generic type parameters, trait
-bounds, and lifetimes all in one function!
+Să abordăm sintaxa necesară pentru a defini parametri generici de tip, delimitări de trăsături și durate de viață, toți concentrați într-o singura funcție!
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/no-listing-11-generics-traits-and-lifetimes/src/main.rs:here}}
 ```
 
-This is the `longest` function from Listing 10-21 that returns the longer of
-two string slices. But now it has an extra parameter named `ann` of the generic
-type `T`, which can be filled in by any type that implements the `Display`
-trait as specified by the `where` clause. This extra parameter will be printed
-using `{}`, which is why the `Display` trait bound is necessary. Because
-lifetimes are a type of generic, the declarations of the lifetime parameter
-`'a` and the generic type parameter `T` go in the same list inside the angle
-brackets after the function name.
+Aceasta este funcția `longest` din Listarea 10-21, care va returna secțiunea de string mai lungă dintre două. Acum a fost adăugat un parametru suplimentar denumit `ann` de tipul generic `T`. Acesta poate fi orice tip ce implementează trăsătura `Display`, așa cum este indicat de clauza `where`. Parametrul suplimentar este afișat utilizând `{}`, de aici și necesitatea delimitării trăsăturii `Display`. Duratele de viață sunt considerate tot un tip de parametri generici, așadar declarațiile parametrului `a` și ale tipului generic `T` sunt listate împreună, în interiorul parantezelor unghiulare care succed numele funcției.
 
-## Summary
+## Sumar
 
-We covered a lot in this chapter! Now that you know about generic type
-parameters, traits and trait bounds, and generic lifetime parameters, you’re
-ready to write code without repetition that works in many different situations.
-Generic type parameters let you apply the code to different types. Traits and
-trait bounds ensure that even though the types are generic, they’ll have the
-behavior the code needs. You learned how to use lifetime annotations to ensure
-that this flexible code won’t have any dangling references. And all of this
-analysis happens at compile time, which doesn’t affect runtime performance!
+Am abordat numeroase subiecte în acest capitol! Ești acum înarmat cu cunoștințele necesare despre parametrii de tip generic, trăsăturile și delimitările de trăsătură, cât și despre parametrii generici de durată de viață, astfel încât să poți crea cod fără redundanțe, aplicabil în diverse contexte. Parametrii de tip generic îți permit să extinzi aplicabilitatea codului la mai multe tipuri. Folosirea trăsăturilor și a delimitărilor de trăsătură asigură că tipurile generice vor poseda comportamentul cerut de codul tău. Ți s-a prezentat modul de utilizare a adnotărilor de durată de viață pentru a preveni orice referințe suspendate în codul flexibil pe care îl produci. Toate aceste analize se desfășoară în etapa de compilare, fără a afecta performanța la rulare!
 
-Believe it or not, there is much more to learn on the topics we discussed in
-this chapter: Chapter 17 discusses trait objects, which are another way to use
-traits. There are also more complex scenarios involving lifetime annotations
-that you will only need in very advanced scenarios; for those, you should read
-the [Rust Reference][reference]. But next, you’ll learn how to write tests in
-Rust so you can make sure your code is working the way it should.
+Este uimitor cât de multe mai sunt de învățat pe temele pe care le-am parcurs: Capitolul 17 se concentrează pe obiectele-trăsătură, oferindu-ți o nouă perspectivă asupra utilizării trăsăturilor. De asemenea, vei descoperi scenarii mai complexe ce implică adnotările de durată de viață, relevante îndeosebi în cazuri avansate; pentru aceste situații, recomandăm consultarea [Rust Reference][reference]. Dar înainte de aceasta, vei învăța cum să elaborezi testele în Rust, pentru a confirma că programul tău se comportă exact cum trebuie.
 
 [references-and-borrowing]:
 ch04-02-references-and-borrowing.html#references-and-borrowing

@@ -1,158 +1,96 @@
-## Generic Data Types
+## Tipuri de date generice
 
-We use generics to create definitions for items like function signatures or
-structs, which we can then use with many different concrete data types. Let’s
-first look at how to define functions, structs, enums, and methods using
-generics. Then we’ll discuss how generics affect code performance.
+Genericile sunt instrumente pe care le utilizăm pentru a construi definiții de elemente, cum ar fi semnăturile de funcții sau structurile, ce pot fi apoi folosite cu o multitudine de tipuri de date concrete. Înainte de toate, să ne uităm cum putem defini funcții, structuri, enumerări și metode folosind genericile. Ulterior, vom aborda impactul pe care îl au genericile asupra performanței codului.
 
-### In Function Definitions
+### Definirea funcțiilor cu generici
 
-When defining a function that uses generics, we place the generics in the
-signature of the function where we would usually specify the data types of the
-parameters and return value. Doing so makes our code more flexible and provides
-more functionality to callers of our function while preventing code duplication.
+Atunci când definim o funcție ce folosește generici, introducem genericii în semnătura funcției acolo unde, în mod obișnuit, am specifica tipurile de date pentru parametri și valoarea returnată. Acest demers face codul nostru mai maleabil și oferă mai multă funcționalitate celor ce apelează funcția, prevenind duplicarea de cod.
 
-Continuing with our `largest` function, Listing 10-4 shows two functions that
-both find the largest value in a slice. We'll then combine these into a single
-function that uses generics.
+Continuând cu funcția noastră `largest`, Listarea 10-4 prezintă două funcții care identifică valoarea cea mai mare dintr-o secțiune. Apoi, vom unifica acestea într-o singură funcție care încorporează generici.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-04/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 10-4: Two functions that differ only in their
-names and the types in their signatures</span>
+<span class="caption">Listarea 10-4: Două funcții care se diferențiază prin numele și tipurile specificate în semnăturile lor</span>
 
-The `largest_i32` function is the one we extracted in Listing 10-3 that finds
-the largest `i32` in a slice. The `largest_char` function finds the largest
-`char` in a slice. The function bodies have the same code, so let’s eliminate
-the duplication by introducing a generic type parameter in a single function.
+Funcția `largest_i32`, pe care am extras-o în Listarea 10-3, localizează cel mai mare `i32` dintr-o secțiune. Funcția `largest_char` identifică cel mai mare `char` dintr-o secțiune. Cum ambele funcții au corpuri identice, vom elimina duplicarea introducând un parametru de tip generic într-o funcție singulară.
 
-To parameterize the types in a new single function, we need to name the type
-parameter, just as we do for the value parameters to a function. You can use
-any identifier as a type parameter name. But we’ll use `T` because, by
-convention, type parameter names in Rust are short, often just a letter, and
-Rust’s type-naming convention is UpperCamelCase. Short for “type,” `T` is the
-default choice of most Rust programmers.
+Pentru a parametriza tipurile în noua funcție singulară, trebuie să numim parametrul de tip, la fel cum nominalizăm parametrii valorici ai unei funcții. Orice identificator poate fi folosit ca nume de parametru de tip. Totuși, ne vom folosi de `T` conform convenției uzuale în Rust, unde numele parametrilor de tip sunt scurte, frecvent doar o literă, și urmează stilul de denumire UpperCamelCase. `T`, fiind prescurtarea pentru „type”, este alegerea preferată de majoritatea dezvoltatorilor de Rust.
 
-When we use a parameter in the body of the function, we have to declare the
-parameter name in the signature so the compiler knows what that name means.
-Similarly, when we use a type parameter name in a function signature, we have
-to declare the type parameter name before we use it. To define the generic
-`largest` function, place type name declarations inside angle brackets, `<>`,
-between the name of the function and the parameter list, like this:
+Când utilizăm un parametru în corpul funcției, trebuie să îl declarăm în semnătură pentru ca compilatorul să înțeleagă la ce ne referim. În mod similar, atunci când utilizăm un nume pentru un parametru de tip în semnătura unei funcții, trebuie să declarăm acest nume de tip înainte de a-l folosi. Pentru a defini funcția generică `largest`, vom insera numele de tip în interiorul parantezelor unghiulare, `<>`, așezate între numele funcției și lista de parametri, în felul următor:
 
 ```rust,ignore
 fn largest<T>(list: &[T]) -> &T {
 ```
 
-We read this definition as: the function `largest` is generic over some type
-`T`. This function has one parameter named `list`, which is a slice of values
-of type `T`. The `largest` function will return a reference to a value of the
-same type `T`.
+Descifrăm această definiție în felul următor: funcția `largest` funcționează generic pentru un anumit tip `T`. Funcția dispune de un parametru denumit `list`, care este o secțiune de elemente de tip `T`. Funcția `largest` va returna o referință către o valoare de același tip `T`.
 
-Listing 10-5 shows the combined `largest` function definition using the generic
-data type in its signature. The listing also shows how we can call the function
-with either a slice of `i32` values or `char` values. Note that this code won’t
-compile yet, but we’ll fix it later in this chapter.
+Listarea 10-5 ne oferă definiția combinată a funcției `largest`, care incorporează tipul de date generic în semnătura sa. Listarea ilustrează și cum putem invoca funcția folosind fie o secțiune de valori `i32`, fie una de `char`. Observăm că acest cod nu va compila încă, dar vom adresa această problemă mai târziu în capitul curent.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-05/src/main.rs}}
 ```
 
-<span class="caption">Listing 10-5: The `largest` function using generic type
-parameters; this doesn’t yet compile</span>
+<span class="caption">Listarea 10-5: Funcția `largest` utilizând parametrii de tip generic; în stadiul actual codul nu se compilează</span>
 
-If we compile this code right now, we’ll get this error:
+Dacă încercăm să compilăm acest cod acum, ne vom confrunta cu următoarea eroare:
 
 ```console
 {{#include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-05/output.txt}}
 ```
 
-The help text mentions `std::cmp::PartialOrd`, which is a *trait*, and we’re
-going to talk about traits in the next section. For now, know that this error
-states that the body of `largest` won’t work for all possible types that `T`
-could be. Because we want to compare values of type `T` in the body, we can
-only use types whose values can be ordered. To enable comparisons, the standard
-library has the `std::cmp::PartialOrd` trait that you can implement on types
-(see Appendix C for more on this trait). By following the help text's
-suggestion, we restrict the types valid for `T` to only those that implement
-`PartialOrd` and this example will compile, because the standard library
-implements `PartialOrd` on both `i32` and `char`.
+Mesajul de ajutor ne îndreaptă atenția spre `std::cmp::PartialOrd`, care este o *trăsătură*, subiect ce va fi abordat în secțiunea următoare. Pentru moment, este important să înțelegem că această eroare ne transmite că implementarea funcției `largest` nu va opera corect pentru toate tipurile posibile ale lui `T`. Pentru că dorim să comparăm valorile de tip `T` în corpul funcției, ne limităm la acele tipuri ale căror valori pot fi comparate în ordine. Biblioteca standard facilitează acest lucru prin intermediul trăsăturii `std::cmp::PartialOrd`, pe care o puteți implementa pentru diverse tipuri (pentru mai multe detalii referitoare la această trăsătură, consultați Anexa C). Urmând sugestia din mesajul de ajutor, vom restricționa tipurile valide pentru `T` la cele care implementează `PartialOrd`, și astfel exemplul nostru va compila fără probleme, dat fiind că biblioteca standard furnizează implementări pentru `PartialOrd` atât pentru tipul `i32`, cât și pentru `char`.
 
-### In Struct Definitions
+### În definiția structurilor
 
-We can also define structs to use a generic type parameter in one or more
-fields using the `<>` syntax. Listing 10-6 defines a `Point<T>` struct to hold
-`x` and `y` coordinate values of any type.
+Noi putem defini structuri care să încorporeze unul sau mai multe câmpuri care folosesc parametri de tip generic, prin intermediul sintaxei cu paranteze unghiulare `<>`. Listarea 10-6 înfățișează definiția structurii `Point<T>`, care reține valori ale coordonatelor `x` și `y` de orice tip.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-06/src/main.rs}}
 ```
 
-<span class="caption">Listing 10-6: A `Point<T>` struct that holds `x` and `y`
-values of type `T`</span>
+<span class="caption">Listarea 10-6: O structură `Point<T>` ce conține valori `x` și `y` de tip `T`</span>
 
-The syntax for using generics in struct definitions is similar to that used in
-function definitions. First, we declare the name of the type parameter inside
-angle brackets just after the name of the struct. Then we use the generic type
-in the struct definition where we would otherwise specify concrete data types.
+Utilizarea genericilor în definirea structurilor urmează o sintaxă similară cu aceea din definițiile funcțiilor. Inițial, numele parametrului de tip generic e declarat între paranteze unghiulare după denumirea structurii. În continuare, folosim tipul generic în cadrul definiției structurii în locul unde, de obicei, sunt specificate tipuri de date fixe.
 
-Note that because we’ve used only one generic type to define `Point<T>`, this
-definition says that the `Point<T>` struct is generic over some type `T`, and
-the fields `x` and `y` are *both* that same type, whatever that type may be. If
-we create an instance of a `Point<T>` that has values of different types, as in
-Listing 10-7, our code won’t compile.
+Este esențial să avem în vedere că, prin utilizarea unui unic tip generic în definirea `Point<T>`, noi comunicăm că structura `Point<T>` este generică peste un anumit tip `T`, și că câmpurile `x` și `y` sunt *în ambele situații* de același tip, oricare ar fi acesta. Astfel, dacă creăm o instanță `Point<T>` cu valori ale tipurilor diferite, așa cum arată Listarea 10-7, codul nu va fi compilabil.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,ignore,does_not_compile
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-07/src/main.rs}}
 ```
 
-<span class="caption">Listing 10-7: The fields `x` and `y` must be the same
-type because both have the same generic data type `T`.</span>
+<span class="caption">Listarea 10-7: Câmpurile `x` și `y` trebuie să fie de același tip din cauză că ambele folosesc tipul de date generic `T`.</span>
 
-In this example, when we assign the integer value 5 to `x`, we let the compiler
-know that the generic type `T` will be an integer for this instance of
-`Point<T>`. Then when we specify 4.0 for `y`, which we’ve defined to have the
-same type as `x`, we’ll get a type mismatch error like this:
+În exemplul de față, o dată ce atribuim `x`-ului valoarea întreagă 5, îi semnalăm compilatorului că pentru această instanță de `Point<T>`, tipul generic `T` va fi un întreg. Apoi, dacă pentru `y` specificăm valoarea 4.0, care ar trebui să fie de același tip ca `x`, vom întâmpina o eroare de incompatibilitate a tipurilor, după cum urmează:
 
 ```console
 {{#include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-07/output.txt}}
 ```
 
-To define a `Point` struct where `x` and `y` are both generics but could have
-different types, we can use multiple generic type parameters. For example, in
-Listing 10-8, we change the definition of `Point` to be generic over types `T`
-and `U` where `x` is of type `T` and `y` is of type `U`.
+Dacă dorim să definim o structură `Point` în care `x` și `y` să fie generice și să accepte tipuri diferite, ne putem folosi de parametri de tip generic multipli. Ca exemplu, în Listarea 10-8, am modificat definiția lui `Point` pentru a deveni generică peste tipurile de date `T` și `U`, unde `x` este de tip `T` și `y` de tip `U`.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-08/src/main.rs}}
 ```
 
-<span class="caption">Listing 10-8: A `Point<T, U>` generic over two types so
-that `x` and `y` can be values of different types</span>
+<span class="caption">Listarea 10-8: Structura `Point<T, U>`, generică peste două tipuri, permițând ca `x` și `y` să fie de tipuri diferite</span>
 
-Now all the instances of `Point` shown are allowed! You can use as many generic
-type parameters in a definition as you want, but using more than a few makes
-your code hard to read. If you're finding you need lots of generic types in
-your code, it could indicate that your code needs restructuring into smaller
-pieces.
+Acum fiecare dintre exemplele prezentate pentru `Point` sunt posibile! Este permisă utilizarea unei varietăți de parametri de tip generic în definiția unei structuri, însă un exces în acest sens poate mări complexitatea codului și îl face greu de urmărit. Dacă-ți dai seama că ai nevoie de multe tipuri generice în codul tău, probabil ar fi benefică o restructurare pentru simplificarea codului.
 
-### In Enum Definitions
+### În definiția enumerărilor
 
-As we did with structs, we can define enums to hold generic data types in their
-variants. Let’s take another look at the `Option<T>` enum that the standard
-library provides, which we used in Chapter 6:
+Ca și în cazul structurilor, putem defini enumerări ce includ tipuri de date generice în variantele lor. Să revizuim enumerarea `Option<T>`, pusă la dispoziție de biblioteca standard, pe care am utilizat-o anterior în Capitolul 6:
 
 ```rust
 enum Option<T> {
@@ -161,15 +99,9 @@ enum Option<T> {
 }
 ```
 
-This definition should now make more sense to you. As you can see, the
-`Option<T>` enum is generic over type `T` and has two variants: `Some`, which
-holds one value of type `T`, and a `None` variant that doesn’t hold any value.
-By using the `Option<T>` enum, we can express the abstract concept of an
-optional value, and because `Option<T>` is generic, we can use this abstraction
-no matter what the type of the optional value is.
+Această definiție ar trebui acum să fie mai inteligibilă pentru tine. După cum poți vedea, enumerarea `Option<T>` este generică peste tipul `T` și are două variante: `Some`, care include o valoare de tipul `T`, și `None`, care nu include nicio valoare. Utilizând enumerarea `Option<T>`, putem exprima conceptul abstract al unei valori facultative și, fiindcă `Option<T>` este generic, această noțiune poate fi aplicată indiferent de tipul valorii facultative.
 
-Enums can use multiple generic types as well. The definition of the `Result`
-enum that we used in Chapter 9 is one example:
+De asemenea, enumerările pot folosi mai multe tipuri generice. Definiția enumerării `Result`, pe care am folosit-o în Capitolul 9, este un astfel de exemplu:
 
 ```rust
 enum Result<T, E> {
@@ -178,132 +110,70 @@ enum Result<T, E> {
 }
 ```
 
-The `Result` enum is generic over two types, `T` and `E`, and has two variants:
-`Ok`, which holds a value of type `T`, and `Err`, which holds a value of type
-`E`. This definition makes it convenient to use the `Result` enum anywhere we
-have an operation that might succeed (return a value of some type `T`) or fail
-(return an error of some type `E`). In fact, this is what we used to open a
-file in Listing 9-3, where `T` was filled in with the type `std::fs::File` when
-the file was opened successfully and `E` was filled in with the type
-`std::io::Error` when there were problems opening the file.
+Enumerarea `Result` este generică peste două tipuri, `T` și `E`, și încorporează două variante: `Ok`, ce include o valoare de tip `T`, și `Err`, ce include o valoare de tip `E`. Această definiție facilitează folosirea enumerării `Result` în orice context avem o operațiune ce ar putea avea succes (întorcând o valoare de un anumit tip `T`) sau ar putea eșua (întorcând o eroare de un anumit tip `E`). Aceasta este metoda pe care am aplicat-o atunci când am deschis un fișier în Listarea 9-3, unde `T` a fost înlocuit cu tipul `std::fs::File` pentru un caz de succes și `E` a fost înlocuit cu `std::io::Error` pentru cazurile de eroare în deschiderea fișierului.
 
-When you recognize situations in your code with multiple struct or enum
-definitions that differ only in the types of the values they hold, you can
-avoid duplication by using generic types instead.
+Atunci când întâmpini în codul tău situații în care multiple structuri sau enumerări se diferențiază doar prin tipul valorilor pe care le conțin, poți evita repetiția prin aplicarea tipurilor generice.
 
-### In Method Definitions
+### În definiția metodelor
 
-We can implement methods on structs and enums (as we did in Chapter 5) and use
-generic types in their definitions, too. Listing 10-9 shows the `Point<T>`
-struct we defined in Listing 10-6 with a method named `x` implemented on it.
+Noi putem implementa metode pe structuri și enumerări, așa cum am făcut în Capitolul 5, utilizând și tipuri generice în definițiile lor. În Listarea 10-9 este prezentată structura `Point<T>`, definită anterior în Listarea 10-6, cu o metodă numită `x` implementată pe ea.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-09/src/main.rs}}
 ```
 
-<span class="caption">Listing 10-9: Implementing a method named `x` on the
-`Point<T>` struct that will return a reference to the `x` field of type
-`T`</span>
+<span class="caption">Listarea 10-9: Implementarea unei metode denumite `x` pe structura `Point<T>`, care returnează o referință către câmpul `x` de tip `T`</span>
 
-Here, we’ve defined a method named `x` on `Point<T>` that returns a reference
-to the data in the field `x`.
+Aici, am definit o metodă `x` pe `Point<T>` care oferă o referință către datele din câmpul `x`.
 
-Note that we have to declare `T` just after `impl` so we can use `T` to specify
-that we’re implementing methods on the type `Point<T>`. By declaring `T` as a
-generic type after `impl`, Rust can identify that the type in the angle
-brackets in `Point` is a generic type rather than a concrete type. We could
-have chosen a different name for this generic parameter than the generic
-parameter declared in the struct definition, but using the same name is
-conventional. Methods written within an `impl` that declares the generic type
-will be defined on any instance of the type, no matter what concrete type ends
-up substituting for the generic type.
+Este necesar să declarăm `T` imediat după `impl` pentru a putea folosi `T` în specificarea că implementăm metode pe structura `Point<T>`. Declarând `T` ca tip generic după `impl`, Rust înțelege că tipul din parantezele unghiulare din `Point` este generic și nu concret. Desigur, am fi putut alege un nume diferit pentru acest parametru generic, comparativ cu cel din definiția structurii, dar convenția sugerează utilizarea aceluiași nume. Metodele definite într-un bloc `impl` care declară tipul generic vor fi aplicabile pe orice instanță de `Point<T>`, indiferent de substituția tipului generic cu un tip concret.
 
-We can also specify constraints on generic types when defining methods on the
-type. We could, for example, implement methods only on `Point<f32>` instances
-rather than on `Point<T>` instances with any generic type. In Listing 10-10 we
-use the concrete type `f32`, meaning we don’t declare any types after `impl`.
+Putem impune, de asemenea, anumite restricții asupra tipurilor generice când definim metode pe un anumit tip. De exemplu, putem implementa metode exclusiv pe instanțe de `Point<f32>` și nu pe `Point<T>` cu orice tip generic. În Listarea 10-10, utilizăm tipul concret `f32`, fără a declarăm tipuri după `impl`.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-10/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 10-10: An `impl` block that only applies to a
-struct with a particular concrete type for the generic type parameter `T`</span>
+<span class="caption">Listarea 10-10: Un bloc `impl` specific pentru o structură cu un tip concret dat pentru parametrul generic `T`</span>
 
-This code means the type `Point<f32>` will have a `distance_from_origin`
-method; other instances of `Point<T>` where `T` is not of type `f32` will not
-have this method defined. The method measures how far our point is from the
-point at coordinates (0.0, 0.0) and uses mathematical operations that are
-available only for floating point types.
+Prin acest cod, `Point<f32>` va avea o metodă `distance_from_origin`, în timp ce alte instanțe de `Point<T>`, unde `T` nu este `f32`, nu vor avea definită această metodă. Metoda calculează cât de departe este un punct de originea de coordonate (0.0, 0.0), folosind operațiuni matematice specifice pentru tipurile cu virgulă mobilă.
 
-Generic type parameters in a struct definition aren’t always the same as those
-you use in that same struct’s method signatures. Listing 10-11 uses the generic
-types `X1` and `Y1` for the `Point` struct and `X2` `Y2` for the `mixup` method
-signature to make the example clearer. The method creates a new `Point`
-instance with the `x` value from the `self` `Point` (of type `X1`) and the `y`
-value from the passed-in `Point` (of type `Y2`).
+Parametrii generici din definiția unei structuri nu trebuie să corespundă întotdeauna cu cei din semnăturile metodelor respectivei structuri. Listarea 10-11 folosește tipurile generice `X1` și `Y1` pentru structura `Point` și `X2`, `Y2` pentru semnătura metodei `mixup`, pentru a ilustra mai clar concepția. Metoda creează o nouă instanță `Point` cu valoarea `x` din instanța `self` de tip `X1` și valoarea `y` din instanța de `Point` primită ca argument, de tip `Y2`.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-11/src/main.rs}}
 ```
 
-<span class="caption">Listing 10-11: A method that uses generic types different
-from its struct’s definition</span>
+<span class="caption">Listarea 10-11: O metodă care utilizează tipuri generice diferite de cele ale definiției structurii sale</span>
 
-In `main`, we’ve defined a `Point` that has an `i32` for `x` (with value `5`)
-and an `f64` for `y` (with value `10.4`). The `p2` variable is a `Point` struct
-that has a string slice for `x` (with value `"Hello"`) and a `char` for `y`
-(with value `c`). Calling `mixup` on `p1` with the argument `p2` gives us `p3`,
-which will have an `i32` for `x`, because `x` came from `p1`. The `p3` variable
-will have a `char` for `y`, because `y` came from `p2`. The `println!` macro
-call will print `p3.x = 5, p3.y = c`.
+În funcția `main`, am definit un `Point` cu un `i32` pentru `x` (valoare `5`) și un `f64` pentru `y` (valoare `10.4`). Variabila `p2` este un `Point` care conține o secțiune de string pentru `x` (cu valoarea `"Hello"`) și un `char` pentru `y` (cu valoarea `c`). Apelând metoda `mixup` pe `p1` cu argumentul `p2` generăm variabila `p3`, ce va prelua valoarea `x` de tip `i32` de la `p1` și valoarea `y` de tip `char` de la `p2`. Apelul macro-ului `println!` va afișa: `p3.x = 5, p3.y = c`.
 
-The purpose of this example is to demonstrate a situation in which some generic
-parameters are declared with `impl` and some are declared with the method
-definition. Here, the generic parameters `X1` and `Y1` are declared after
-`impl` because they go with the struct definition. The generic parameters `X2`
-and `Y2` are declared after `fn mixup`, because they’re only relevant to the
-method.
+Exemplul servește la demonstrarea unei situații în care unii parametri generici sunt definiți în blocul `impl` și alții sunt incluși în definiția metodei propriu-zise. În acest context, parametrii generici `X1` și `Y1` sunt declarați alături de `impl` deoarece sunt asociați cu definiția structurii, în vreme ce `X2` și `Y2` sunt introduși odată cu definiția funcției `mixup`, având relevanță doar în contextul acelei metode.
 
-### Performance of Code Using Generics
+### Performanța codului folosind generici
 
-You might be wondering whether there is a runtime cost when using generic type
-parameters. The good news is that using generic types won't make your program run
-any slower than it would with concrete types.
+Ai putea să te întrebi dacă folosirea parametrilor de tip generic implică un cost la rulare. Vestea excelentă este că utilizarea genericilor nu va încetini executarea programului tău comparativ cu folosirea tipurilor concrete.
 
-Rust accomplishes this by performing monomorphization of the code using
-generics at compile time. *Monomorphization* is the process of turning generic
-code into specific code by filling in the concrete types that are used when
-compiled. In this process, the compiler does the opposite of the steps we used
-to create the generic function in Listing 10-5: the compiler looks at all the
-places where generic code is called and generates code for the concrete types
-the generic code is called with.
+Rust atinge acest performanță prin monomorfizarea codului cu generici în timpul compilării. *Monomorfizarea* este procesul prin care codul generic este transformat în cod specific, prin completarea cu tipurile concrete utilizate în momentul compilării. În acest proces, compilatorul face contrariul demersurilor noastre din crearea funcției generice prezentată în Listarea 10-5: acesta analizează toate locurile unde este invocat codul generic și generează cod pentru tipurile concrete utilizate.
 
-Let’s look at how this works by using the standard library’s generic
-`Option<T>` enum:
+Explorăm acest mecanism prin intermediul enum-ului generic `Option<T>` din biblioteca standardă a limbajului Rust:
 
 ```rust
 let integer = Some(5);
 let float = Some(5.0);
 ```
 
-When Rust compiles this code, it performs monomorphization. During that
-process, the compiler reads the values that have been used in `Option<T>`
-instances and identifies two kinds of `Option<T>`: one is `i32` and the other
-is `f64`. As such, it expands the generic definition of `Option<T>` into two
-definitions specialized to `i32` and `f64`, thereby replacing the generic
-definition with the specific ones.
+La compilarea acestui cod, Rust efectuează monomorfizarea. Compilatorul identifică valorile folosite în instanțele `Option<T>` și recunoaște două variante ale lui `Option<T>`: una pentru `i32` și alta pentru `f64`. În consecință, extinde definiția generică a `Option<T>` în două versiuni specializate pentru `i32` și `f64`, substituind astfel definiția generică.
 
-The monomorphized version of the code looks similar to the following (the
-compiler uses different names than what we’re using here for illustration):
+Versiunea monomorfizată a codului ar putea arăta astfel (compilatorul folosește denumiri diferite de cele alese de noi aici pentru exemplificare):
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 enum Option_i32 {
@@ -322,9 +192,4 @@ fn main() {
 }
 ```
 
-The generic `Option<T>` is replaced with the specific definitions created by
-the compiler. Because Rust compiles generic code into code that specifies the
-type in each instance, we pay no runtime cost for using generics. When the code
-runs, it performs just as it would if we had duplicated each definition by
-hand. The process of monomorphization makes Rust’s generics extremely efficient
-at runtime.
+Genericul `Option<T>` este substituit cu definițiile specifice generate de compilator. Deoarece Rust transformă codul generic în cod care precizează tipul pentru fiecare instanță, nu întâmpinăm niciun cost suplimentar la rulare atunci când folosim genericii. Astfel, când codul este executat, performanța este echivalentă cu cea pe care am obține-o dacă am duplica manual fiecare definiție. Procesul de monomorfizare face ca genericii din Rust să fie extrem de performanți la executare.

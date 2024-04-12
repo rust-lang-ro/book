@@ -1,32 +1,27 @@
-# Writing Automated Tests
+# Testare automatizată în Rust
 
-In his 1972 essay “The Humble Programmer,” Edsger W. Dijkstra said that
-“Program testing can be a very effective way to show the presence of bugs, but
-it is hopelessly inadequate for showing their absence.” That doesn’t mean we
-shouldn’t try to test as much as we can!
+În eseu din 1972 intitulat "The Humble Programmer", Edsger W. Dijkstra remarcă faptul că
+"Testarea programelor poate fi un mijloc foarte eficace de a evidenția prezența defectelor, însă
+este total inadecvată pentru a garanta absența lor." Aceasta nu înseamnă că
+nu ar trebui să ne străduim să testăm tot ce putem!
 
-Correctness in our programs is the extent to which our code does what we intend
-it to do. Rust is designed with a high degree of concern about the correctness
-of programs, but correctness is complex and not easy to prove. Rust’s type
-system shoulders a huge part of this burden, but the type system cannot catch
-everything. As such, Rust includes support for writing automated software tests.
+Corectitudinea în programele noastre se referă la măsura în care codul nostru efectuează ceea ce ne-am propus
+să realizeze. Rust este conceput cu o atenție sporită asupra corectitudinii
+programelor, dar această corectitudine este complexă și dificil de atestat. Sistemul de tipuri din Rust
+poartă o bună parte din această responsabilitate, însă sistemul de tipuri nu poate intercepta
+toate problemele. Din acest motiv, Rust oferă suport pentru scrierea de teste automate.
 
-Say we write a function `add_two` that adds 2 to whatever number is passed to
-it. This function’s signature accepts an integer as a parameter and returns an
-integer as a result. When we implement and compile that function, Rust does all
-the type checking and borrow checking that you’ve learned so far to ensure
-that, for instance, we aren’t passing a `String` value or an invalid reference
-to this function. But Rust *can’t* check that this function will do precisely
-what we intend, which is return the parameter plus 2 rather than, say, the
-parameter plus 10 or the parameter minus 50! That’s where tests come in.
+Luăm cazul în care compunem o funcție `add_two` care adaugă 2 la numărul primit ca argument.
+Această funcție are o semnătură care primește un integer ca parametru și returnează un
+integer ca rezultat. Implementând și compilând această funcție, Rust efectuează toate
+verificările de tip și de împrumut pe care le-am studiat până acum pentru a ne asigura că, de exemplu, nu introducem un `String` sau o referință nevalidă
+în această funcție. Dar, Rust *nu poate* confirma dacă funcția va executa exact
+ce dorim noi, care este să returneze parametrul adunat cu 2 în locul parametrului adunat cu 10 sau scăzut cu 50! Pentru acest lucru sunt indispensabile testele.
 
-We can write tests that assert, for example, that when we pass `3` to the
-`add_two` function, the returned value is `5`. We can run these tests whenever
-we make changes to our code to make sure any existing correct behavior has not
-changed.
+Putem crea teste care susțin, de pildă, că atunci când pasăm `3` la
+funcția `add_two`, ieșirea este `5`. Aceste teste le putem executa ori de câte ori
+facem schimbări la cod pentru a verifica faptul că niciun comportament corect deja existent
+nu a fost afectat.
 
-Testing is a complex skill: although we can’t cover every detail about how to
-write good tests in one chapter, we’ll discuss the mechanics of Rust’s testing
-facilities. We’ll talk about the annotations and macros available to you when
-writing your tests, the default behavior and options provided for running your
-tests, and how to organize tests into unit tests and integration tests.
+Testarea este o capacitate complexă: deși nu putem acoperi toate detaliile despre cum se
+scriu teste de înaltă calitate într-un singur capitol, vom trata mecanismele sistemului de testare din Rust. Vom discuta despre adnotațiile și macro-urile pe care le aveți la dispoziție când redactați teste, comportamentul implicit și opțiunile de rulare a testelor, și cum să clasificăm testele în teste de unitate și teste de integrare.

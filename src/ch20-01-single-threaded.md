@@ -1,28 +1,14 @@
-## Building a Single-Threaded Web Server
+## Construirea unui server web cu un singur fir de execuție
 
-We’ll start by getting a single-threaded web server working. Before we begin,
-let’s look at a quick overview of the protocols involved in building web
-servers. The details of these protocols are beyond the scope of this book, but
-a brief overview will give you the information you need.
+Vom începe prin a pune în funcțiune un server web care rulează pe un singur fir de execuție (sau *thread*). Înainte de a ne apuca de treabă, să aruncăm o privire sumară asupra protocoalelor implicate în construcția serverelor web. Detaliile profunde ale acestor protocoale depășesc scopul acestei cărți, dar o înțelegere elementară ne va furniza cunoștințele necesare.
 
-The two main protocols involved in web servers are *Hypertext Transfer
-Protocol* *(HTTP)* and *Transmission Control Protocol* *(TCP)*. Both protocols
-are *request-response* protocols, meaning a *client* initiates requests and a
-*server* listens to the requests and provides a response to the client. The
-contents of those requests and responses are defined by the protocols.
+Principalele două protocoale folosite în serverele web sunt *Hypertext Transfer Protocol* *(HTTP)* și *Transmission Control Protocol* *(TCP)*. Acestea sunt protocoale de tip *request-response*, prin care un *client* inițiază solicitări iar un *server* le recepționează și furnizează un răspuns corespunzător clientului. Conținutul specific al cererilor și răspunsurilor este stipulat de către aceste protocoale.
 
-TCP is the lower-level protocol that describes the details of how information
-gets from one server to another but doesn’t specify what that information is.
-HTTP builds on top of TCP by defining the contents of the requests and
-responses. It’s technically possible to use HTTP with other protocols, but in
-the vast majority of cases, HTTP sends its data over TCP. We’ll work with the
-raw bytes of TCP and HTTP requests and responses.
+TCP este protocolul de fundament, ce explică mecanismele de transfer al informațiilor între servere, fără a detalia natura acestor informații. Pe de altă parte, HTTP se suprapune peste TCP, stabilind conținutul specific al solicitărilor și răspunsurilor. Deși este posibilă utilizarea HTTP în conjuncție cu alte protocoale, în majoritatea covârșitoare a situațiilor, HTTP își expediază datele prin TCP. Vom lucra direct cu octeții nealterați ai cererilor și răspunsurilor oferite de TCP și HTTP.
 
-### Listening to the TCP Connection
+### Ascultarea unei conexiuni TCP
 
-Our web server needs to listen to a TCP connection, so that’s the first part
-we’ll work on. The standard library offers a `std::net` module that lets us do
-this. Let’s make a new project in the usual fashion:
+Serverul nostru web trebuie să fie capabil să asculte o conexiune TCP, iar aceasta este prima parte la care ne vom concentra. Biblioteca standard ne oferă un modul `std::net` prin care putem realiza acest lucru. Să creăm un nou proiect în modul obișnuit:
 
 ```console
 $ cargo new hello
@@ -30,69 +16,25 @@ $ cargo new hello
 $ cd hello
 ```
 
-Now enter the code in Listing 20-1 in *src/main.rs* to start. This code will
-listen at the local address `127.0.0.1:7878` for incoming TCP streams. When it
-gets an incoming stream, it will print `Connection established!`.
-
-<span class="filename">Filename: src/main.rs</span>
+Introdu acum codul din Listarea 20-1 în fișierul *src/main.rs* ca punct de pornire. Acest cod va asculta la adresa locală `127.0.0.1:7878` pentru fluxurile TCP care sosesc. Când un astfel de flux e detectat, programul va afișa mesajul `Connection established!`.
 
 ```rust,no_run
-{{#rustdoc_include ../listings/ch20-web-server/listing-20-01/src/main.rs}}
+{{#rustdoc_include ../listings/ch20-web-server/listing-20-01/src/main.rs}}...
 ```
 
-<span class="caption">Listing 20-1: Listening for incoming streams and printing
-a message when we receive a stream</span>
+<span class="caption">Listarea 20-1: Ascultarea fluxurilor TCP și afișarea unui mesaj la primirea unui flux</span>
 
-Using `TcpListener`, we can listen for TCP connections at the address
-`127.0.0.1:7878`. In the address, the section before the colon is an IP address
-representing your computer (this is the same on every computer and doesn’t
-represent the authors’ computer specifically), and `7878` is the port. We’ve
-chosen this port for two reasons: HTTP isn’t normally accepted on this port so
-our server is unlikely to conflict with any other web server you might have
-running on your machine, and 7878 is *rust* typed on a telephone.
+Utilizând `TcpListener`, putem asculta conexiuni TCP la adresa `127.0.0.1:7878`. În această adresă, partea dinaintea celor două puncte `:` este o adresă IP ce reprezintă computerul tău (fiind același IP pe toate computerele, el nu reprezintă un IP specific autorilor cărții), iar `7878` este portul utilizat. Am ales acest port din două motive: în mod normal HTTP nu operează pe acest port, așadar este improbabil ca serverul nostru să între în conflict cu alte servere web care ar putea fi active pe computerul tău, și 7878 reprezintă cuvântul *rust* pe tastatura unui telefon.
 
-The `bind` function in this scenario works like the `new` function in that it
-will return a new `TcpListener` instance. The function is called `bind`
-because, in networking, connecting to a port to listen to is known as “binding
-to a port.”
+Funcția `bind`, în acest context, funcționează similar cu funcția `new` în sensul că va returna o nouă instanță `TcpListener`. Se numește `bind` (engl. a lega) pentru că în terminologia de rețea, procesul de a asculta un port este cunoscut ca „asocierea cu un port” ("binding to a port").
 
-The `bind` function returns a `Result<T, E>`, which indicates that it’s
-possible for binding to fail. For example, connecting to port 80 requires
-administrator privileges (nonadministrators can listen only on ports higher
-than 1023), so if we tried to connect to port 80 without being an
-administrator, binding wouldn’t work. Binding also wouldn’t work, for example,
-if we ran two instances of our program and so had two programs listening to the
-same port. Because we’re writing a basic server just for learning purposes, we
-won’t worry about handling these kinds of errors; instead, we use `unwrap` to
-stop the program if errors happen.
+Funcția `bind` returnează un `Result<T, E>`, sugerând că există posibilitatea ca asocierile să fie nereușite. De exemplu, pentru a asculta pe portul 80 sunt necesare privilegii de administrator (non-administratorii pot asculta doar pe porturi mai mari de 1023), deci dacă am încerca să ascultăm pe portul 80 fără a fi administratori, asocierea nu ar reuși. Asocierea ar eșua de asemenea dacă am rula două instanțe ale programului nostru și astfel două programe ar asculta același port. Întrucât construim un server simplu doar în scop educațional, nu ne vom preocupa de gestionarea acestor tipuri de erori; în schimb, vom folosi `unwrap` pentru a opri programul dacă ele apar.
 
-The `incoming` method on `TcpListener` returns an iterator that gives us a
-sequence of streams (more specifically, streams of type `TcpStream`). A single
-*stream* represents an open connection between the client and the server. A
-*connection* is the name for the full request and response process in which a
-client connects to the server, the server generates a response, and the server
-closes the connection. As such, we will read from the `TcpStream` to see what
-the client sent and then write our response to the stream to send data back to
-the client. Overall, this `for` loop will process each connection in turn and
-produce a series of streams for us to handle.
+Metoda `incoming` de pe `TcpListener` ne întoarce un iterator care ne oferă o secvență de fluxuri (mai exact, fluxuri de tip `TcpStream`). Un singur *flux* constituie o conexiune deschisă între client și server. O *conexiune* este denumirea pentru tot procesul de cerere și răspuns, în care clientul se conectează la server, serverul generează un răspuns și apoi serverul închide conexiunea. Astfel, vom citi din `TcpStream` pentru a afla ce a trimis clientul și vom scrie răspunsul nostru în flux pentru a transmite datele înapoi clientului. Per total, acest ciclu `for` va procesa fiecare conexiune pe rând, producând o serie de fluxuri pe care trebuie să le gestionăm.
 
-For now, our handling of the stream consists of calling `unwrap` to terminate
-our program if the stream has any errors; if there aren’t any errors, the
-program prints a message. We’ll add more functionality for the success case in
-the next listing. The reason we might receive errors from the `incoming` method
-when a client connects to the server is that we’re not actually iterating over
-connections. Instead, we’re iterating over *connection attempts*. The
-connection might not be successful for a number of reasons, many of them
-operating system specific. For example, many operating systems have a limit to
-the number of simultaneous open connections they can support; new connection
-attempts beyond that number will produce an error until some of the open
-connections are closed.
+Pentru moment, gestionarea fluxului se rezumă la utilizarea funcției `unwrap` pentru a opri programul nostru dacă fluxul întâmpină erori; dacă nu există erori, programul va afișa un mesaj. Vom extinde funcționalitatea pentru situația de succes în următoarea listare. Motivul pentru care s-ar putea să primim erori de la metoda `incoming` atunci când un client încearcă să se conecteze la server este faptul că nu iterăm propriu-zis peste conexiuni, ci peste *încercări de conectare*. Conexiunea poate eșua din diverse motive, multe fiind specifice sistemului de operare. De exemplu, multe sisteme de operare limitează numărul de conexiuni deschise simultan pe care le pot suporta; încercările de a stabili noi conexiuni peste acest număr vor rezulta într-o eroare până când anumite conexiuni deschise sunt închise.
 
-Let’s try running this code! Invoke `cargo run` in the terminal and then load
-*127.0.0.1:7878* in a web browser. The browser should show an error message
-like “Connection reset,” because the server isn’t currently sending back any
-data. But when you look at your terminal, you should see several messages that
-were printed when the browser connected to the server!
+Să încercăm să executăm acest cod! Rulează `cargo run` în terminal, apoi deschide *127.0.0.1:7878* într-un browser web. Browserul ar trebui să afișeze un mesaj de eroare cum ar fi "Conexiunea s-a resetat", deoarece serverul, în acest moment, nu trimite niciun fel de date înapoi. Dar, privind în terminal, ar trebui să observi mai multe mesaje care s-au afișat când browserul s-a conectat la server!
 
 ```text
      Running `target/debug/hello`
@@ -101,73 +43,35 @@ Connection established!
 Connection established!
 ```
 
-Sometimes, you’ll see multiple messages printed for one browser request; the
-reason might be that the browser is making a request for the page as well as a
-request for other resources, like the *favicon.ico* icon that appears in the
-browser tab.
+Uneori, ai putea observa că sunt afișate mai multe mesaje pentru o singură cerere făcută de browser; cauza ar putea fi aceea că browserul solicită atât pagina, cât și alte resurse, precum iconița *favicon.ico* care apare în tab-ul browserului.
 
-It could also be that the browser is trying to connect to the server multiple
-times because the server isn’t responding with any data. When `stream` goes out
-of scope and is dropped at the end of the loop, the connection is closed as
-part of the `drop` implementation. Browsers sometimes deal with closed
-connections by retrying, because the problem might be temporary. The important
-factor is that we’ve successfully gotten a handle to a TCP connection!
+De asemenea, este posibil ca browserul să încerce să se conecteze de mai multe ori la server deoarece serverul nu transmite nicio dată. Atunci când `stream` iese din domeniul de vizibilitate și este abandonat la sfârșitul buclei, conexiunea se închide automat, acesta fiind parte a comportamentului metodei `drop`. Browserul poate gestiona astfel de conexiuni închise prin efectuarea de noi încercări, presupunând că problema ar putea fi una temporară. Elementul cheie este că am obținut cu succes un descriptor pentru o conexiune TCP!
 
-Remember to stop the program by pressing <span class="keystroke">ctrl-c</span>
-when you’re done running a particular version of the code. Then restart the
-program by invoking the `cargo run` command after you’ve made each set of code
-changes to make sure you’re running the newest code.
+Nu uita să oprești programul apăsând <span class="keystroke">ctrl-c</span> când ai finalizat rularea unei versiuni particulare de cod. Ulterior, repornește programul utilizând comanda `cargo run` după aplicarea fiecărui set de schimbări în cod, pentru a te asigura că rulezi versiunea actualizată a codului.
 
-### Reading the Request
+### Citirea cererii
 
-Let’s implement the functionality to read the request from the browser! To
-separate the concerns of first getting a connection and then taking some action
-with the connection, we’ll start a new function for processing connections. In
-this new `handle_connection` function, we’ll read data from the TCP stream and
-print it so we can see the data being sent from the browser. Change the code to
-look like Listing 20-2.
+Să implementăm funcționalitatea pentru citirea cererii din partea browserului! Pentru a separa responsabilitățile de a obține mai întâi o conexiune și apoi a face o acțiune cu acea conexiune, vom iniția o nouă funcție de procesare a conexiunilor. În această nouă funcție `handle_connection`, vom citi date din fluxul TCP și le vom afișa pentru a vedea informațiile trimise de browser. Actualizează codul să corespundă cu Listarea 20-2.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,no_run
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-02/src/main.rs}}
 ```
 
-<span class="caption">Listing 20-2: Reading from the `TcpStream` and printing
-the data</span>
+<span class="caption">Listarea 20-2: Citirea datelor din `TcpStream` și afișarea lor</span>
 
-We bring `std::io::prelude` and `std::io::BufReader` into scope to get access
-to traits and types that let us read from and write to the stream. In the `for`
-loop in the `main` function, instead of printing a message that says we made a
-connection, we now call the new `handle_connection` function and pass the
-`stream` to it.
+Introducem în context `std::io::prelude` și `std::io::BufReader` pentru a obține acces la trăsăturile și tipurile care ne permit să citim și să scriem pe flux. În bucla `for` din funcția `main`, în loc să afișăm un mesaj care să confirme că s-a realizat o conexiune, acum invocăm noua funcție `handle_connection` și îi pasăm `stream`-ul.
 
-In the `handle_connection` function, we create a new `BufReader` instance that
-wraps a mutable reference to the `stream`. `BufReader` adds buffering by
-managing calls to the `std::io::Read` trait methods for us.
+În interiorul funcției `handle_connection`, creăm o nouă instanță de `BufReader` care cuprinde o referință mutabilă către `stream`. `BufReader` adaugă un buffer prin gestionarea apelurilor la metodologiile trăsăturii `std::io::Read`.
 
-We create a variable named `http_request` to collect the lines of the request
-the browser sends to our server. We indicate that we want to collect these
-lines in a vector by adding the `Vec<_>` type annotation.
+Definim o variabilă numită `http_request` pentru a acumula liniile cererii pe care browserul le trimite către serverul nostru. Specificăm că dorim să adunăm aceste linii într-un vector prin adăugarea adnotării de tip `Vec<_>`.
 
-`BufReader` implements the `std::io::BufRead` trait, which provides the `lines`
-method. The `lines` method returns an iterator of `Result<String,
-std::io::Error>` by splitting the stream of data whenever it sees a newline
-byte. To get each `String`, we map and `unwrap` each `Result`. The `Result`
-might be an error if the data isn’t valid UTF-8 or if there was a problem
-reading from the stream. Again, a production program should handle these errors
-more gracefully, but we’re choosing to stop the program in the error case for
-simplicity.
+`BufReader` implementează trăsătura `std::io::BufRead`, care pune la dispoziție metoda `lines`. Metoda `lines` furnizează un iterator de `Result<String, std::io::Error>`, despărțind fluxul de date la fiecare întâlnire a unui octet de sfârșit de linie. Pentru a extrage fiecare `String`, aplicăm `map` și `unwrap` la fiecare `Result`. `Result` poate fi o eroare dacă datele nu sunt UTF-8 valide sau dacă a apărut o problemă în timpul citirii de pe flux. Într-un context de producție, ar trebui abordate aceste erori mai elegant, dar optăm pentru simplificare prin oprirea programului în cazul unei erori.
 
-The browser signals the end of an HTTP request by sending two newline
-characters in a row, so to get one request from the stream, we take lines until
-we get a line that is the empty string. Once we’ve collected the lines into the
-vector, we’re printing them out using pretty debug formatting so we can take a
-look at the instructions the web browser is sending to our server.
+Browserul indică sfârșitul unei cereri HTTP trimițând două caractere de tip newline în succesiune, așadar pentru a extrage o cerere din flux, citim liniile până când întâlnim o linie care este un string gol. După ce am adunat liniile în vector, le afișăm utilizând formatarea de debug, astfel încât să putem analiza instrucțiunile pe care browserul web le trimite serverului nostru.
 
-Let’s try this code! Start the program and make a request in a web browser
-again. Note that we’ll still get an error page in the browser, but our
-program’s output in the terminal will now look similar to this:
+Să încercăm acest cod! Pornim programul și facem o cerere în browserul web din nou. Observă că în browser vom întâlni în continuare o pagină de eroare, dar ieșirea programului nostru în terminal va arăta acum similar cu acesta:
 
 ```console
 $ cargo run
@@ -192,19 +96,13 @@ Request: [
 ]
 ```
 
-Depending on your browser, you might get slightly different output. Now that
-we’re printing the request data, we can see why we get multiple connections
-from one browser request by looking at the path after `GET` in the first line
-of the request. If the repeated connections are all requesting */*, we know the
-browser is trying to fetch */* repeatedly because it’s not getting a response
-from our program.
+În funcție de browserul tău, este posibil să obții un output ușor diferit. Acum că afișăm datele cererii, putem determina motivele pentru care primim multiple conexiuni dintr-o singură cerere de browser analizând calea după `GET` din prima linie a cererii. Dacă conexiunile repetate sunt toate pentru calea `*/*`, înseamnă că browserul încearcă să acceseze `*/*` de mai multe ori deoarece nu primește un răspuns de la programul nostru.
 
-Let’s break down this request data to understand what the browser is asking of
-our program.
+În continuare să analizăm aceste date pentru a înțelege mai bine ce solicită browserul de la programul nostru.
 
-### A Closer Look at an HTTP Request
+### Examinăm mai detaliat o cerere HTTP
 
-HTTP is a text-based protocol, and a request takes this format:
+HTTP este un protocol bazat pe text și o cerere are formatul următor:
 
 ```text
 Method Request-URI HTTP-Version CRLF
@@ -212,41 +110,23 @@ headers CRLF
 message-body
 ```
 
-The first line is the *request line* that holds information about what the
-client is requesting. The first part of the request line indicates the *method*
-being used, such as `GET` or `POST`, which describes how the client is making
-this request. Our client used a `GET` request, which means it is asking for
-information.
+Prima linie reprezintă *linia de cerere* și conține informații despre ce solicită clientul. Prima parte a liniei de cerere precizează *metoda* utilizată, precum `GET` sau `POST`, ce descrie cum clientul efectuează această cerere. Clientul nostru a folosit o cerere de tip `GET`, ceea ce semnifică că el solicită informații.
 
-The next part of the request line is */*, which indicates the *Uniform Resource
-Identifier* *(URI)* the client is requesting: a URI is almost, but not quite,
-the same as a *Uniform Resource Locator* *(URL)*. The difference between URIs
-and URLs isn’t important for our purposes in this chapter, but the HTTP spec
-uses the term URI, so we can just mentally substitute URL for URI here.
+Următorul segment al liniei de cerere este */*, care indică *Uniform Resource Identifier (URI)* pe care clientul dorește să-l acceseze. Un URI este similar, dar nu identic cu un *Uniform Resource Locator (URL)*. Distincția dintre URI și URL nu este semnificativă în contextul acestui capitol, însă specificația HTTP utilizează termenul URI, astfel putem înlocui mental termenul URL pentru URI.
 
-The last part is the HTTP version the client uses, and then the request line
-ends in a *CRLF sequence*. (CRLF stands for *carriage return* and *line feed*,
-which are terms from the typewriter days!) The CRLF sequence can also be
-written as `\r\n`, where `\r` is a carriage return and `\n` is a line feed. The
-CRLF sequence separates the request line from the rest of the request data.
-Note that when the CRLF is printed, we see a new line start rather than `\r\n`.
+Ultimul segment este versiunea HTTP folosită de client și apoi linia de cerere se încheie cu o *secvență CRLF*. (CRLF înseamnă *carriage return* și *line feed*, termeni din epoca mașinilor de scris!) Secvența CRLF poate fi, de asemenea, reprezentată prin `\r\n`, unde `\r` este carriage return și `\n` este line feed. Secvența CRLF separă linia de cerere de restul datelor cererii. De remarcat că atunci când CRLF este afișat, începe o linie nouă în loc să vedem `\r\n`.
 
-Looking at the request line data we received from running our program so far,
-we see that `GET` is the method, */* is the request URI, and `HTTP/1.1` is the
-version.
+Analizând datele liniei de cerere pe care le-am obținut până în acest moment prin rularea programului nostru, observăm că `GET` este metoda, */* este URI-ul solicitat și `HTTP/1.1` este versiunea utilizată.
 
-After the request line, the remaining lines starting from `Host:` onward are
-headers. `GET` requests have no body.
+După linia de cerere, următoarele linii începând cu `Host:` și continuând sunt anteturile, sau header-ele. Cererile de tip `GET` nu includ un corp.
 
-Try making a request from a different browser or asking for a different
-address, such as *127.0.0.1:7878/test*, to see how the request data changes.
+Încearcă să faci o cerere folosind un alt browser sau solicitând o adresă diferită, de exemplu, *127.0.0.1:7878/test*, pentru a vedea cum se modifică datele cererii.
 
-Now that we know what the browser is asking for, let’s send back some data!
+Acum că înțelegem ce solicită browser-ul, să-i răspundem cu unele date!
 
-### Writing a Response
+### Scrierea unui răspuns
 
-We’re going to implement sending data in response to a client request.
-Responses have the following format:
+Pornim să implementăm transmiterea de date ca răspuns la o solicitare din partea clientului. Răspunsurile urmează acest format:
 
 ```text
 HTTP-Version Status-Code Reason-Phrase CRLF
@@ -254,24 +134,15 @@ headers CRLF
 message-body
 ```
 
-The first line is a *status line* that contains the HTTP version used in the
-response, a numeric status code that summarizes the result of the request, and
-a reason phrase that provides a text description of the status code. After the
-CRLF sequence are any headers, another CRLF sequence, and the body of the
-response.
+Prima linie, cunoscută ca *linie de status*, include versiunea HTTP utilizată în răspuns, un cod de status numeric ce sumarizează rezultatul solicitării și o frază explicativă ce oferă o descriere în text a codului de status. După secvența CRLF, urmează anteturile, încă o secvență CRLF și corpul răspunsului.
 
-Here is an example response that uses HTTP version 1.1, has a status code of
-200, an OK reason phrase, no headers, and no body:
+Avem aici un exemplu de răspuns folosind versiunea HTTP 1.1, cu un cod de status 200, o frază OK explicativă, fără anteturi și fără corp:
 
 ```text
 HTTP/1.1 200 OK\r\n\r\n
 ```
 
-The status code 200 is the standard success response. The text is a tiny
-successful HTTP response. Let’s write this to the stream as our response to a
-successful request! From the `handle_connection` function, remove the
-`println!` that was printing the request data and replace it with the code in
-Listing 20-3.
+Status code 200 reprezintă răspunsul standard pentru o operațiune de succes. Acest text este un mic exemplu de răspuns HTTP reușit. Să trimitem acest răspuns în fluxul nostru ca reacție la o solicitare îndeplinită cu succes! În funcția `handle_connection`, eliminăm comanda `println!` care afișa datele solicitării și o înlocuim cu codul din Listarea 20-3.
 
 <span class="filename">Filename: src/main.rs</span>
 
@@ -279,182 +150,101 @@ Listing 20-3.
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-03/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 20-3: Writing a tiny successful HTTP response to
-the stream</span>
+<span class="caption">Listarea 20-3: Crearea unui răspuns HTTP succint și eficient în fluxul de date</span>
 
-The first new line defines the `response` variable that holds the success
-message’s data. Then we call `as_bytes` on our `response` to convert the string
-data to bytes. The `write_all` method on `stream` takes a `&[u8]` and sends
-those bytes directly down the connection. Because the `write_all` operation
-could fail, we use `unwrap` on any error result as before. Again, in a real
-application you would add error handling here.
+Prima linie nouă stabilește variabila `response` care conține datele mesajului nostru de succes. În continuare, folosim `as_bytes` pe `response` pentru a converti string-ul în octeți. Metoda `write_all` de pe `stream` acceptă un `&[u8]` și trimite acești octeți direct prin conexiune. Folosim `unwrap` pentru a gestiona eventualele erori ce pot apărea în timpul operației `write_all`, ca și în cazurile anterioare. Desigur, într-o aplicație reală ar fi necesară implementarea unei gestionări adecvate a erorilor.
 
-With these changes, let’s run our code and make a request. We’re no longer
-printing any data to the terminal, so we won’t see any output other than the
-output from Cargo. When you load *127.0.0.1:7878* in a web browser, you should
-get a blank page instead of an error. You’ve just hand-coded receiving an HTTP
-request and sending a response!
+Cu aceste modificări implementate, să rulăm codul și să inițiem o solicitare. Cum nu vom mai afișa date în terminal, singura ieșire vizibilă va fi cea de la Cargo. Accesând într-un browser adresa *127.0.0.1:7878*, ar trebui să apară o pagină albă, semn că nu mai există nicio eroare. Felicitări, tocmai ai realizat manual o solicitare HTTP și ai trimis un răspuns corespunzător!
 
-### Returning Real HTML
+### Returnarea de HTML real
 
-Let’s implement the functionality for returning more than a blank page. Create
-the new file *hello.html* in the root of your project directory, not in the
-*src* directory. You can input any HTML you want; Listing 20-4 shows one
-possibility.
+Să dezvoltăm funcționalitatea de a returna mai mult decât o simplă pagină goală. Creează noul fișier *hello.html* în rădăcina directoriului tău de proiect, nu în
+directorul *src*. Poți introduce orice cod HTML dorești; în Listarea 20-4 este prezentată o variantă.
 
-<span class="filename">Filename: hello.html</span>
+<span class="filename">Numele fișierului: hello.html</span>
 
 ```html
 {{#include ../listings/ch20-web-server/listing-20-05/hello.html}}
 ```
 
-<span class="caption">Listing 20-4: A sample HTML file to return in a
-response</span>
+<span class="caption">Listarea 20-4: Un exemplu de fișier HTML pentru a fi returnat ca răspuns</span>
 
-This is a minimal HTML5 document with a heading and some text. To return this
-from the server when a request is received, we’ll modify `handle_connection` as
-shown in Listing 20-5 to read the HTML file, add it to the response as a body,
-and send it.
+Acesta este un document minimal HTML5 cu un titlu și ceva text. Pentru a-l returna de pe server atunci când se primește o cerere, vom modifica `handle_connection` conform celor prezentate în Listarea 20-5 pentru a citi fișierul HTML, adăugându-l la răspuns în calitate de corp, apoi trimițându-l.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,no_run
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-05/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 20-5: Sending the contents of *hello.html* as the
-body of the response</span>
+<span class="caption">Listarea 20-5: Trimiterea conținutului fișierului *hello.html* ca parte a corpului răspunsului</span>
 
-We’ve added `fs` to the `use` statement to bring the standard library’s
-filesystem module into scope. The code for reading the contents of a file to a
-string should look familiar; we used it in Chapter 12 when we read the contents
-of a file for our I/O project in Listing 12-4.
+Am introdus `fs` în instrucțiunea `use` pentru a aduce modulul de sistem de fișiere din biblioteca standard în sfera noastră de aplicabilitate. Codul pentru citirea conținuturilor unui fișier într-un string ți-ar putea fi cunoscut; l-am utilizat în Capitolul 12 când am citit conținuturile unui fișier pentru proiectul nostru I/O, prezentate în Listarea 12-4.
 
-Next, we use `format!` to add the file’s contents as the body of the success
-response. To ensure a valid HTTP response, we add the `Content-Length` header
-which is set to the size of our response body, in this case the size of
-`hello.html`.
+Apoi, utilizăm `format!` pentru a include conținutul fișierului ca parte a corpului răspunsului de succes. Pentru a asigura un răspuns HTTP valid, includeem antetul `Content-Length`, care este stabilit la dimensiunea corpului nostru de răspuns, în acest caz dimensiunea lui `hello.html`.
 
-Run this code with `cargo run` and load *127.0.0.1:7878* in your browser; you
-should see your HTML rendered!
+Execută acest cod folosind `cargo run` și accesează *127.0.0.1:7878* în browser; ar trebui să îți vezi codul HTML afișat!
 
-Currently, we’re ignoring the request data in `http_request` and just sending
-back the contents of the HTML file unconditionally. That means if you try
-requesting *127.0.0.1:7878/something-else* in your browser, you’ll still get
-back this same HTML response. At the moment, our server is very limited and
-does not do what most web servers do. We want to customize our responses
-depending on the request and only send back the HTML file for a well-formed
-request to */*.
+În momentul de față, ignorăm datele din cererea `http_request` și pur și simplu returnăm conținutul fișierului HTML indiferent de alți parametri. Acest lucru înseamnă că dacă încerci să accesezi *127.0.0.1:7878/ceva-altceva* în browserul tău, vei primi același răspuns HTML. În stadiul actual, serverul nostru este destul de limitat și nu efectuează operațiunile pe care le realizează majoritatea serverelor web. Vrem să personalizăm răspunsurile noastre în funcție de cereri și să returnăm fișierul HTML doar pentru cereri corect formulate spre */*.
 
-### Validating the Request and Selectively Responding
+### Validarea cererii și răspuns selectiv
 
-Right now, our web server will return the HTML in the file no matter what the
-client requested. Let’s add functionality to check that the browser is
-requesting */* before returning the HTML file and return an error if the
-browser requests anything else. For this we need to modify `handle_connection`,
-as shown in Listing 20-6. This new code checks the content of the request
-received against what we know a request for */* looks like and adds `if` and
-`else` blocks to treat requests differently.
+Deocamdată, serverul nostru web va returna codul HTML din fișier indiferent de solicitarea clientului. Să introducem o funcționalitate care să verifice dacă navigatorul web solicită */* înainte de a oferi fișierul HTML și să trimitem o eroare dacă se solicită altceva. Pentru acest lucru, este necesar să modificăm `handle_connection`, așa cum e ilustrat în Listarea 20-6. Acest cod nou compară conținutul cererii primite cu formatul unei cereri pentru */* și utilizează construcții `if` și `else` pentru a gestiona diferit cererile.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,no_run
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-06/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 20-6: Handling requests to */* differently from
-other requests</span>
+<span class="caption">Listarea 20-6: Gestionarea diferită a cererilor la */* în comparație cu alte cereri</span>
 
-We’re only going to be looking at the first line of the HTTP request, so rather
-than reading the entire request into a vector, we’re calling `next` to get the
-first item from the iterator. The first `unwrap` takes care of the `Option` and
-stops the program if the iterator has no items. The second `unwrap` handles the
-`Result` and has the same effect as the `unwrap` that was in the `map` added in
-Listing 20-2.
+Ne vom concentra doar asupra primei linii din cererea HTTP, astfel, în loc să citim întreaga cerere într-un vector, folosim `next` pentru a accesa primul element din iterator. Primul `unwrap` tratează `Option` și oprește execuția programului dacă iteratorul nu conține niciun element. Al doilea `unwrap` se ocupă de `Result`, având același rol ca `unwrap`-ul adăugat în `map` din Listarea 20-2.
 
-Next, we check the `request_line` to see if it equals the request line of a GET
-request to the */* path. If it does, the `if` block returns the contents of our
-HTML file.
+În continuare, verificăm dacă `request_line` corespunde cu linia specifică unei cereri GET către calea */*. Dacă este așa, blocul `if` furnizează conținutul fișierului nostru HTML.
 
-If the `request_line` does *not* equal the GET request to the */* path, it
-means we’ve received some other request. We’ll add code to the `else` block in
-a moment to respond to all other requests.
+Dacă `request_line` *nu* corespunde cu cererea GET către calea */*, atunci e clar că am primit o solicitare diferită. Vom adăuga cod blocului `else` în curând, pentru a răspunde la orice altă cerere.
 
-Run this code now and request *127.0.0.1:7878*; you should get the HTML in
-*hello.html*. If you make any other request, such as
-*127.0.0.1:7878/something-else*, you’ll get a connection error like those you
-saw when running the code in Listing 20-1 and Listing 20-2.
+Execută acest cod acum și accesează *127.0.0.1:7878*; ar trebui să primești codul HTML din *hello.html*. Dacă inițiezi o cerere diferită, de exemplu la *127.0.0.1:7878/ceva-altceva*, te vei confrunta cu o eroare de conexiune similară cu cea întâlnită atunci când codul din Listarea 20-1 și Listarea 20-2 era executat.
 
-Now let’s add the code in Listing 20-7 to the `else` block to return a response
-with the status code 404, which signals that the content for the request was
-not found. We’ll also return some HTML for a page to render in the browser
-indicating the response to the end user.
+Acum să includem codul din Listarea 20-7 în blocul `else` pentru a emite un răspuns cu codul de status 404, semnalând astfel că nu a fost găsit conținutul solicitat. De asemenea, vom returna un HTML pentru o pagină ce va fi afișată în browser, indicând utilizatorului final acest răspuns.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,no_run
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-07/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 20-7: Responding with status code 404 and an
-error page if anything other than */* was requested</span>
+<span class="caption">Listarea 20-7: Emiterea unui răspuns cu codul de status 404 și o pagină de eroare când se solicită altceva în loc de */*</span>
 
-Here, our response has a status line with status code 404 and the reason phrase
-`NOT FOUND`. The body of the response will be the HTML in the file *404.html*.
-You’ll need to create a *404.html* file next to *hello.html* for the error
-page; again feel free to use any HTML you want or use the example HTML in
-Listing 20-8.
+Aici, linia de status a răspunsului nostru include codul de status 404 și fraza `NOT FOUND`. Corpul răspunsului va reprezenta HTML-ul conținut în fișierul *404.html*. Trebuie să creezi un fișier *404.html* în directoriul fișierului *hello.html* pentru pagina de eroare; ești liber să folosești orice cod HTML vrei sau să preiei exemplul de HTML din Listarea 20-8.
 
-<span class="filename">Filename: 404.html</span>
+<span class="filename">Numele fișierului: 404.html</span>
 
 ```html
 {{#include ../listings/ch20-web-server/listing-20-07/404.html}}
 ```
 
-<span class="caption">Listing 20-8: Sample content for the page to send back
-with any 404 response</span>
+<span class="caption">Listarea 20-8: Conținut exemplu pentru pagina returnată odată cu răspunsul de 404</span>
 
-With these changes, run your server again. Requesting *127.0.0.1:7878* should
-return the contents of *hello.html*, and any other request, like
-*127.0.0.1:7878/foo*, should return the error HTML from *404.html*.
+După aceste actualizări, rulează din nou serverul tău. Accesarea *127.0.0.1:7878* ar trebui să îți prezinte conținutul din *hello.html*, iar orice altă solicitare, precum *127.0.0.1:7878/foo*, va genera răspunsul HTML de eroare din *404.html*.
 
-### A Touch of Refactoring
+### Un strop de refactorizare
 
-At the moment the `if` and `else` blocks have a lot of repetition: they’re both
-reading files and writing the contents of the files to the stream. The only
-differences are the status line and the filename. Let’s make the code more
-concise by pulling out those differences into separate `if` and `else` lines
-that will assign the values of the status line and the filename to variables;
-we can then use those variables unconditionally in the code to read the file
-and write the response. Listing 20-9 shows the resulting code after replacing
-the large `if` and `else` blocks.
+La momentul actual, blocurile `if` și `else` conțin mult cod repetitiv: amândouă citesc fișiere și scriu conținutul în flux. Diferențele sunt doar linia de status și numele fișierului. Vom simplifica codul, extrăgând aceste diferențe în linii de `if` și `else` separate, care vor atribui valorile pentru linia de status și numele fișierului la variabile; apoi vom utiliza variabilele pentru a citi fișierul și a scrie răspunsul în mod necondiționat. Listarea 20-9 prezintă codul rezultat după înlocuirea blocurilor mari de `if` și `else`.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust,no_run
 {{#rustdoc_include ../listings/ch20-web-server/listing-20-09/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 20-9: Refactoring the `if` and `else` blocks to
-contain only the code that differs between the two cases</span>
+<span class="caption">Listarea 20-9: Refactorizarea blocurilor `if` și `else` pentru a conține numai codul care diferă între cele două cazuri</span>
 
-Now the `if` and `else` blocks only return the appropriate values for the
-status line and filename in a tuple; we then use destructuring to assign these
-two values to `status_line` and `filename` using a pattern in the `let`
-statement, as discussed in Chapter 18.
+În prezent, blocurile `if` și `else` returnează valorile potrivite pentru linia de status și numele fișierului sub formă de tuplă; apoi folosim destructurarea pentru a atribui aceste valori variabilelor `status_line` și `filename`, utilizând un pattern în instrucțiunea `let`, după cum a fost discutat în Capitolul 18.
 
-The previously duplicated code is now outside the `if` and `else` blocks and
-uses the `status_line` and `filename` variables. This makes it easier to see
-the difference between the two cases, and it means we have only one place to
-update the code if we want to change how the file reading and response writing
-work. The behavior of the code in Listing 20-9 will be the same as that in
-Listing 20-8.
+Codul care era duplicat anterior este acum plasat în afara blocurilor `if` și `else` și utilizează variabilele `status_line` și `filename`. Aceasta ne facilitează observarea diferențelor dintre cele două cazuri și înseamnă că avem acum un singur punct unde trebuie să facem modificări dacă dorim să schimbăm modul de citire a fișierelor și de redactare a răspunsurilor. Comportamentul codului din Listarea 20-9 este identic cu cel din Listarea 20-8.
 
-Awesome! We now have a simple web server in approximately 40 lines of Rust code
-that responds to one request with a page of content and responds to all other
-requests with a 404 response.
+Extraordinar! Deținem acum un server web simplu în aproximativ 40 de linii de cod Rust, care răspunde la o cerere cu o pagină de conținut și la toate celelalte cereri cu un răspuns 404.
 
-Currently, our server runs in a single thread, meaning it can only serve one
-request at a time. Let’s examine how that can be a problem by simulating some
-slow requests. Then we’ll fix it so our server can handle multiple requests at
-once.
+Serverul nostru operează momentan într-un singur fir de execuție, ceea ce implică faptul că poate procesa o singură solicitare consecutiv. Să explorăm cum acest aspect poate deveni o problemă simulând câteva cereri lente. Pe urmă, vom îmbunătăți serverul astfel încât să poată gestiona multiple cereri în paralel.

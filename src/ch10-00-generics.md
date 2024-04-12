@@ -1,118 +1,65 @@
-# Generic Types, Traits, and Lifetimes
+# Tipuri generice, trăsături și durate de viață
 
-Every programming language has tools for effectively handling the duplication
-of concepts. In Rust, one such tool is *generics*: abstract stand-ins for
-concrete types or other properties. We can express the behavior of generics or
-how they relate to other generics without knowing what will be in their place
-when compiling and running the code.
+Fiecare limbaj de programare dispune de unelte specifice pentru a gestiona eficient duplicarea conceptelor. În Rust, un asemenea instrument sunt *genericele*: substituenți abstracți pentru tipuri concrete sau alte caracteristici. Ne permite să descriem comportamentul genericelor sau relațiile acestora cu alte generice fără a cunoaște ce le va înlocui atunci când codul este compilat și executat.
 
-Functions can take parameters of some generic type, instead of a concrete type
-like `i32` or `String`, in the same way a function takes parameters with
-unknown values to run the same code on multiple concrete values. In fact, we’ve
-already used generics in Chapter 6 with `Option<T>`, Chapter 8 with `Vec<T>`
-and `HashMap<K, V>`, and Chapter 9 with `Result<T, E>`. In this chapter, you’ll
-explore how to define your own types, functions, and methods with generics!
+Funcțiile pot accepta parametri de orice tip generic, în locul unui tip concret precum `i32` sau `String`, similar modului în care o funcție acceptă parametri cu valori necunoscute pentru a rula același cod peste multiple valori concrete. De fapt, am utilizat genericele în Capitolul 6 cu `Option<T>`, în Capitolul 8 cu `Vec<T>` și `HashMap<K, V>`, și în Capitolul 9 cu `Result<T, E>`. În acest capitol, vei explora cum să-ți definești propriile tipuri, funcții și metode utilizând generice!
 
-First, we’ll review how to extract a function to reduce code duplication. We’ll
-then use the same technique to make a generic function from two functions that
-differ only in the types of their parameters. We’ll also explain how to use
-generic types in struct and enum definitions.
+Vom începe cu o recapitulare a metodei de extragere a unei funcții în scopul reducerii duplicării de cod. Vom folosi aceeași tehnică pentru a deriva o funcție generică din două funcții care diferă numai prin tipurile parametrilor lor. Îți vom arăta cum se aplică tipurile generice în definițiile structurilor și enumerărilor.
 
-Then you’ll learn how to use *traits* to define behavior in a generic way. You
-can combine traits with generic types to constrain a generic type to accept
-only those types that have a particular behavior, as opposed to just any type.
+Mai departe, vei învăța să folosești *trăsături* (trait) pentru a defini comportamente într-un mod generic. Combinând trăsăturile cu tipuri generice, putem limita un tip generic să accepte doar acele tipuri care prezintă un anumit comportament, spre deosebire de orice tip.
 
-Finally, we’ll discuss *lifetimes*: a variety of generics that give the
-compiler information about how references relate to each other. Lifetimes allow
-us to give the compiler enough information about borrowed values so that it can
-ensure references will be valid in more situations than it could without our
-help.
+La final, vom discuta despre *duratele de viață*: o categorie specială de generice ce furnizează compilatorului date privind modul în care referințele interacționează unele cu altele. Duratele de viață ne permit să înzestrăm compilatorul cu informații suficiente despre valorile împrumutate, permițându-i acestuia să asigure că referințele sunt valide într-o paletă mai largă de scenarii decât ar fi posibil fără sprijinul nostru.
 
-## Removing Duplication by Extracting a Function
+## Reducerea duplicării prin extragerea unei funcții
 
-Generics allow us to replace specific types with a placeholder that represents
-multiple types to remove code duplication. Before diving into generics syntax,
-then, let’s first look at how to remove duplication in a way that doesn’t
-involve generic types by extracting a function that replaces specific values
-with a placeholder that represents multiple values. Then we’ll apply the same
-technique to extract a generic function! By looking at how to recognize
-duplicated code you can extract into a function, you’ll start to recognize
-duplicated code that can use generics.
+Genericele ne permit să substituim tipuri specifice cu un placeholder, ce reprezintă mai multe tipuri, și astfel să eliminăm duplicarea în cod. Înainte de a ne familiariza cu sintaxa de generice, să vedem prima dată cum putem înlătura duplicările într-un mod care nu implică tipuri generice. Acest lucru se realizează prin extragerea unei funcții care înlocuiește valorile specifice cu un placeholder pentru multiple valori. Apoi, vom aplica aceeași abordare pentru a defini o funcție generică! Înțelegând cum să recunoaștem codul duplicat care se poate transforma într-o funcție, vei începe să identifici și codul duplicat care poate beneficia de generice.
 
-We begin with the short program in Listing 10-1 that finds the largest number
-in a list.
+Pornim cu un program simplu prezentat în Listarea 10-1, care determină cel mai mare număr dintr-o listă.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-01/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 10-1: Finding the largest number in a list of
-numbers</span>
+<span class="caption">Listarea 10-1: Identificarea celui mai mare număr dintr-o listă de numere</span>
 
-We store a list of integers in the variable `number_list` and place a reference
-to the first number in the list in a variable named `largest`. We then iterate
-through all the numbers in the list, and if the current number is greater than
-the number stored in `largest`, replace the reference in that variable.
-However, if the current number is less than or equal to the largest number seen
-so far, the variable doesn’t change, and the code moves on to the next number
-in the list. After considering all the numbers in the list, `largest` should
-refer to the largest number, which in this case is 100.
+Noi salvăm o listă de numere întregi în variabila `number_list` și atribuim o referință la primul număr din listă variabilei `largest`. Procedăm apoi la iterarea prin fiecare număr din listă, iar dacă numărul curent este mai mare decât cel referențiat de `largest`, actualizăm referința din această variabilă. Pe de altă parte, dacă numărul curent este mai mic sau egal cu cel mai mare număr întâlnit până în acel moment, variabila `largest` rămâne neschimbată, iar codul continuă cu următorul număr din listă. După ce toate numerele din listă sunt evaluate, `largest` va indica cel mai mare număr, care în acest exemplu este 100.
 
-We've now been tasked with finding the largest number in two different lists of
-numbers. To do so, we can choose to duplicate the code in Listing 10-1 and use
-the same logic at two different places in the program, as shown in Listing 10-2.
+Ne-am propus acum să găsim cel mai mare număr din două seturi diferite de numere. Putem alege să duplicăm codul din Listarea 10-1 sau să aplicăm aceeași logică în două locuri diferite din program, așa cum este prezentat în Listarea 10-2.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-02/src/main.rs}}
 ```
 
-<span class="caption">Listing 10-2: Code to find the largest number in *two*
-lists of numbers</span>
+<span class="caption">Listarea 10-2: Cod pentru identificarea celui mai mare număr din *două* liste de numere</span>
 
-Although this code works, duplicating code is tedious and error prone. We also
-have to remember to update the code in multiple places when we want to change
-it.
+Chiar dacă acest cod este funcțional, duplicarea sa este monotonă și predispusă la erori. În plus, trebuie să ne amintim să actualizăm codul în diverse locuri atunci când dorim să facem modificări.
 
-To eliminate this duplication, we’ll create an abstraction by defining a
-function that operates on any list of integers passed in a parameter. This
-solution makes our code clearer and lets us express the concept of finding the
-largest number in a list abstractly.
+Pentru a elimina această duplicare, vom introduce o abstracție prin definirea unei
+funcții care operează pe orice array de numere întregi dat ca parametru. Această metodă îmbunătățește claritatea codului și ne permite să formulăm conceptul de identificare a celui mai mare număr dintr-un array într-un mod abstract.
 
-In Listing 10-3, we extract the code that finds the largest number into a
-function named `largest`. Then we call the function to find the largest number
-in the two lists from Listing 10-2. We could also use the function on any other
-list of `i32` values we might have in the future.
+În Listarea 10-3, extragem codul care identifică cel mai mare număr într-o funcție numită `largest`. Apoi invocăm funcția pentru a determina cel mai mare număr din cele două liste prezentate în Listarea 10-2. Totodată, putem utiliza funcția pentru orice alte array-uri de valori `i32` pe care le-am putea avea în viitor.
 
-<span class="filename">Filename: src/main.rs</span>
+<span class="filename">Numele fișierului: src/main.rs</span>
 
 ```rust
 {{#rustdoc_include ../listings/ch10-generic-types-traits-and-lifetimes/listing-10-03/src/main.rs:here}}
 ```
 
-<span class="caption">Listing 10-3: Abstracted code to find the largest number
-in two lists</span>
+<span class="caption">Listarea 10-3: Cod abstractizat pentru găsirea celui mai mare număr din două liste</span>
 
-The `largest` function has a parameter called `list`, which represents any
-concrete slice of `i32` values we might pass into the function. As a result,
-when we call the function, the code runs on the specific values that we pass
-in.
+Funcția `largest` are un parametru denumit `list`, care poate reprezenta orice secțiune concretă de valori `i32` introdusă în funcție. În consecință, când apelăm funcția, codul se execută folosind valorile specifice furnizate.
 
-In summary, here are the steps we took to change the code from Listing 10-2 to
-Listing 10-3:
+Rezumând, aceștia sunt pașii pe care i-am urmat pentru a transforma codul din Listarea 10-2 în Listarea 10-3:
 
-1. Identify duplicate code.
-2. Extract the duplicate code into the body of the function and specify the
-   inputs and return values of that code in the function signature.
-3. Update the two instances of duplicated code to call the function instead.
+1. Identifică codul duplicat.
+2. Extrage codul duplicat în corpul funcției și specifică
+   intrările și valorile de retur ale acestui cod în semnătura funcției.
+3. Actualizează cele două instanțe de cod duplicat pentru a apela funcția în locul acestuia.
 
-Next, we’ll use these same steps with generics to reduce code duplication. In
-the same way that the function body can operate on an abstract `list` instead
-of specific values, generics allow code to operate on abstract types.
+În continuare, vom folosi acești pași împreună cu genericele pentru a reduce și mai mult duplicarea codului. La fel cum corpul unei funcții poate opera pe o `list` abstractă și nu pe valori concrete, genericele ne permit să lucrăm cu tipuri abstracte.
 
-For example, say we had two functions: one that finds the largest item in a
-slice of `i32` values and one that finds the largest item in a slice of `char`
-values. How would we eliminate that duplication? Let’s find out!
+De pildă, să ne imaginăm că avem două funcții: una care determină elementul cel mai mare dintr-o secțiune de valori `i32` și una care găsește cel mai mare element într-o secțiune de valori `char`. Cum am putea elimina această duplicare? Să explorăm!
